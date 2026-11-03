@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Write - Homework Launchpad</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261103a">
+<style>
+:root{--a1:#2563eb}
+.desk{flex:1;overflow:auto;padding:28px 16px 60px;background:var(--bg)}
+.zoomer{transform-origin:top center;margin:0 auto;width:794px;max-width:100%}
+.page{background:var(--paper);color:var(--paper-ink);width:794px;max-width:100%;min-height:1123px;margin:0 auto;padding:84px 88px;
+  box-shadow:0 1px 3px rgba(0,0,0,.12),0 12px 32px -12px rgba(0,0,0,.28);border-radius:4px;
+  font:12pt/1.5 Calibri,Carlito,"Segoe UI",system-ui,sans-serif;outline:none;word-wrap:break-word;caret-color:#2563eb}
+@media (max-width:700px){ .page{padding:36px 24px;min-height:70vh} .desk{padding:12px 8px 40px} }
+.page:empty::before{content:attr(data-placeholder);color:#9aa3ae}
+.page h1{font-size:20pt;margin:.6em 0 .3em;color:#1f3864;font-weight:600}
+.page h2{font-size:15pt;margin:.6em 0 .3em;color:#2f5496;font-weight:600}
+.page h3{font-size:13pt;margin:.6em 0 .3em;color:#2f5496;font-weight:600}
+.page .doc-title{font-size:28pt;font-weight:300;margin:0 0 .3em;letter-spacing:-.01em;color:#111}
+.page p{margin:0 0 .55em}
+.page blockquote{margin:.6em 0;padding:.2em 1em;border-left:4px solid #b4c6e7;color:#404040;font-style:italic}
+.page blockquote[style*="margin"]{border-left:0;font-style:normal;color:inherit;padding:0}
+.page ul,.page ol{margin:0 0 .55em;padding-left:2em}
+.page a{color:#0563c1}
+.page img{max-width:100%;height:auto}
+.page table{border-collapse:collapse;width:100%;margin:.4em 0 .8em}
+.page td,.page th{border:1px solid #9aa3ae;padding:5px 8px;vertical-align:top;min-width:40px}
+.page th{background:#eef2f8}
+.page hr{border:0;border-top:1px solid #9aa3ae;margin:1em 0}
+.page mark.find{background:#ffe066;color:inherit}
+.page mark.find.now{background:#ff9f1c}
+
+.findbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 12px;background:var(--tool);border-bottom:1px solid var(--rule);flex:none}
+.findbar input{height:32px;border:1px solid var(--rule);border-radius:8px;background:var(--card);padding:0 10px;width:180px}
+.findbar .n{color:var(--soft);font-size:.85rem;min-width:70px}
+
+@media print{
+  @page{size:A4;margin:20mm}
+  body{display:block;overflow:visible;background:#fff}
+  .top,.ribbon,.findbar,.foot,#ofToast,dialog{display:none!important}
+  .desk{padding:0;overflow:visible}
+  .zoomer{transform:none!important;width:auto}
+  .page{box-shadow:none;padding:0;min-height:0;width:auto;border-radius:0}
+  body::before{display:none!important}
+}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">✍️</i><span>Write</span></a>
+  <input class="title-in" id="title" value="Untitled document" aria-label="Document name" maxlength="120">
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="sp"></span>
+  <button class="tbtn" id="filesBtn" type="button">📁<span class="lbl"> Files</span></button>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+
+<div class="ribbon" role="toolbar" aria-label="Formatting">
+  <div class="grp">
+    <button class="tb" data-cmd="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+    <button class="tb" data-cmd="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+  </div>
+  <div class="grp">
+    <select id="style" aria-label="Paragraph style" title="Style">
+      <option value="p">Normal</option><option value="title">Title</option><option value="h1">Heading 1</option>
+      <option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option>
+    </select>
+    <select id="font" aria-label="Font" title="Font">
+      <option value="Calibri, Carlito, 'Segoe UI', sans-serif">Calibri</option>
+      <option value="Arial, Helvetica, sans-serif">Arial</option>
+      <option value="'Times New Roman', Tinos, serif">Times New Roman</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="Verdana, sans-serif">Verdana</option>
+      <option value="'Comic Sans MS', 'Comic Neue', cursive">Comic Sans</option>
+      <option value="'Courier New', monospace">Courier New</option>
+    </select>
+    <select id="size" aria-label="Font size" title="Size">
+      <option>8</option><option>9</option><option>10</option><option>11</option><option selected>12</option><option>14</option>
+      <option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option><option>48</option><option>72</option>
+    </select>
+  </div>
+  <div class="grp">
+    <button class="tb" data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+    <button class="tb" data-cmd="italic" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
+    <button class="tb" data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
+    <button class="tb" data-cmd="strikeThrough" title="Strikethrough" aria-label="Strikethrough"><s>S</s></button>
+    <button class="tb" data-cmd="superscript" title="Superscript" aria-label="Superscript">x²</button>
+    <button class="tb" data-cmd="subscript" title="Subscript" aria-label="Subscript">x₂</button>
+    <label class="tb colorbtn" title="Text colour">A<span class="bar" id="fgBar" style="background:#c00000"></span><input type="color" id="fg" value="#c00000" aria-label="Text colour"></label>
+    <label class="tb colorbtn" title="Highlight">🖍<span class="bar" id="hlBar" style="background:#ffff00"></span><input type="color" id="hl" value="#ffff00" aria-label="Highlight colour"></label>
+    <button class="tb" data-cmd="removeFormat" title="Clear formatting" aria-label="Clear formatting">⌫</button>
+  </div>
+  <div class="grp">
+    <button class="tb" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bulleted list">•≡</button>
+    <button class="tb" data-cmd="insertOrderedList" title="Numbering" aria-label="Numbered list">1≡</button>
+    <button class="tb" data-cmd="outdent" title="Decrease indent" aria-label="Decrease indent">⇤</button>
+    <button class="tb" data-cmd="indent" title="Increase indent" aria-label="Increase indent">⇥</button>
+    <button class="tb" data-cmd="justifyLeft" title="Align left" aria-label="Align left">⟸</button>
+    <button class="tb" data-cmd="justifyCenter" title="Centre" aria-label="Centre">≡</button>
+    <button class="tb" data-cmd="justifyRight" title="Align right" aria-label="Align right">⟹</button>
+    <button class="tb" data-cmd="justifyFull" title="Justify" aria-label="Justify">☰</button>
+  </div>
+  <div class="grp">
+    <button class="tb" id="linkBtn" title="Link" aria-label="Insert link">🔗</button>
+    <label class="tb" title="Picture" aria-label="Insert picture">🖼<input type="file" id="imgIn" accept="image/*" hidden></label>
+    <button class="tb" id="tableBtn" title="Table" aria-label="Insert table">▦</button>
+    <button class="tb" data-cmd="insertHorizontalRule" title="Line" aria-label="Insert line">―</button>
+  </div>
+  <div class="grp">
+    <button class="tb" id="findBtn" title="Find and replace (Ctrl+F)" aria-label="Find and replace">🔍</button>
+    <button class="tb" id="speakBtn" title="Read aloud" aria-label="Read aloud" aria-pressed="false">🔊</button>
+    <div class="menuwrap">
+      <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
+      <div class="menu" id="exportMenu" hidden>
+        <button type="button" data-ex="docx">📘<span>Word document<small>.docx - opens in Word, Pages and Google Docs</small></span></button>
+        <button type="button" data-ex="pdf">📄<span>PDF or print<small>Choose “Save as PDF” to make a PDF</small></span></button>
+        <button type="button" data-ex="txt">📝<span>Plain text<small>.txt</small></span></button>
+        <button type="button" data-ex="html">🌐<span>Web page<small>.html</small></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="findbar" id="findbar" hidden>
+  <input id="findIn" placeholder="Find" aria-label="Find">
+  <input id="replIn" placeholder="Replace with" aria-label="Replace with">
+  <button class="tb wide" id="findPrev" type="button">↑</button>
+  <button class="tb wide" id="findNext" type="button">↓</button>
+  <button class="tb wide" id="replOne" type="button">Replace</button>
+  <button class="tb wide" id="replAll" type="button">Replace all</button>
+  <span class="n" id="findN"></span>
+  <button class="tb" id="findClose" type="button" aria-label="Close find">✕</button>
+</div>
+
+<main class="desk" id="desk">
+  <div class="zoomer" id="zoomer">
+    <article class="page" id="page" contenteditable="true" spellcheck="true" lang="en-GB"
+      data-placeholder="Start typing…" aria-label="Document" aria-multiline="true" role="textbox"></article>
+  </div>
+</main>
+
+<footer class="foot">
+  <span id="wc">0 words</span><span id="cc">0 characters</span><span id="rt"></span>
+  <span class="sp"></span>
+  <label>Zoom <input type="range" id="zoom" min="50" max="200" step="10" value="100" aria-label="Zoom"></label><span id="zoomN">100%</span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/jszip.min.js"></script>
+<script src="/office/office.js?b=20261103a"></script>
+<script src="/write/docx.js?b=20261103a"></script>
+<script src="/write/write.js?b=20261103a"></script>
+</body>
+</html>

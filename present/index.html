@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Present - Homework Launchpad</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261103a">
+<style>
+:root{--a1:#ea580c}
+.work{flex:1;display:flex;min-height:0}
+.rail{width:200px;flex:none;overflow:auto;background:var(--tool);border-right:1px solid var(--rule);padding:10px 10px 30px;display:flex;flex-direction:column;gap:10px}
+.thumb{position:relative;display:flex;gap:6px;align-items:flex-start;border:0;background:transparent;padding:0;text-align:left}
+.thumb .no{font:600 .75rem var(--ui);color:var(--soft);width:16px;padding-top:4px;text-align:right;flex:none}
+.thumb .mini{width:160px;height:90px;border-radius:8px;overflow:hidden;position:relative;border:2px solid var(--rule);background:#fff;flex:none}
+.thumb[aria-current="true"] .mini{border-color:var(--a1);box-shadow:0 0 0 3px color-mix(in srgb,var(--a1) 25%,transparent)}
+.thumb .mini > .slide{transform:scale(.16667);transform-origin:0 0;pointer-events:none}
+.railbtns{display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:-10px;background:var(--tool);padding:4px 0;z-index:2}
+.railbtns .tb{border:1px solid var(--rule);background:var(--card)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg)}
+.stagewrap{flex:1;display:grid;place-items:center;overflow:hidden;padding:20px;min-height:0;position:relative}
+.stage{position:relative;box-shadow:0 2px 6px rgba(0,0,0,.12),0 18px 44px -16px rgba(0,0,0,.4);border-radius:6px;overflow:hidden}
+.notes{flex:none;height:86px;border-top:1px solid var(--rule);background:var(--card);display:flex}
+.notes textarea{flex:1;border:0;background:transparent;padding:10px 16px;resize:none;font:14px/1.45 var(--ui);outline:none}
+@media (max-width:760px){ .rail{width:120px} .thumb .mini{width:96px;height:54px} .thumb .mini > .slide{transform:scale(.1)} .notes{height:64px} }
+
+/* a slide is always 960 x 540 units inside, then scaled */
+.slide{position:relative;width:960px;height:540px;overflow:hidden;font-family:Calibri,Carlito,"Segoe UI",sans-serif}
+.el{position:absolute;box-sizing:border-box}
+.el.text{padding:6px 10px;line-height:1.15;outline:none;overflow:hidden;word-wrap:break-word}
+.el.text ul,.el.text ol{margin:0;padding-left:1.15em}
+.el.text li{margin:.25em 0}
+.el.text p,.el.text div{margin:0}
+.el.text:empty::before{content:attr(data-ph);opacity:.45}
+.el.img img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+.el.shape svg{width:100%;height:100%;display:block;overflow:visible}
+.edit .el{cursor:move}
+.edit .el.text[contenteditable="true"]{cursor:text;outline:2px dashed rgba(234,88,12,.7);outline-offset:-2px}
+.edit .el.text:not([contenteditable="true"]):empty{outline:1px dashed rgba(127,127,127,.6);outline-offset:-1px}
+.selbox{position:absolute;border:2px solid #ea580c;pointer-events:none;z-index:50}
+.selbox i{position:absolute;width:14px;height:14px;background:#fff;border:2px solid #ea580c;border-radius:50%;margin:-8px 0 0 -8px;pointer-events:auto;touch-action:none}
+.guide{position:absolute;background:#ec4899;z-index:49;pointer-events:none}
+.ribbon .tb.wide{font-size:.84rem}
+.thpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.thpick button{border:2px solid var(--rule);border-radius:12px;padding:0;overflow:hidden;background:none;aspect-ratio:16/9;position:relative}
+.thpick button[aria-pressed="true"]{border-color:var(--a1)}
+.thpick span{position:absolute;inset:0;display:grid;place-items:center;font-weight:700;font-size:1.05rem}
+
+/* presenting */
+#show{position:fixed;inset:0;background:#000;z-index:100;display:grid;place-items:center;cursor:none;touch-action:none}
+#show.mouse{cursor:default}
+#show .slide{box-shadow:none}
+#show .bar{position:fixed;bottom:14px;right:18px;color:rgba(255,255,255,.65);font:600 14px var(--ui);display:flex;gap:10px;align-items:center;opacity:0;transition:opacity .3s}
+#show.mouse .bar{opacity:1}
+#show .bar button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:999px;padding:6px 12px}
+.t-fade{animation:tfade .5s ease both}.t-push{animation:tpush .55s cubic-bezier(.2,.8,.2,1) both}.t-zoom{animation:tzoom .5s cubic-bezier(.2,.8,.2,1) both}
+.t-back.t-push{animation-name:tpushb}
+@keyframes tfade{from{opacity:0}}@keyframes tpush{from{transform:translateX(30%);opacity:0}}@keyframes tpushb{from{transform:translateX(-30%);opacity:0}}@keyframes tzoom{from{transform:scale(.85);opacity:0}}
+@media (prefers-reduced-motion:reduce){.t-fade,.t-push,.t-zoom{animation:none}}
+
+#printArea{display:none}
+@media print{
+  @page{size:13.333in 7.5in;margin:0}
+  body{display:block;overflow:visible;background:#fff}
+  body > *:not(#printArea){display:none!important}
+  body::before{display:none!important}
+  #printArea{display:block}
+  #printArea .pg{width:13.333in;height:7.5in;overflow:hidden;break-after:page;page-break-after:always}
+  #printArea .slide{transform:scale(1.3333);transform-origin:0 0}
+}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">🎞️</i><span>Present</span></a>
+  <input class="title-in" id="title" value="Untitled presentation" aria-label="Presentation name" maxlength="120">
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="sp"></span>
+  <button class="tbtn" id="playBtn" type="button" style="background:var(--a1)">▶<span class="lbl"> Present</span></button>
+  <button class="tbtn" id="filesBtn" type="button">📁<span class="lbl"> Files</span></button>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+
+<div class="ribbon" role="toolbar" aria-label="Slide tools">
+  <div class="grp">
+    <button class="tb" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+    <button class="tb" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+  </div>
+  <div class="grp">
+    <div class="menuwrap">
+      <button class="tb wide" id="newBtn" aria-haspopup="true">＋ New slide ▾</button>
+      <div class="menu" id="newMenu" hidden style="left:0;right:auto">
+        <button type="button" data-lay="title">🅃<span>Title slide<small>Big title and a subtitle</small></span></button>
+        <button type="button" data-lay="content">☰<span>Title and points<small>A heading and bullet points</small></span></button>
+        <button type="button" data-lay="two">◫<span>Two columns<small>Compare two things</small></span></button>
+        <button type="button" data-lay="picture">🖼<span>Title and picture<small>A heading with room for a picture</small></span></button>
+        <button type="button" data-lay="section">§<span>Section header<small>Start a new part</small></span></button>
+        <button type="button" data-lay="blank">▢<span>Blank<small>Start from nothing</small></span></button>
+      </div>
+    </div>
+    <button class="tb wide" id="addText" title="Text box">🅰 Text</button>
+    <label class="tb wide" title="Picture">🖼 Picture<input type="file" id="imgIn" accept="image/*" hidden></label>
+    <div class="menuwrap">
+      <button class="tb wide" id="shapeBtn" aria-haspopup="true">⬟ Shape ▾</button>
+      <div class="menu" id="shapeMenu" hidden style="left:0;right:auto;min-width:180px">
+        <button type="button" data-shape="rect">▬<span>Rectangle</span></button>
+        <button type="button" data-shape="round">▢<span>Rounded box</span></button>
+        <button type="button" data-shape="ellipse">⬤<span>Circle</span></button>
+        <button type="button" data-shape="triangle">▲<span>Triangle</span></button>
+        <button type="button" data-shape="star">★<span>Star</span></button>
+        <button type="button" data-shape="arrow">➜<span>Arrow</span></button>
+        <button type="button" data-shape="line">―<span>Line</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="grp" id="textTools">
+    <button class="tb" data-cmd="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+    <button class="tb" data-cmd="italic" aria-label="Italic" title="Italic"><i>I</i></button>
+    <button class="tb" data-cmd="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+    <button class="tb" data-cmd="insertUnorderedList" aria-label="Bullets" title="Bullets">•≡</button>
+    <button class="tb" id="szDown" aria-label="Smaller text" title="Smaller text">A−</button>
+    <button class="tb" id="szUp" aria-label="Bigger text" title="Bigger text">A+</button>
+    <button class="tb" data-alg="left" aria-label="Align left" title="Align left">⟸</button>
+    <button class="tb" data-alg="center" aria-label="Centre" title="Centre">≡</button>
+    <button class="tb" data-alg="right" aria-label="Align right" title="Align right">⟹</button>
+    <label class="tb colorbtn" title="Colour (text or shape)">🎨<span class="bar" id="colBar" style="background:#ea580c"></span><input type="color" id="colIn" value="#ea580c" aria-label="Colour"></label>
+  </div>
+  <div class="grp">
+    <button class="tb" id="fwdBtn" title="Bring to front" aria-label="Bring to front">⇡</button>
+    <button class="tb" id="backBtn" title="Send to back" aria-label="Send to back">⇣</button>
+    <button class="tb" id="dupBtn" title="Duplicate (Ctrl+D)" aria-label="Duplicate">⧉</button>
+    <button class="tb" id="delBtn" title="Delete" aria-label="Delete">🗑</button>
+  </div>
+  <div class="grp">
+    <button class="tb wide" id="designBtn">🎨 Design</button>
+    <select id="trans" aria-label="Transition" title="Transition for this slide">
+      <option value="fade">Fade</option><option value="push">Push</option><option value="zoom">Zoom</option><option value="none">No transition</option>
+    </select>
+    <div class="menuwrap">
+      <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
+      <div class="menu" id="exportMenu" hidden>
+        <button type="button" data-ex="pptx">📙<span>PowerPoint<small>.pptx - opens in PowerPoint, Keynote and Google Slides</small></span></button>
+        <button type="button" data-ex="pdf">📄<span>PDF or print<small>One slide per page - choose “Save as PDF”</small></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="work">
+  <aside class="rail" aria-label="Slides">
+    <div class="railbtns">
+      <button class="tb" id="sDup" title="Duplicate slide" aria-label="Duplicate slide">⧉</button>
+      <button class="tb" id="sUp" title="Move slide up" aria-label="Move slide up">↑</button>
+      <button class="tb" id="sDown" title="Move slide down" aria-label="Move slide down">↓</button>
+      <button class="tb" id="sDel" title="Delete slide" aria-label="Delete slide">🗑</button>
+    </div>
+    <div id="thumbs" style="display:flex;flex-direction:column;gap:10px"></div>
+  </aside>
+  <section class="main">
+    <div class="stagewrap" id="stagewrap"><div class="stage" id="stage"></div></div>
+    <div class="notes"><textarea id="notes" placeholder="Speaker notes - only you see these" aria-label="Speaker notes"></textarea></div>
+  </section>
+</div>
+<div id="printArea"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/jszip.min.js"></script>
+<script src="/office/office.js?b=20261103a"></script>
+<script src="/present/pptx.js?b=20261103a"></script>
+<script src="/present/present.js?b=20261103a"></script>
+</body>
+</html>

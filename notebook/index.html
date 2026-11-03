@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Notebook - Homework Launchpad</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261103a">
+<style>
+:root{--a1:#7c3aed}
+.work{flex:1;display:flex;min-height:0}
+.secs{width:190px;flex:none;background:var(--tool);border-right:1px solid var(--rule);display:flex;flex-direction:column;min-height:0}
+.pages{width:230px;flex:none;background:var(--card);border-right:1px solid var(--rule);display:flex;flex-direction:column;min-height:0}
+.colhead{display:flex;align-items:center;gap:6px;padding:10px 10px 6px;font:700 .78rem var(--ui);letter-spacing:.04em;text-transform:uppercase;color:var(--soft)}
+.colhead .sp{flex:1}
+.colhead button{border:1px solid var(--rule);background:var(--card);border-radius:8px;width:28px;height:28px;font-size:1rem;line-height:1}
+.list{flex:1;overflow:auto;padding:2px 8px 16px;display:flex;flex-direction:column;gap:4px}
+.sec{display:flex;align-items:center;gap:8px;border:0;background:transparent;border-radius:10px;padding:8px 10px;text-align:left;font-weight:600;width:100%}
+.sec .dot{width:12px;height:12px;border-radius:4px;flex:none}
+.sec:hover{background:var(--hover)}
+.sec[aria-current="true"]{background:var(--on)}
+.sec span.n{margin-left:auto;color:var(--soft);font-weight:500;font-size:.8rem}
+.pg{border:0;background:transparent;border-radius:10px;padding:8px 10px;text-align:left;width:100%;border-left:3px solid transparent}
+.pg strong{display:block;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg small{color:var(--soft);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.78rem}
+.pg:hover{background:var(--hover)}
+.pg[aria-current="true"]{background:var(--on);border-left-color:var(--a1)}
+.search{margin:6px 10px 8px;height:34px;border:1px solid var(--rule);border-radius:10px;background:var(--card);padding:0 10px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--card)}
+.canvaswrap{flex:1;overflow:auto;position:relative}
+.sheet{position:relative;max-width:860px;margin:0 auto;padding:28px 40px 120px;min-height:100%}
+.ptitle{width:100%;border:0;border-bottom:1px solid var(--rule);background:transparent;font:700 1.7rem var(--ui);padding:4px 0 8px;outline:none;color:var(--ink)}
+.pdate{color:var(--soft);font-size:.82rem;margin:6px 0 16px}
+.note{outline:none;min-height:420px;font:15.5px/1.6 var(--ui);color:var(--ink)}
+.note:empty::before{content:"Start typing - or pick ✏️ Draw to write with your finger or pencil.";color:var(--soft)}
+.note h1{font-size:1.45rem;margin:.7em 0 .3em}.note h2{font-size:1.2rem;margin:.6em 0 .25em}.note p{margin:0 0 .5em}
+.note img{max-width:100%;border-radius:8px}
+.note table{border-collapse:collapse}.note td,.note th{border:1px solid var(--rule);padding:4px 8px}
+.note a{color:var(--a1)}
+.note ul.todo{list-style:none;padding-left:4px}
+.note ul.todo li{position:relative;padding-left:30px;margin:.2em 0}
+.note ul.todo li::before{content:"";position:absolute;left:0;top:.2em;width:18px;height:18px;border:2px solid var(--a1);border-radius:6px;cursor:pointer;box-sizing:border-box}
+.note ul.todo li.done{color:var(--soft);text-decoration:line-through}
+.note ul.todo li.done::before{background:var(--a1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='white' stroke-width='2.2'/%3E%3C/svg%3E") center/14px no-repeat}
+.note mark.hit{background:#fde047;color:#111}
+#ink{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
+.drawing #ink{pointer-events:auto;touch-action:none;cursor:crosshair}
+.inkbar{display:flex;gap:6px;align-items:center;padding:6px 12px;background:var(--tool);border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.inkbar .pen{width:28px;height:28px;border-radius:50%;border:2px solid var(--rule);padding:0}
+.inkbar .pen[aria-pressed="true"]{outline:3px solid var(--a1);outline-offset:1px}
+@media (max-width:900px){ .pages{width:180px} .secs{width:140px} .sheet{padding:18px 18px 100px} }
+@media (max-width:640px){ .secs{display:none} .pages{width:140px} }
+@media print{
+  body{display:block;overflow:visible} .top,.ribbon,.inkbar,.secs,.pages,dialog,#ofToast{display:none!important}
+  .canvaswrap{overflow:visible} body::before{display:none!important}
+}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">📓</i><span>Notebook</span></a>
+  <input class="title-in" id="title" value="My Notebook" aria-label="Notebook name" maxlength="120">
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="sp"></span>
+  <button class="tbtn" id="filesBtn" type="button">📁<span class="lbl"> Notebooks</span></button>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+
+<div class="ribbon" role="toolbar" aria-label="Formatting">
+  <div class="grp">
+    <button class="tb" data-cmd="undo" aria-label="Undo" title="Undo">↶</button>
+    <button class="tb" data-cmd="redo" aria-label="Redo" title="Redo">↷</button>
+  </div>
+  <div class="grp">
+    <button class="tb" data-block="h1" title="Heading" aria-label="Heading">H1</button>
+    <button class="tb" data-block="h2" title="Subheading" aria-label="Subheading">H2</button>
+    <button class="tb" data-block="p" title="Normal text" aria-label="Normal text">¶</button>
+    <button class="tb" data-cmd="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+    <button class="tb" data-cmd="italic" aria-label="Italic" title="Italic"><i>I</i></button>
+    <button class="tb" data-cmd="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+    <button class="tb" data-cmd="strikeThrough" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+    <label class="tb colorbtn" title="Highlight">🖍<span class="bar" id="hlBar" style="background:#fde047"></span><input type="color" id="hl" value="#fde047" aria-label="Highlight colour"></label>
+  </div>
+  <div class="grp">
+    <button class="tb" id="todoBtn" title="Checklist (Ctrl+1)" aria-label="Checklist">☑</button>
+    <button class="tb" data-cmd="insertUnorderedList" aria-label="Bullets" title="Bullets">•≡</button>
+    <button class="tb" data-cmd="insertOrderedList" aria-label="Numbering" title="Numbering">1≡</button>
+    <button class="tb" data-tag="⭐" title="Tag: important" aria-label="Tag important">⭐</button>
+    <button class="tb" data-tag="❓" title="Tag: question for the teacher" aria-label="Tag question">❓</button>
+    <button class="tb" data-tag="💡" title="Tag: idea" aria-label="Tag idea">💡</button>
+  </div>
+  <div class="grp">
+    <label class="tb" title="Picture" aria-label="Insert picture">🖼<input type="file" id="imgIn" accept="image/*" hidden></label>
+    <button class="tb" id="dateBtn" title="Insert today's date" aria-label="Insert date">📅</button>
+    <button class="tb wide" id="drawBtn" aria-pressed="false" title="Draw with a finger, pen or mouse">✏️ Draw</button>
+    <div class="menuwrap">
+      <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
+      <div class="menu" id="exportMenu" hidden>
+        <button type="button" data-ex="docx">📘<span>This page as Word<small>.docx</small></span></button>
+        <button type="button" data-ex="pdf">📄<span>This page as PDF or print<small>Choose “Save as PDF”</small></span></button>
+        <button type="button" data-ex="html">🌐<span>Whole notebook<small>One web page with every section</small></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="inkbar" id="inkbar" hidden>
+  <strong style="font-size:.85rem">Pen</strong>
+  <button type="button" class="pen" data-pen="#111827" style="background:#111827" aria-label="Black pen" aria-pressed="true"></button>
+  <button type="button" class="pen" data-pen="#2563eb" style="background:#2563eb" aria-label="Blue pen"></button>
+  <button type="button" class="pen" data-pen="#dc2626" style="background:#dc2626" aria-label="Red pen"></button>
+  <button type="button" class="pen" data-pen="#16a34a" style="background:#16a34a" aria-label="Green pen"></button>
+  <button type="button" class="pen" data-pen="hl" style="background:#fde047" aria-label="Highlighter"></button>
+  <button type="button" class="tb wide" data-pen="eraser" aria-pressed="false">🧽 Eraser</button>
+  <label style="font-size:.85rem;display:flex;gap:6px;align-items:center">Size <input type="range" id="penSize" min="1" max="12" value="3"></label>
+  <button type="button" class="tb wide" id="inkClear">Clear drawing</button>
+  <span style="color:var(--soft);font-size:.8rem">Tap ✏️ Draw again to go back to typing.</span>
+</div>
+
+<div class="work">
+  <aside class="secs" aria-label="Sections">
+    <div class="colhead">Sections<span class="sp"></span><button type="button" id="addSec" aria-label="Add a section" title="Add a section">＋</button></div>
+    <div class="list" id="secList"></div>
+  </aside>
+  <aside class="pages" aria-label="Pages">
+    <input class="search" id="search" type="search" placeholder="🔍 Search every page" aria-label="Search every page">
+    <div class="colhead"><span id="pagesHead">Pages</span><span class="sp"></span><button type="button" id="addPage" aria-label="Add a page" title="Add a page">＋</button></div>
+    <div class="list" id="pageList"></div>
+  </aside>
+  <main class="main">
+    <div class="canvaswrap" id="cw">
+      <div class="sheet" id="sheetEl">
+        <input class="ptitle" id="ptitle" placeholder="Page title" aria-label="Page title" maxlength="120">
+        <div class="pdate" id="pdate"></div>
+        <div class="note" id="note" contenteditable="true" spellcheck="true" lang="en-GB" role="textbox" aria-multiline="true" aria-label="Page"></div>
+        <canvas id="ink"></canvas>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/jszip.min.js"></script>
+<script src="/office/office.js?b=20261103a"></script>
+<script src="/write/docx.js?b=20261103a"></script>
+<script src="/notebook/notebook.js?b=20261103a"></script>
+</body>
+</html>

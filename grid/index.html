@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Grid - Homework Launchpad</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261103a">
+<style>
+:root{--a1:#16a34a;--cell:#ffffff;--cellink:#1b1b1b;--grid:#e1e5eb;--head:#f3f5f8;--headon:#dcefe2;--sel:rgba(22,163,74,.12)}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --cell:#151b23;--cellink:#e6ebf2;--grid:#2a333f;--head:#1c232d;--headon:#1f3b2a;--sel:rgba(74,222,128,.14) } }
+:root[data-theme="dark"]{ --cell:#151b23;--cellink:#e6ebf2;--grid:#2a333f;--head:#1c232d;--headon:#1f3b2a;--sel:rgba(74,222,128,.14) }
+
+.fbar{display:flex;align-items:center;gap:6px;padding:5px 10px;background:var(--tool);border-bottom:1px solid var(--rule);flex:none}
+.fbar .nm{width:76px;height:30px;border:1px solid var(--rule);border-radius:8px;background:var(--card);text-align:center;font:600 .85rem ui-monospace,Menlo,Consolas,monospace}
+.fbar .fx{font:italic 700 .95rem Georgia,serif;color:var(--soft);padding:0 6px}
+.fbar input.f{flex:1;height:30px;border:1px solid var(--rule);border-radius:8px;background:var(--card);padding:0 10px;font:.9rem ui-monospace,Menlo,Consolas,monospace;min-width:0}
+
+.wrap{flex:1;overflow:auto;position:relative;background:var(--cell);outline:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13px/1.2 Calibri,Carlito,"Segoe UI",system-ui,sans-serif;color:var(--cellink)}
+.sheet th,.sheet td{height:24px;border-right:1px solid var(--grid);border-bottom:1px solid var(--grid);padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.sheet td{background:var(--cell);cursor:cell}
+.sheet td.n{text-align:right}.sheet td.e,.sheet td.t{text-align:center}
+.sheet td.e{color:#c62828}
+.sheet thead th{position:sticky;top:0;z-index:3;background:var(--head);font:600 12px var(--ui);color:var(--soft);text-align:center;cursor:s-resize;-webkit-user-select:none;user-select:none}
+.sheet th.rh{position:sticky;left:0;z-index:2;background:var(--head);font:600 11px var(--ui);color:var(--soft);text-align:center;width:46px;cursor:e-resize}
+.sheet thead th.corner{left:0;z-index:4;cursor:default}
+.sheet th.on{background:var(--headon);color:var(--a1)}
+.sheet thead th .rs{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:2}
+.box{position:absolute;pointer-events:none;z-index:1}
+#selBox{background:var(--sel);border:1px solid var(--a1)}
+#actBox{border:2px solid var(--a1)}
+#fillH{position:absolute;width:9px;height:9px;background:var(--a1);border:2px solid var(--cell);z-index:2;cursor:crosshair;touch-action:none;margin:-5px 0 0 -5px}
+#copyBox{border:2px dashed var(--a1)}
+#ed{position:absolute;z-index:5;border:2px solid var(--a1);outline:none;padding:0 4px;font:13px/1.2 Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--cell);color:var(--cellink);box-shadow:0 4px 14px -4px rgba(0,0,0,.35)}
+#hint{position:absolute;z-index:6;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:6px 10px;font-size:.8rem;box-shadow:0 8px 20px -8px rgba(0,0,0,.4);max-width:340px;pointer-events:none}
+#hint b{font-family:ui-monospace,Menlo,monospace}
+
+.tabs{flex:none;display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--tool);border-top:1px solid var(--rule);overflow-x:auto}
+.tabs .tab{border:1px solid var(--rule);background:var(--card);border-radius:9px;padding:4px 12px;font-size:.85rem;white-space:nowrap}
+.tabs .tab[aria-selected="true"]{border-color:var(--a1);color:var(--a1);font-weight:700}
+.tabs .tab input{width:110px;border:0;background:transparent;font:inherit;outline:none}
+.foot .stat b{color:var(--ink);font-weight:600}
+
+.chartbox{display:grid;gap:10px}
+.chartbox canvas{width:100%;height:auto;border:1px solid var(--rule);border-radius:12px;background:#fff}
+.fnlist{list-style:none;padding:0;margin:0;display:grid;gap:4px;max-height:50vh;overflow:auto}
+.fnlist button{width:100%;text-align:left;border:1px solid var(--rule);background:var(--tool);border-radius:10px;padding:7px 10px}
+.fnlist button:hover{background:var(--hover)}
+.fnlist b{font-family:ui-monospace,Menlo,monospace}
+.fnlist small{display:block;color:var(--soft)}
+.of-dialog input.q{width:100%;height:36px;border:1px solid var(--rule);border-radius:9px;padding:0 10px;background:var(--tool);margin:4px 0 10px}
+
+@media print{
+  body{display:block;overflow:visible} .top,.ribbon,.fbar,.tabs,.foot,dialog,#ofToast{display:none!important}
+  .wrap{overflow:visible} .box,#fillH,#ed{display:none!important} body::before{display:none!important}
+}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">📊</i><span>Grid</span></a>
+  <input class="title-in" id="title" value="Untitled spreadsheet" aria-label="Spreadsheet name" maxlength="120">
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="sp"></span>
+  <button class="tbtn" id="filesBtn" type="button">📁<span class="lbl"> Files</span></button>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+
+<div class="ribbon" role="toolbar" aria-label="Formatting">
+  <div class="grp">
+    <button class="tb" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+    <button class="tb" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+  </div>
+  <div class="grp">
+    <button class="tb" data-tog="b" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+    <button class="tb" data-tog="i" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
+    <button class="tb" data-tog="u" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
+    <label class="tb colorbtn" title="Text colour">A<span class="bar" id="fgBar" style="background:#c00000"></span><input type="color" id="fg" value="#c00000" aria-label="Text colour"></label>
+    <label class="tb colorbtn" title="Fill colour">🪣<span class="bar" id="bgBar" style="background:#fff2a8"></span><input type="color" id="bg" value="#fff2a8" aria-label="Fill colour"></label>
+    <button class="tb" id="clearFmt" title="Clear formatting" aria-label="Clear formatting">⌫</button>
+  </div>
+  <div class="grp">
+    <button class="tb" data-al="l" title="Align left" aria-label="Align left">⟸</button>
+    <button class="tb" data-al="c" title="Centre" aria-label="Centre">≡</button>
+    <button class="tb" data-al="r" title="Align right" aria-label="Align right">⟹</button>
+    <select id="nf" aria-label="Number format" title="Number format">
+      <option value="">General</option><option value="n2">1,234.50</option><option value="int">1,235</option>
+      <option value="gbp">£ Pounds</option><option value="pct">% Percent</option>
+    </select>
+  </div>
+  <div class="grp">
+    <button class="tb wide" id="sumBtn" title="AutoSum" aria-label="AutoSum">Σ Sum</button>
+    <button class="tb wide" id="fxBtn" title="Insert a function" aria-label="Insert a function"><i style="font-family:Georgia,serif">fx</i></button>
+    <button class="tb" id="sortUp" title="Sort A to Z" aria-label="Sort A to Z">A↓</button>
+    <button class="tb" id="sortDown" title="Sort Z to A" aria-label="Sort Z to A">Z↓</button>
+    <button class="tb wide" id="chartBtn" title="Make a chart from the selected cells" aria-label="Chart">📈 Chart</button>
+  </div>
+  <div class="grp">
+    <button class="tb wide" id="addRow" title="Insert a row above" aria-label="Insert row">＋ Row</button>
+    <button class="tb wide" id="addCol" title="Insert a column to the left" aria-label="Insert column">＋ Col</button>
+    <button class="tb wide" id="delRow" title="Delete the selected rows" aria-label="Delete rows">－ Row</button>
+    <button class="tb wide" id="delCol" title="Delete the selected columns" aria-label="Delete columns">－ Col</button>
+  </div>
+  <div class="grp">
+    <div class="menuwrap">
+      <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
+      <div class="menu" id="exportMenu" hidden>
+        <button type="button" data-ex="xlsx">📗<span>Excel workbook<small>.xlsx - every sheet, formulas and colours</small></span></button>
+        <button type="button" data-ex="csv">🧾<span>CSV<small>This sheet's values, for any app</small></span></button>
+        <button type="button" data-ex="pdf">📄<span>PDF or print<small>Choose “Save as PDF” to make a PDF</small></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fbar">
+  <input class="nm" id="nameBox" aria-label="Cell name - type one to jump there" value="A1">
+  <span class="fx" aria-hidden="true">fx</span>
+  <input class="f" id="fbar" aria-label="Cell contents" autocomplete="off" spellcheck="false">
+</div>
+
+<div class="wrap" id="wrap" tabindex="0" aria-label="Spreadsheet">
+  <table class="sheet" id="sheet"></table>
+  <div class="box" id="selBox"></div>
+  <div class="box" id="copyBox" hidden></div>
+  <div class="box" id="actBox"></div>
+  <div id="fillH" title="Drag to fill"></div>
+  <input id="ed" hidden autocomplete="off" spellcheck="false" aria-label="Edit cell">
+  <div id="hint" hidden></div>
+</div>
+
+<nav class="tabs" id="tabs" aria-label="Sheets"></nav>
+<footer class="foot">
+  <span class="stat" id="stat"></span>
+  <span class="sp"></span>
+  <span id="cellsN"></span>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/jszip.min.js"></script>
+<script src="/office/office.js?b=20261103a"></script>
+<script src="/grid/formula.js?b=20261103a"></script>
+<script src="/grid/xlsx.js?b=20261103a"></script>
+<script src="/grid/grid.js?b=20261103a"></script>
+</body>
+</html>

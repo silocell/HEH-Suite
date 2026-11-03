@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Launchpad Suite</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261103b">
+<style>
+:root{--a1:#4f46e5}
+body{overflow:auto;display:block}
+main{max-width:1040px;margin:0 auto;padding:34px 18px 60px}
+.hero h1{font:800 clamp(1.9rem,4.5vw,2.9rem)/1.1 var(--ui);margin:0 0 8px;letter-spacing:-.02em}
+.hero p{color:var(--soft);margin:0 0 26px;font-size:1.05rem;max-width:620px}
+.apps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:34px}
+@media (max-width:860px){ .apps{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.app{display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:24px;text-decoration:none;color:#fff;min-height:180px;position:relative;overflow:hidden;transition:transform .18s cubic-bezier(.2,.8,.2,1)}
+.app:hover{transform:translateY(-3px)}
+.app i{font-style:normal;font-size:2.4rem;line-height:1}
+.app b{font-size:1.35rem}
+.app span{opacity:.9;font-size:.92rem;line-height:1.35}
+.app small{margin-top:auto;font-weight:700;font-size:.82rem;opacity:.85}
+.w{background:linear-gradient(140deg,#1e40af,#3b82f6);box-shadow:0 14px 34px -16px #2563eb}
+.g{background:linear-gradient(140deg,#166534,#22c55e);box-shadow:0 14px 34px -16px #16a34a}
+.p{background:linear-gradient(140deg,#9a3412,#f97316);box-shadow:0 14px 34px -16px #ea580c}
+.n{background:linear-gradient(140deg,#5b21b6,#a855f7);box-shadow:0 14px 34px -16px #7c3aed}
+h2{font-size:1.15rem;margin:0 0 12px}
+.recent{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.recent a{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;background:var(--card);border:1px solid var(--rule);text-decoration:none;color:var(--ink);min-width:0}
+.recent a:hover{background:var(--hover)}
+.recent strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent small{color:var(--soft)}
+.recent span:last-child{min-width:0}
+.recent .ic{font-size:1.5rem}
+.empty{color:var(--soft)}
+.where{color:var(--soft);font-size:.88rem;margin-top:22px}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/"><i aria-hidden="true">🚀</i><span>Launchpad Suite</span></a>
+  <span class="sp"></span>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/" style="display:inline-flex">Launchpad</a>
+</header>
+<main>
+  <section class="hero">
+    <h1>Write it. Work it out. Show it.</h1>
+    <p>Four apps for homework, made for the Launchpad. They open and save Word, Excel and PowerPoint files, and everything saves by itself.</p>
+  </section>
+  <nav class="apps" aria-label="Apps">
+    <a class="app w" href="/write/"><i aria-hidden="true">✍️</i><b>Write</b><span>Essays and documents, with spell check, tables and pictures.</span><small>Opens .docx →</small></a>
+    <a class="app g" href="/grid/"><i aria-hidden="true">📊</i><b>Grid</b><span>Spreadsheets with formulas, charts and sorting.</span><small>Opens .xlsx and .csv →</small></a>
+    <a class="app p" href="/present/"><i aria-hidden="true">🎞️</i><b>Present</b><span>Slides with themes, shapes and a full-screen show.</span><small>Opens .pptx →</small></a>
+    <a class="app n" href="/notebook/"><i aria-hidden="true">📓</i><b>Notebook</b><span>Notes, checklists and drawing with a finger or pencil.</span><small>Sections and pages →</small></a>
+  </nav>
+  <h2>Recent files</h2>
+  <ul class="recent" id="recent"><li class="empty">Loading…</li></ul>
+  <p class="where" id="where"></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/office.js?b=20261103b"></script>
+<script>
+(function(){
+  Office.themeToggle(document.getElementById("themeBtn"));
+  var APPS = [["doc","write","📘"],["sheet","grid","📗"],["deck","present","📙"],["note","notebook","📓"]], all = [], cloud = false, user = null;
+  APPS.reduce(function(p, a){
+    return p.then(function(){ return Office.init(a[0]); }).then(function(st){
+      cloud = st.cloud; user = st.user;
+      return Office.list().then(function(rows){ rows.forEach(function(r){ all.push({ r:r, a:a }); }); });
+    }).catch(function(){});
+  }, Promise.resolve()).then(function(){
+    all.sort(function(x, y){ return (x.r.updated_at || "") < (y.r.updated_at || "") ? 1 : -1; });
+    var ul = document.getElementById("recent");
+    ul.innerHTML = all.slice(0, 12).map(function(o){
+      var d = o.r.updated_at ? new Date(o.r.updated_at).toLocaleDateString("en-GB", { day:"numeric", month:"short" }) : "";
+      return '<li><a href="/' + o.a[1] + '/?id=' + encodeURIComponent(o.r.id) + '"><span class="ic">' + o.a[2] + '</span><span><strong>' +
+        Office.esc(o.r.title || "Untitled") + '</strong><small>' + Office.esc(o.a[1][0].toUpperCase() + o.a[1].slice(1)) + (d ? " · " + d : "") + "</small></span></a></li>";
+    }).join("") || '<li class="empty">Nothing yet - pick an app above to start.</li>';
+    document.getElementById("where").textContent = cloud ? "Your files are saved to your Launchpad account, so they follow you to any device."
+      : user ? "Your files are saved in this browser for now." : "You're not signed in, so files are saved in this browser. Sign in on the Launchpad to keep them in your account.";
+  });
+})();
+</script>
+</body>
+</html>
