@@ -111,6 +111,7 @@
       .catch(function (e) { Office.toast("Couldn't open it: " + (e.message || e), true); fresh(); });
   }
   applyLayout();
+  Office.setImporter(function (f) { importFile(f); });
   Office.init("doc").then(function (st) {
     var q = new URLSearchParams(location.search).get("id"), last = null;
     try { last = localStorage.getItem("hl.write.last"); } catch (e) {}

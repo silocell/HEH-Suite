@@ -1,0 +1,30 @@
+{
+  "name": "Launchpad Suite",
+  "short_name": "Suite",
+  "description": "Write, Grid, Present, Notebook and more - homework apps that open and save Word, Excel and PowerPoint files.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#eef1f6",
+  "theme_color": "#4f46e5",
+  "lang": "en-GB",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "/icons/suite-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/suite-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/suite-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Write", "url": "/write/", "icons": [{ "src": "/icons/suite-192.png", "sizes": "192x192" }] },
+    { "name": "Grid", "url": "/grid/", "icons": [{ "src": "/icons/suite-192.png", "sizes": "192x192" }] },
+    { "name": "Present", "url": "/present/", "icons": [{ "src": "/icons/suite-192.png", "sizes": "192x192" }] },
+    { "name": "Notebook", "url": "/notebook/", "icons": [{ "src": "/icons/suite-192.png", "sizes": "192x192" }] }
+  ],
+  "file_handlers": [
+    { "action": "/write/", "accept": { "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"], "text/markdown": [".md"] } },
+    { "action": "/grid/", "accept": { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"], "text/csv": [".csv"] } },
+    { "action": "/present/", "accept": { "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"] } }
+  ]
+}

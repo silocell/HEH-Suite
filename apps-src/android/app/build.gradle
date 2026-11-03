@@ -1,0 +1,27 @@
+plugins { id "com.android.application"; id "org.jetbrains.kotlin.android" }
+// The signing key is never kept in this repository. Point SUITE_KEYS at a
+// keystore.properties (storeFile, storePassword, keyAlias, keyPassword).
+def ks = new Properties()
+def ksFile = file(System.getenv("SUITE_KEYS") ?: "../../../../suite-keys/keystore.properties")
+if (ksFile.exists()) ks.load(new FileInputStream(ksFile))
+android {
+  namespace "org.civilinitiatives.suite"
+  compileSdk 34
+  defaultConfig {
+    applicationId "org.civilinitiatives.suite"
+    minSdk 23
+    targetSdk 34
+    versionCode 1
+    versionName "1.0.0"
+  }
+  signingConfigs {
+    release {
+      storeFile ks["storeFile"] ? file(ks["storeFile"]) : null
+      storePassword ks["storePassword"]; keyAlias ks["keyAlias"]; keyPassword ks["keyPassword"]
+    }
+  }
+  buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
+  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+  kotlinOptions { jvmTarget = "17" }
+  lint { checkReleaseBuilds false; abortOnError false }
+}

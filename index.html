@@ -6,6 +6,11 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Launchpad Suite</title>
 <link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#4f46e5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Suite">
 <script>
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
@@ -39,6 +44,15 @@ h2{font-size:1.15rem;margin:0 0 12px}
 .recent .ic{font-size:1.5rem}
 .empty{color:var(--soft)}
 .where{color:var(--soft);font-size:.88rem;margin-top:22px}
+.get{margin-top:34px;padding:20px;border-radius:24px;background:var(--card);border:1px solid var(--rule);display:grid;gap:14px}
+.get h2{margin:0}
+.get p{margin:0;color:var(--soft)}
+.getrow{display:flex;gap:10px;flex-wrap:wrap}
+.getrow a,.getrow button{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:999px;font-weight:700;text-decoration:none;border:1px solid var(--rule);background:var(--tool);color:var(--ink);font-size:.95rem;cursor:pointer}
+.getrow .main{background:var(--a1);color:#fff;border-color:var(--a1)}
+.getrow small{font-weight:500;color:var(--soft)}
+.getrow .main small{color:#e0e7ff}
+
 </style>
 <link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
 </head>
@@ -63,13 +77,26 @@ h2{font-size:1.15rem;margin:0 0 12px}
   <h2>Recent files</h2>
   <ul class="recent" id="recent"><li class="empty">Loading…</li></ul>
   <p class="where" id="where"></p>
+  <section class="get" aria-labelledby="getH">
+    <h2 id="getH">Get the app</h2>
+    <p>Install the Suite so it has its own icon and works without the internet. It's free and open source.</p>
+    <div class="getrow">
+      <button type="button" class="main" id="installBtn">⬇ Install <small>iPad · Mac · Chromebook · PC</small></button>
+      <a href="/apps/LaunchpadSuite.exe" download>🪟 Windows <small>.exe</small></a>
+      <a href="/apps/LaunchpadSuite.apk" download>🤖 Android <small>.apk</small></a>
+      <a href="https://github.com/silocell/HEH-Suite" target="_blank" rel="noopener">🧩 Source code <small>GPL-3.0</small></a>
+    </div>
+  </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
-<script src="/office/office.js?b=20261103c"></script>
+<script src="/office/office.js?b=20261103e"></script>
 <script>
 (function(){
   Office.themeToggle(document.getElementById("themeBtn"));
+  var ib = document.getElementById("installBtn");
+  if (Office.isApp()) ib.closest("section").hidden = true;
+  ib.onclick = function () { Office.install(); };
   var APPS = [["doc","write","📘"],["sheet","grid","📗"],["deck","present","📙"],["note","notebook","📓"]], all = [], cloud = false, user = null;
   APPS.reduce(function(p, a){
     return p.then(function(){ return Office.init(a[0]); }).then(function(st){

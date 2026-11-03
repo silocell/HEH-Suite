@@ -434,16 +434,18 @@
     if (q || last) return openId(q || last);
     return Office.list().then(function (rows) { if (rows.length) return openId(rows[0].id); fresh(); });
   });
+  function importDeck(f) {
+        Office.toast("Opening " + f.name + "…");
+        Pptx.read(f).then(function (d) { fresh(); deck = clean(d); file.title = f.name.replace(/\.[^.]+$/, ""); $("title").value = file.title; draw(); saver.now(); Office.toast("Opened " + f.name); })
+          .catch(function (e) { Office.toast("Couldn't open that PowerPoint: " + (e.message || e), true); });
+  }
+  Office.setImporter(importDeck);
   $("filesBtn").onclick = function () {
     finishEdit(); saver.now();
     Office.filesDialog({
       heading: "Your presentations", noun: "presentation", icon: "📙", current: file.id, accept: ".pptx",
       onOpen: openId, onNew: fresh, onDeletedCurrent: fresh,
-      onImport: function (f) {
-        Office.toast("Opening " + f.name + "…");
-        Pptx.read(f).then(function (d) { fresh(); deck = clean(d); file.title = f.name.replace(/\.[^.]+$/, ""); $("title").value = file.title; draw(); saver.now(); Office.toast("Opened " + f.name); })
-          .catch(function (e) { Office.toast("Couldn't open that PowerPoint: " + (e.message || e), true); });
-      }
+      onImport: importDeck
     });
   };
   Office.themeToggle($("themeBtn"));

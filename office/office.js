@@ -116,6 +116,12 @@
 
   /* ---- little helpers both apps use ---- */
   function download(blob, name) {
+    // in the Android app, the app saves it (a web view can't download blobs)
+    if (window.SuiteAndroid && window.SuiteAndroid.save) {
+      var fr = new FileReader();
+      fr.onload = function () { var u = String(fr.result); window.SuiteAndroid.save(name, blob.type || "application/octet-stream", u.slice(u.indexOf(",") + 1)); };
+      fr.readAsDataURL(blob); return;
+    }
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click();
@@ -332,7 +338,35 @@
     });
   }
 
+  /* ---- installing the Suite as an app, and offline ---- */
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); });
+  }
+  var installEvt = null, importer = null, waiting = [];
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); installEvt = e; document.dispatchEvent(new Event("suite-installable")); });
+  function canInstall() { return !!installEvt; }
+  function isApp() { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true || /LaunchpadSuite\//.test(navigator.userAgent); }
+  function install() {
+    if (installEvt) { installEvt.prompt(); return installEvt.userChoice.then(function (c) { installEvt = null; return c.outcome === "accepted"; }); }
+    var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    var how = ios ? "In Safari, tap <b>Share</b> (the square with an arrow), then <b>Add to Home Screen</b>, then <b>Add</b>."
+      : /Mac/.test(navigator.platform) ? "In Safari, choose <b>File → Add to Dock</b>. In Chrome or Edge, use the <b>install</b> icon at the right of the address bar."
+      : "In Chrome or Edge, use the <b>install</b> icon at the right of the address bar, or the <b>⋮</b> menu → <b>Install Launchpad Suite</b>. On a Chromebook it's the same.";
+    var d = document.createElement("dialog"); d.className = "of-dialog";
+    d.innerHTML = '<div class="of-dhead"><h2>Install the Suite</h2><button type="button" class="of-x" aria-label="Close">✕</button></div><p>' + how +
+      '</p><p class="of-where">It opens in its own window, has its own icon, and works without the internet.</p><div class="of-new"><button type="button" class="of-btn">Got it</button></div>';
+    document.body.appendChild(d); d.showModal();
+    d.onclick = function (e) { if (e.target === d || e.target.closest(".of-x,.of-btn")) { d.close(); d.remove(); } };
+    return Promise.resolve(false);
+  }
+  /* files opened with the installed app (double-click a .docx, say) */
+  if ("launchQueue" in window) window.launchQueue.setConsumer(function (p) {
+    (p.files || []).slice(0, 1).forEach(function (h) { h.getFile().then(function (f) { if (importer) importer(f); else waiting.push(f); }); });
+  });
+  function setImporter(fn) { importer = fn; waiting.splice(0).forEach(fn); }
+
   window.Office = {
+    install: install, canInstall: canInstall, isApp: isApp, setImporter: setImporter,
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
