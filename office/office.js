@@ -153,7 +153,7 @@
       '<p class="of-where">' + esc(cloud ? "Saved to your Launchpad account - they follow you to any device."
         : (user ? "Saved in this browser for now." : "Saved in this browser. Sign in on the Launchpad to keep them in your account.")) + '</p>' +
       '<div class="of-new"><button type="button" class="of-btn" data-act="new">＋ New ' + esc(opts.noun) + '</button>' +
-      '<label class="of-btn ghost">Open a file from your device<input type="file" accept="' + esc(opts.accept) + '" hidden></label></div>' +
+      '<label class="of-btn ghost">Open a file from your device<input type="file" hidden></label></div>' +
       '<ul class="of-list"><li class="of-empty">Loading…</li></ul>';
     var ul = dlg.querySelector(".of-list");
     function draw() {
@@ -183,10 +183,30 @@
       }
     };
     dlg.querySelector('input[type=file]').onchange = function () {
-      var f = this.files && this.files[0]; if (!f) return; dlg.close(); opts.onImport(f);
+      var f = this.files && this.files[0]; this.value = ""; if (!f) return; dlg.close();
+      /* Google Docs, Sheets and Slides aren't real files - Drive only hands
+         over a shortcut - so say how to get a copy that can be opened. */
+      var ext = (f.name.match(/\.[^.]+$/) || [""])[0].toLowerCase();
+      if (/^\.(gdoc|gsheet|gslides|gdraw|gform)$/.test(ext) || /google-apps/.test(f.type) || (!ext && f.size < 2048)) { googleHelp(opts.noun); return; }
+      var ok = String(opts.accept || "").split(",").map(function (x) { return x.trim().toLowerCase(); });
+      if (ok.indexOf(ext) < 0) { toast("That's a " + (ext || "file without a type") + " - this app opens " + ok.join(", "), true); return; }
+      opts.onImport(f);
     };
     draw();
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  }
+  function googleHelp(noun) {
+    var fmt = { document: ["Word (.docx)", "Google Docs"], spreadsheet: ["Microsoft Excel (.xlsx)", "Google Sheets"], presentation: ["Microsoft PowerPoint (.pptx)", "Google Slides"], notebook: ["Word (.docx)", "Google Docs"] }[noun] || ["Word (.docx)", "Google Docs"];
+    var d = document.createElement("dialog"); d.className = "of-dialog";
+    d.innerHTML = '<div class="of-dhead"><h2>Make a copy first</h2><button type="button" class="of-x" aria-label="Close">✕</button></div>' +
+      '<p>' + esc(fmt[1]) + ' files live inside Google, so the Drive picker can only hand over a shortcut, not the writing itself. Save a copy, then open that:</p>' +
+      '<ol style="line-height:1.6;padding-left:1.3em"><li>Open the file in the <b>' + esc(fmt[1]) + '</b> app (or docs.google.com).</li>' +
+      '<li>Tap <b>⋯</b> → <b>Share and export</b> → <b>Save as</b> (on a computer: <b>File</b> → <b>Download</b>).</li>' +
+      '<li>Pick <b>' + esc(fmt[0]) + '</b>, save it to <b>Files</b> (or your Downloads).</li>' +
+      '<li>Come back here, tap <b>Open a file from your device</b> and pick the copy.</li></ol>' +
+      '<div class="of-new" style="margin-top:10px"><button type="button" class="of-btn">Got it</button></div>';
+    document.body.appendChild(d); d.showModal();
+    d.onclick = function (e) { if (e.target === d || e.target.closest(".of-x,.of-btn")) { d.close(); d.remove(); } };
   }
   /* A second tap on the same bin confirms, so no browser pop-up is needed. */
   function confirmInline(btn, label) {

@@ -11,5 +11,7 @@ https://suite.civilinitiatives.org. Sign-in is shared with the Launchpad.
 
 Files are saved in the `office_files` table, which only each file's owner can read.
 
-Copyright (c) 2026 Shiv (silocell). All rights reserved - see LICENSE.
+Copyright (c) 2026 Shiv (silocell). Free software under the GNU General Public
+License v3.0 - you can copy, change and share it, as long as your version stays
+open source under the same licence. See LICENSE.
 JSZip (office/jszip.min.js) is by Stuart Knightley and others, under the MIT licence.
