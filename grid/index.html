@@ -119,7 +119,9 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
       <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
       <div class="menu" id="exportMenu" hidden>
         <button type="button" data-ex="xlsx">📗<span>Excel workbook<small>.xlsx - every sheet, formulas and colours</small></span></button>
+        <button type="button" data-ex="ods">📙<span>OpenDocument<small>.ods - LibreOffice and OpenOffice</small></span></button>
         <button type="button" data-ex="csv">🧾<span>CSV<small>This sheet's values, for any app</small></span></button>
+        <button type="button" data-ex="tsv">🧾<span>Tab-separated<small>.tsv</small></span></button>
         <button type="button" data-ex="pdf">📄<span>PDF or print<small>Choose “Save as PDF” to make a PDF</small></span></button>
       </div>
     </div>
@@ -155,6 +157,7 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
 <script src="/office/office.js?b=20261103f"></script>
 <script src="/grid/formula.js?b=20261103a"></script>
 <script src="/grid/xlsx.js?b=20261103a"></script>
-<script src="/grid/grid.js?b=20261103a"></script>
+<script src="/office/odf.js?b=20261103g"></script>
+<script src="/grid/grid.js?b=20261103g"></script>
 </body>
 </html>

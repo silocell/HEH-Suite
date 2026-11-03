@@ -120,7 +120,7 @@
     return Office.list().then(function (rows) { if (rows.length) return openId(rows[0].id); fresh(); });
   });
 
-  var ACCEPT = ".docx,.txt,.html,.htm,.md,.markdown";
+  var ACCEPT = ".docx,.odt,.rtf,.txt,.html,.htm,.md,.markdown";
   function filesWin() {
     saver.now();
     Office.filesDialog({
@@ -654,6 +654,8 @@
       else if (w === "save") s.innerHTML = '<h2>Save a copy</h2><div class="bgrid">' +
         '<button type="button" data-ex="docx"><i>📘</i><span><b>Word document</b><small>.docx - Word, Pages, Google Docs</small></span></button>' +
         '<button type="button" data-ex="pdf"><i>📄</i><span><b>PDF</b><small>Print, then “Save as PDF”</small></span></button>' +
+        '<button type="button" data-ex="odt"><i>📗</i><span><b>OpenDocument</b><small>.odt - LibreOffice and OpenOffice</small></span></button>' +
+        '<button type="button" data-ex="rtf"><i>📃</i><span><b>Rich text</b><small>.rtf - opens almost anywhere</small></span></button>' +
         '<button type="button" data-ex="md"><i>Ⓜ️</i><span><b>Markdown</b><small>.md - for websites and notes apps</small></span></button>' +
         '<button type="button" data-ex="txt"><i>📝</i><span><b>Plain text</b><small>.txt - just the words</small></span></button>' +
         '<button type="button" data-ex="html"><i>🌐</i><span><b>Web page</b><small>.html</small></span></button></div>';
@@ -736,6 +738,13 @@
         doc.innerHTML + "</body></html>";
       Office.download(new Blob([h], { type: "text/html;charset=utf-8" }), Office.safeName(t, ".html")); return;
     }
+    if (kind === "rtf") { Office.download(new Blob([Odf.writeRtf(doc)], { type: "application/rtf" }), Office.safeName(t, ".rtf")); return; }
+    if (kind === "odt") {
+      document.body.appendChild(doc); doc.style.cssText = "position:fixed;left:-99999px;top:0;width:600px";
+      Odf.writeOdt(doc, t, layout).then(function (b) { doc.remove(); Office.download(b, Office.safeName(t, ".odt")); })
+        .catch(function (e) { doc.remove(); Office.toast("Couldn't make the file: " + (e.message || e), true); });
+      return;
+    }
     Office.toast("Making your Word file…");
     document.body.appendChild(doc); doc.style.cssText = "position:fixed;left:-99999px;top:0;width:600px";
     Docx.build(doc, t, layout).then(function (blob) { doc.remove(); Office.download(blob, Office.safeName(t, ".docx")); })
@@ -786,9 +795,16 @@
         .catch(function (e) { Office.toast("Couldn't open that Word file: " + (e.message || e), true); });
       return;
     }
+    if (/\.odt$/i.test(f.name)) {
+      Office.toast("Opening " + f.name + "…");
+      Odf.readOdt(f).then(function (html) { fresh(name, Office.cleanHTML(html)); Office.toast("Opened " + f.name); })
+        .catch(function (e) { Office.toast("Couldn't open that file: " + (e.message || e), true); });
+      return;
+    }
     var r = new FileReader();
     r.onload = function () {
       var t = String(r.result);
+      if (/\.rtf$/i.test(f.name)) { try { fresh(name, Office.cleanHTML(Odf.readRtf(t))); } catch (e) { Office.toast("Couldn't open that file: " + e.message, true); } return; }
       if (/\.html?$/i.test(f.name)) fresh(name, Office.cleanHTML(t.replace(/^[\s\S]*<body[^>]*>|<\/body>[\s\S]*$/gi, "")));
       else if (/\.(md|markdown)$/i.test(f.name)) fresh(name, Office.cleanHTML(mdToHtml(t)));
       else fresh(name, t.split(/\r?\n/).map(function (l) { return "<p>" + (Office.esc(l) || "<br>") + "</p>"; }).join(""));

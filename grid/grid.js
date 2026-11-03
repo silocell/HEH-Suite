@@ -783,7 +783,7 @@
   $("filesBtn").onclick = function () {
     saver.now();
     Office.filesDialog({
-      heading: "Your spreadsheets", noun: "spreadsheet", icon: "📗", current: file.id, accept: ".xlsx,.csv,.tsv,.txt",
+      heading: "Your spreadsheets", noun: "spreadsheet", icon: "📗", current: file.id, accept: ".xlsx,.ods,.csv,.tsv,.txt",
       onOpen: openId, onNew: function () { fresh(); }, onDeletedCurrent: function () { fresh(); }, onImport: importFile
     });
   };
@@ -794,6 +794,12 @@
   function importFile(f) {
     var name = f.name.replace(/\.[^.]+$/, "") || "Imported spreadsheet";
     if (f.size > 20 * 1024 * 1024) { Office.toast("That file is too big (over 20 MB).", true); return; }
+    if (/\.ods$/i.test(f.name)) {
+      Office.toast("Opening " + f.name + "…");
+      Odf.readOds(f).then(function (sheets) { fresh(name, { sheets: sheets, active: 0 }); Office.toast("Opened " + f.name); })
+        .catch(function (e) { Office.toast("Couldn't open that file: " + (e.message || e), true); });
+      return;
+    }
     if (/\.xlsx$/i.test(f.name)) {
       Office.toast("Opening " + f.name + "…");
       Xlsx.read(f).then(function (sheets) { fresh(name, { sheets: sheets, active: 0 }); Office.toast("Opened " + f.name); })
@@ -812,22 +818,28 @@
   var exBtn = $("exportBtn"), exMenu = $("exportMenu");
   exBtn.onclick = function (e) { e.stopPropagation(); exMenu.hidden = !exMenu.hidden; exBtn.setAttribute("aria-expanded", String(!exMenu.hidden)); };
   document.addEventListener("click", function (e) { if (!exMenu.hidden && !exMenu.contains(e.target)) { exMenu.hidden = true; exBtn.setAttribute("aria-expanded", "false"); } });
+  function csvLike(sep, ext) {
+    var t = titleIn.value.trim() || "Untitled spreadsheet", maxR = -1, maxC = -1;
+    Object.keys(sh.cells).forEach(function (k) { var p = F.parseRef(k); if (p && sh.cells[k].v != null) { maxR = Math.max(maxR, p.r); maxC = Math.max(maxC, p.c); } });
+    var lines = [];
+    for (var r = 0; r <= maxR; r++) {
+      var row = [];
+      for (var c = 0; c <= maxC; c++) { var cell = sh.cells[RN(r, c)], s = show(value(RN(r, c)), cell && cell.nf); row.push(sep === "," && /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s.replace(/[\t\n]/g, " ")); }
+      lines.push(row.join(sep));
+    }
+    Office.download(new Blob(["\ufeff" + lines.join("\r\n")], { type: (sep === "," ? "text/csv" : "text/tab-separated-values") + ";charset=utf-8" }), Office.safeName(t + (book.sheets.length > 1 ? " - " + sh.name : ""), ext));
+  }
   exMenu.onclick = function (e) {
     var b = e.target.closest("[data-ex]"); if (!b) return; exMenu.hidden = true;
     var t = titleIn.value.trim() || "Untitled spreadsheet";
     if (b.dataset.ex === "pdf") { window.print(); return; }
-    if (b.dataset.ex === "csv") {
-      var maxR = -1, maxC = -1;
-      Object.keys(sh.cells).forEach(function (k) { var p = F.parseRef(k); if (p && sh.cells[k].v != null) { maxR = Math.max(maxR, p.r); maxC = Math.max(maxC, p.c); } });
-      var lines = [];
-      for (var r = 0; r <= maxR; r++) {
-        var row = [];
-        for (var c = 0; c <= maxC; c++) { var cell = sh.cells[RN(r, c)], s = show(value(RN(r, c)), cell && cell.nf); row.push(/[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s); }
-        lines.push(row.join(","));
-      }
-      Office.download(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), Office.safeName(t + (book.sheets.length > 1 ? " - " + sh.name : ""), ".csv"));
+    if (b.dataset.ex === "csv") { csvLike(",", ".csv"); return; }
+    if (b.dataset.ex === "ods") {
+      Odf.writeOds(book.sheets, valueIn).then(function (blob) { Office.download(blob, Office.safeName(t, ".ods")); })
+        .catch(function (er) { Office.toast("Couldn't make the file: " + (er.message || er), true); });
       return;
     }
+    if (b.dataset.ex === "tsv") { csvLike("\t", ".tsv"); return; }
     Office.toast("Making your Excel file…");
     Xlsx.build(book.sheets, valueIn).then(function (blob) { Office.download(blob, Office.safeName(t, ".xlsx")); })
       .catch(function (er) { Office.toast("Couldn't make the Excel file: " + (er.message || er), true); });

@@ -24,8 +24,8 @@
     { "name": "PDF", "url": "/pdf/", "icons": [{ "src": "/icons/suite-192.png", "sizes": "192x192" }] }
   ],
   "file_handlers": [
-    { "action": "/write/", "accept": { "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"], "text/markdown": [".md"] } },
-    { "action": "/grid/", "accept": { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"], "text/csv": [".csv"] } },
+    { "action": "/write/", "accept": { "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"], "text/markdown": [".md"], "application/vnd.oasis.opendocument.text": [".odt"], "application/rtf": [".rtf"] } },
+    { "action": "/grid/", "accept": { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"], "text/csv": [".csv"], "application/vnd.oasis.opendocument.spreadsheet": [".ods"] } },
     { "action": "/present/", "accept": { "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"] } },
     { "action": "/pdf/", "accept": { "application/pdf": [".pdf"] } }
   ]
