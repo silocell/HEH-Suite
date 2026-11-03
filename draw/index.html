@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Draw - Launchpad Suite</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#4f46e5">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261103e">
+<style>
+:root{--a1:#0d9488;--board:#ffffff;--dot:#d4d9e1}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --board:#151b23;--dot:#2c3644 } }
+:root[data-theme="dark"]{ --board:#151b23;--dot:#2c3644 }
+.ribbon{gap:3px 2px}
+.tb[aria-pressed="true"]{background:color-mix(in srgb,var(--a1) 20%,transparent);border-color:color-mix(in srgb,var(--a1) 45%,transparent)}
+.sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--rule);padding:0;cursor:pointer}
+.sw[aria-pressed="true"]{outline:3px solid var(--a1);outline-offset:1px}
+#board{flex:1;position:relative;overflow:hidden;background:var(--board);touch-action:none;outline:none}
+#board svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#board.pan{cursor:grab}#board.panning{cursor:grabbing}
+#ed{position:absolute;z-index:5;border:2px solid var(--a1);border-radius:6px;outline:none;resize:none;padding:6px 8px;font:16px/1.3 "Segoe UI",system-ui,sans-serif;background:rgba(255,255,255,.96);color:#111;box-sizing:border-box}
+.hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--card);border:1px solid var(--rule);border-radius:999px;padding:6px 14px;font-size:.82rem;color:var(--soft);pointer-events:none;white-space:nowrap}
+.zoombar{position:absolute;right:14px;bottom:14px;display:flex;gap:4px;background:var(--card);border:1px solid var(--rule);border-radius:999px;padding:4px}
+.zoombar button{border:0;background:transparent;border-radius:999px;min-width:32px;height:32px;font-weight:700}
+.zoombar button:hover{background:var(--hover)}
+@media print{ .top,.ribbon,.zoombar,.hint{display:none!important} body{display:block} #board{height:100vh} body::before{display:none!important} }
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">🎨</i><span>Draw</span></a>
+  <input class="title-in" id="title" value="Untitled board" aria-label="Board name" maxlength="120">
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="sp"></span>
+  <button class="tbtn" id="filesBtn" type="button">📁<span class="lbl"> Files</span></button>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+<div class="ribbon" role="toolbar" aria-label="Drawing tools">
+  <div class="grp" id="tools">
+    <button class="tb" data-tool="select" aria-pressed="true" title="Pick and move (V)">↖</button>
+    <button class="tb" data-tool="hand" title="Move around the board (H, or hold Space)">✋</button>
+    <button class="tb" data-tool="pen" title="Pen (P)">✏️</button>
+    <button class="tb" data-tool="hl" title="Highlighter">🖍</button>
+    <button class="tb" data-tool="rect" title="Rectangle (R)">▭</button>
+    <button class="tb" data-tool="ellipse" title="Circle (O)">◯</button>
+    <button class="tb" data-tool="diamond" title="Diamond (for flowcharts)">◇</button>
+    <button class="tb" data-tool="arrow" title="Arrow (A)">➝</button>
+    <button class="tb" data-tool="line" title="Line (L)">╱</button>
+    <button class="tb" data-tool="text" title="Text (T)">🅣</button>
+    <button class="tb" data-tool="note" title="Sticky note (N)">🗒</button>
+    <button class="tb" data-tool="erase" title="Rubber (E)">🧽</button>
+    <label class="tb" title="Picture">🖼<input type="file" id="imgIn" accept="image/*" hidden></label>
+  </div>
+  <div class="grp" id="swatches">
+    <button class="sw" data-c="#111827" style="background:#111827" aria-label="Black" aria-pressed="true"></button>
+    <button class="sw" data-c="#2563eb" style="background:#2563eb" aria-label="Blue"></button>
+    <button class="sw" data-c="#dc2626" style="background:#dc2626" aria-label="Red"></button>
+    <button class="sw" data-c="#16a34a" style="background:#16a34a" aria-label="Green"></button>
+    <button class="sw" data-c="#ea580c" style="background:#ea580c" aria-label="Orange"></button>
+    <button class="sw" data-c="#7c3aed" style="background:#7c3aed" aria-label="Purple"></button>
+    <label class="tb colorbtn" title="Any colour">🎨<span class="bar" id="cBar" style="background:#111827"></span><input type="color" id="cIn" value="#111827" aria-label="Colour"></label>
+    <select id="sw" aria-label="Line width" title="Line width"><option value="2">Thin</option><option value="4" selected>Medium</option><option value="8">Thick</option></select>
+    <button class="tb" id="fillBtn" aria-pressed="false" title="Fill shapes with a light colour">◼ Fill</button>
+  </div>
+  <div class="grp">
+    <button class="tb" id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
+    <button class="tb" id="redoBtn" title="Redo (Ctrl+Y)">↷</button>
+    <button class="tb" id="fwdBtn" title="Bring to front">⇡</button>
+    <button class="tb" id="dupBtn" title="Duplicate (Ctrl+D)">⧉</button>
+    <button class="tb" id="delBtn" title="Delete (Del)">🗑</button>
+  </div>
+  <div class="grp">
+    <select id="bg" aria-label="Background" title="Background"><option value="dots">Dots</option><option value="grid">Grid</option><option value="plain">Plain</option></select>
+    <div class="menuwrap">
+      <button class="tb wide" id="tplBtn" aria-haspopup="true">✨ Start ▾</button>
+      <div class="menu" id="tplMenu" hidden style="left:0;right:auto">
+        <button type="button" data-tpl="mind">🧠<span>Mind map<small>An idea in the middle with branches</small></span></button>
+        <button type="button" data-tpl="flow">🔀<span>Flowchart<small>Start, steps, a question, end</small></span></button>
+        <button type="button" data-tpl="kanban">🗂<span>To do / Doing / Done<small>Sticky notes in three columns</small></span></button>
+        <button type="button" data-tpl="venn">⭕<span>Venn diagram<small>Two circles that overlap</small></span></button>
+      </div>
+    </div>
+    <div class="menuwrap">
+      <button class="tb wide" id="exportBtn" aria-haspopup="true">⬇ Export ▾</button>
+      <div class="menu" id="exportMenu" hidden>
+        <button type="button" data-ex="png">🖼<span>Picture<small>.png of everything on the board</small></span></button>
+        <button type="button" data-ex="svg">📐<span>SVG<small>Sharp at any size - for websites and Word</small></span></button>
+        <button type="button" data-ex="pdf">📄<span>PDF or print</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+<main id="board" tabindex="0" aria-label="Drawing board">
+  <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="pdots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="1.5" fill="var(--dot)"/></pattern>
+      <pattern id="pgrid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="var(--dot)" stroke-width="1"/></pattern>
+    </defs>
+    <rect id="bgRect" x="-50000" y="-50000" width="100000" height="100000" fill="url(#pdots)"/>
+    <g id="world"></g>
+    <g id="ui"></g>
+  </svg>
+  <div class="zoombar"><button type="button" id="zOut" aria-label="Zoom out">−</button><button type="button" id="zFit" aria-label="Show everything" title="Show everything">⤢</button><button type="button" id="zN" aria-label="Zoom 100%">100%</button><button type="button" id="zIn" aria-label="Zoom in">+</button></div>
+  <div class="hint" id="hint">Pick a tool and draw. Double-tap a shape or note to type in it.</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/office.js?b=20261103e"></script>
+<script src="/draw/draw.js?b=20261103e"></script>
+</body>
+</html>

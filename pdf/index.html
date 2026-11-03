@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>PDF - Launchpad Suite</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#4f46e5">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261103e">
+<style>
+:root{--a1:#dc2626}
+.ribbon{gap:3px 2px}
+.tb[aria-pressed="true"]{background:color-mix(in srgb,var(--a1) 18%,transparent);border-color:color-mix(in srgb,var(--a1) 45%,transparent)}
+label.tb{cursor:pointer}
+.work{flex:1;display:flex;min-height:0}
+.rail{width:150px;flex:none;overflow:auto;background:var(--tool);border-right:1px solid var(--rule);padding:10px;display:flex;flex-direction:column;gap:12px}
+.th{position:relative;border:2px solid var(--rule);border-radius:8px;background:#fff;padding:0;cursor:pointer;display:block;width:100%}
+.th canvas{width:100%;height:auto;display:block;border-radius:6px}
+.th[aria-current="true"]{border-color:var(--a1)}
+.th .n{position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.6);color:#fff;font:600 11px var(--ui);padding:1px 6px;border-radius:999px}
+.th input{position:absolute;right:4px;top:4px;width:18px;height:18px;accent-color:var(--a1)}
+.view{flex:1;overflow:auto;background:var(--bg);padding:24px 16px 80px;display:flex;flex-direction:column;align-items:center;gap:22px}
+.pg{position:relative;box-shadow:0 2px 8px rgba(0,0,0,.18);background:#fff;flex:none}
+.pg canvas{display:block;width:100%;height:100%}
+.pg svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.pg .lbl{position:absolute;left:0;top:-18px;font:600 11px var(--ui);color:var(--soft)}
+.empty{margin:auto;text-align:center;max-width:520px;color:var(--soft)}
+.empty h2{color:var(--ink);font-size:1.5rem;margin:.3em 0}
+.empty .big{font-size:3.5rem}
+.empty .of-new{justify-content:center;margin-top:16px}
+.formbox{width:300px;flex:none;overflow:auto;border-left:1px solid var(--rule);background:var(--card);padding:12px}
+.formbox label{display:block;font-size:.85rem;margin:8px 0 3px;color:var(--soft)}
+.formbox input[type=text]{width:100%;height:34px;border:1px solid var(--rule);border-radius:8px;padding:0 8px;background:var(--tool);box-sizing:border-box}
+.sigpad{width:100%;height:200px;border:2px dashed var(--rule);border-radius:12px;background:#fff;touch-action:none}
+@media (max-width:700px){ .rail{width:90px} .formbox{position:fixed;right:0;top:0;bottom:0;z-index:50} }
+.drop{outline:4px dashed var(--a1);outline-offset:-12px}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">📕</i><span>PDF</span></a>
+  <input class="title-in" id="title" value="Untitled PDF" aria-label="PDF name" maxlength="120">
+  <span class="status" id="status" aria-live="polite">Your PDFs stay on this device</span>
+  <span class="sp"></span>
+  <button class="tbtn" id="saveBtn" type="button" style="background:var(--a1)">⬇<span class="lbl"> Save PDF</span></button>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+
+<div class="ribbon" role="toolbar" aria-label="PDF tools">
+  <div class="grp">
+    <label class="tb wide" title="Open a PDF">📂 Open<input type="file" id="openIn" accept="application/pdf,.pdf" hidden></label>
+    <label class="tb wide" title="Add another PDF's pages at the end">➕ Merge<input type="file" id="mergeIn" accept="application/pdf,.pdf" multiple hidden></label>
+    <label class="tb wide" title="Turn pictures into PDF pages">🖼 Pictures<input type="file" id="imgIn" accept="image/*" multiple hidden></label>
+  </div>
+  <div class="grp" id="tools">
+    <button class="tb" data-tool="select" aria-pressed="true" title="Scroll and pick">🖐</button>
+    <button class="tb" data-tool="pen" title="Pen">✏️</button>
+    <button class="tb" data-tool="hl" title="Highlighter">🖍</button>
+    <button class="tb" data-tool="text" title="Type text">🅣</button>
+    <button class="tb" data-tool="box" title="Box">▭</button>
+    <button class="tb" data-tool="white" title="White-out (cover something)">⬜</button>
+    <button class="tb" data-tool="sign" title="Signature">✍️</button>
+    <button class="tb" data-tool="erase" title="Rubber - tap a mark to remove it">🧽</button>
+    <label class="tb colorbtn" title="Colour">🎨<span class="bar" id="colBar" style="background:#1d4ed8"></span><input type="color" id="col" value="#1d4ed8" aria-label="Colour"></label>
+    <select id="size" aria-label="Size" title="Pen or text size"><option value="2">Thin</option><option value="3" selected>Medium</option><option value="6">Thick</option><option value="12">Text 12</option><option value="16">Text 16</option><option value="24">Text 24</option></select>
+    <button class="tb" id="undoBtn" title="Undo the last mark">↶</button>
+  </div>
+  <div class="grp">
+    <button class="tb" id="rotL" title="Rotate left">⟲</button>
+    <button class="tb" id="rotR" title="Rotate right">⟳</button>
+    <button class="tb" id="upBtn" title="Move page up">↑</button>
+    <button class="tb" id="downBtn" title="Move page down">↓</button>
+    <button class="tb" id="blankBtn" title="Add a blank page after this one">📄+</button>
+    <button class="tb" id="delBtn" title="Delete the ticked pages (or this page)">🗑</button>
+  </div>
+  <div class="grp">
+    <button class="tb wide" id="formBtn" title="Fill in the form" hidden>📝 Form</button>
+    <button class="tb wide" id="numBtn" aria-pressed="false" title="Add page numbers when saving">#️⃣ Numbers</button>
+    <button class="tb" id="zOut" title="Zoom out">➖</button>
+    <button class="tb" id="zIn" title="Zoom in">➕</button>
+    <div class="menuwrap">
+      <button class="tb wide" id="moreBtn" aria-haspopup="true">⬇ More ▾</button>
+      <div class="menu" id="moreMenu" hidden>
+        <button type="button" data-ex="pdf">📕<span>Save the whole PDF<small>With your marks, in this page order</small></span></button>
+        <button type="button" data-ex="ticked">✂️<span>Save ticked pages only<small>Split out the pages you ticked</small></span></button>
+        <button type="button" data-ex="png">🖼<span>This page as a picture<small>.png</small></span></button>
+        <button type="button" data-ex="text">📝<span>Copy out the words<small>.txt of all the text</small></span></button>
+        <button type="button" data-ex="write">✍️<span>Open the words in Write<small>Edit the text as a document</small></span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="work">
+  <aside class="rail" id="rail" aria-label="Pages" hidden></aside>
+  <main class="view" id="view">
+    <div class="empty" id="empty">
+      <div class="big">📕</div>
+      <h2>Open a PDF</h2>
+      <p>Write and draw on it, add a signature, fill in forms, reorder, rotate or delete pages, merge PDFs together, or turn photos into a PDF.</p>
+      <div class="of-new">
+        <label class="of-btn">📂 Open a PDF<input type="file" id="openIn2" accept="application/pdf,.pdf" hidden></label>
+        <label class="of-btn ghost">🖼 Pictures to PDF<input type="file" id="imgIn2" accept="image/*" multiple hidden></label>
+      </div>
+      <p class="of-where" style="margin-top:14px">Or drop a PDF anywhere on this page. Nothing is uploaded - your PDF stays on this device.</p>
+    </div>
+  </main>
+  <aside class="formbox" id="formBox" hidden aria-label="Form"></aside>
+</div>
+<footer class="foot"><span id="pgInfo"></span><span class="sp"></span><span id="zoomN">100%</span></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/office.js?b=20261103e"></script>
+<script src="/pdf/lib/pdf-lib.min.js"></script>
+<script type="module" src="/pdf/pdf.js?b=20261103e"></script>
+</body>
+</html>

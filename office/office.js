@@ -98,6 +98,9 @@
     if (cloud) {
       return sb.from("office_files").upsert({ id: f.id, kind: kind, title: f.title || "Untitled", body: f.body },
         { onConflict: "id" }).then(function (r) {
+          // the server doesn't know this kind of file yet (it needs the
+          // latest update) - keep it in this browser until it does
+          if (r.error && /kind_check|check constraint/i.test(r.error.message || "")) { cloud = false; return save(f); }
           if (r.error) throw r.error; return f;
         });
     }
