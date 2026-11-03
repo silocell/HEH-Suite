@@ -299,8 +299,9 @@
           var w = parseInt(n.getAttribute("width"), 10); if (w > 0 && w < 4000) el.setAttribute("width", w); }
         if (name === "INPUT") { el.setAttribute("type", "checkbox"); if (n.hasAttribute("checked") || n.checked) el.setAttribute("checked", ""); }
         if ((name === "TD" || name === "TH") && +n.getAttribute("colspan") > 1) el.setAttribute("colspan", Math.min(+n.getAttribute("colspan"), 50));
-        if (n.className && typeof n.className === "string" && /\b(doc-title|todo|done)\b/.test(n.className))
-          el.className = n.className.match(/\b(doc-title|todo|done)\b/g).join(" ");
+        var CLS = /\b(doc-title|doc-subtitle|todo|done|cmt|pb|toc|toch)\b/g;
+        if (n.className && typeof n.className === "string" && n.className.match(CLS)) el.className = n.className.match(CLS).join(" ");
+        var dc = n.getAttribute("data-c"); if (dc && /^[a-z0-9]{1,16}$/.test(dc)) el.setAttribute("data-c", dc);
         if (name !== "BR" && name !== "HR" && name !== "IMG" && name !== "INPUT") walk(n, el);
         dst.appendChild(el);
       }

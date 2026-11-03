@@ -24,7 +24,8 @@
   }
 
   /* ================= writing ================= */
-  function build(root, title) {
+  function build(root, title, lay) {
+    lay = lay || {};
     var rels = [], media = [], nums = [], body = [];
     function rel(type, target, ext) {
       var id = "rId" + (rels.length + 10);
@@ -127,7 +128,11 @@
       nums.push(abs); var num = nums.length;
       Array.prototype.forEach.call(el.children, function (li) {
         if (li.tagName !== "LI") return;
-        out.push(para(li, "ListParagraph", { num: num, lvl: Math.min(lvl, 8) }));
+        if (el.classList.contains("todo")) {
+          var l2 = li.cloneNode(true); l2.querySelectorAll("ul,ol").forEach(function (x) { x.remove(); });
+          l2.insertBefore(document.createTextNode(li.classList.contains("done") ? "☑ " : "☐ "), l2.firstChild);
+          out.push(para(l2, "ListParagraph", { ind: 360 + 360 * lvl }));
+        } else out.push(para(li, "ListParagraph", { num: num, lvl: Math.min(lvl, 8) }));
         Array.prototype.forEach.call(li.children, function (c) { if (c.tagName === "UL" || c.tagName === "OL") list(c, lvl + 1, out); });
       });
     }
@@ -168,7 +173,7 @@
           if (t === "P" || t === "DIV") {
             flush();
             if (n.querySelector("ul,ol,table,p,div,h1,h2,h3,blockquote")) { blocks(n, out, base); return; }
-            out.push(para(n, n.classList.contains("doc-title") ? "Title" : null, null, base)); return;
+            out.push(para(n, n.classList.contains("doc-title") ? "Title" : n.classList.contains("doc-subtitle") ? "Subtitle" : null, null, base)); return;
           }
           if (/^H[1-3]$/.test(t)) { flush(); out.push(para(n, "Heading" + t[1], null, base)); return; }
           if (t === "BLOCKQUOTE") {
@@ -180,8 +185,18 @@
             } else out.push(para(n, indent ? null : "Quote", indent ? { ind: 720 } : null, base));
             return;
           }
+          if (t === "UL" && n.classList.contains("toc")) {
+            flush(); Array.prototype.forEach.call(n.children, function (li) {
+              var ind = parseInt(li.style.marginLeft, 10) || 0;
+              out.push(para(li, li.classList.contains("toch") ? "TOCHeading" : null, ind ? { ind: ind * 15 } : null, base));
+            }); return;
+          }
+          if (t === "PRE") {
+            flush(); n.textContent.split("\n").forEach(function (line) { var q = document.createElement("p"); q.textContent = line || "\u00a0"; out.push(para(q, "Code", null, base)); }); return;
+          }
           if (t === "UL" || t === "OL") { flush(); list(n, 0, out); return; }
           if (t === "TABLE") { flush(); table(n, out); return; }
+          if (t === "HR" && n.classList.contains("pb")) { flush(); out.push('<w:p><w:r><w:br w:type="page"/></w:r></w:p>'); return; }
           if (t === "HR") { flush(); out.push('<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="9AA3AE"/></w:pBdr></w:pPr></w:p>'); return; }
         }
         if (n.nodeType === 3 && !n.nodeValue.trim() && !any) return;
@@ -212,20 +227,31 @@
       });
       numbering += "</w:numbering>";
 
+      var PG = { A4: [11906, 16838], Letter: [12240, 15840], A5: [8391, 11906] }[lay.size] || [11906, 16838], land = lay.orient === "landscape";
+      var M = { normal: 1440, narrow: 720, moderate: 1080, wide: 2160 }[lay.margins] || 1440;
+      var sect = '<w:sectPr><w:footerReference w:type="default" r:id="rIdFtr1"/><w:pgSz w:w="' + (land ? PG[1] : PG[0]) + '" w:h="' + (land ? PG[0] : PG[1]) + '"' + (land ? ' w:orient="landscape"' : "") + "/>" +
+        '<w:pgMar w:top="' + M + '" w:right="' + M + '" w:bottom="' + M + '" w:left="' + M + '" w:header="708" w:footer="708" w:gutter="0"/>' +
+        (+lay.cols > 1 ? '<w:cols w:num="' + (+lay.cols) + '" w:space="567"/>' : "") + "</w:sectPr>";
+      var bgc = /^#[0-9a-f]{6}$/i.test(lay.pc || "") && lay.pc.toLowerCase() !== "#ffffff" ? lay.pc.slice(1).toUpperCase() : null;
       var doc = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
         '<w:document xmlns:w="' + W + '" xmlns:r="' + R + '" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">' +
+        (bgc ? '<w:background w:color="' + bgc + '"/>' : "") +
         "<w:body>" + (body.join("") || "<w:p/>") +
-        '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>' +
+        sect +
         "</w:body></w:document>";
 
       var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="' + W + '">' +
         '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Calibri" w:cs="Calibri"/><w:sz w:val="24"/><w:szCs w:val="24"/><w:lang w:val="en-GB"/></w:rPr></w:rPrDefault>' +
-        '<w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+        '<w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="' + Math.round(240 * (+lay.ls || 1.15)) + '" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
         '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
         '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="120"/></w:pPr><w:rPr><w:rFonts w:ascii="Calibri Light" w:hAnsi="Calibri Light"/><w:sz w:val="56"/></w:rPr></w:style>' +
         '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="80"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:color w:val="1F3864"/><w:sz w:val="40"/></w:rPr></w:style>' +
         '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="200" w:after="80"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:color w:val="2F5496"/><w:sz w:val="30"/></w:rPr></w:style>' +
         '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="160" w:after="60"/><w:outlineLvl w:val="2"/></w:pPr><w:rPr><w:color w:val="2F5496"/><w:sz w:val="26"/></w:rPr></w:style>' +
+        '<w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="160"/></w:pPr><w:rPr><w:color w:val="5A5A5A"/><w:spacing w:val="15"/><w:sz w:val="30"/></w:rPr></w:style>' +
+        '<w:style w:type="paragraph" w:styleId="Code"><w:name w:val="Code"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:shd w:val="clear" w:color="auto" w:fill="F3F4F6"/></w:pPr><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:cs="Consolas"/><w:sz w:val="20"/></w:rPr></w:style>' +
+        '<w:style w:type="paragraph" w:styleId="TOCHeading"><w:name w:val="TOC Heading"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:spacing w:before="120" w:after="80"/></w:pPr><w:rPr><w:b/><w:sz w:val="26"/></w:rPr></w:style>' +
+        '<w:style w:type="paragraph" w:styleId="Footer"><w:name w:val="footer"/><w:basedOn w:val="Normal"/><w:pPr><w:jc w:val="center"/></w:pPr><w:rPr><w:color w:val="7F7F7F"/><w:sz w:val="18"/></w:rPr></w:style>' +
         '<w:style w:type="paragraph" w:styleId="Quote"><w:name w:val="Quote"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:pBdr><w:left w:val="single" w:sz="24" w:space="8" w:color="B4C6E7"/></w:pBdr><w:ind w:left="360"/></w:pPr><w:rPr><w:i/><w:color w:val="404040"/></w:rPr></w:style>' +
         '<w:style w:type="paragraph" w:styleId="ListParagraph"><w:name w:val="List Paragraph"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="40"/><w:contextualSpacing/></w:pPr></w:style>' +
         '<w:style w:type="character" w:styleId="Hyperlink"><w:name w:val="Hyperlink"/><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr></w:style>' +
@@ -238,6 +264,8 @@
         '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
         '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
         '<Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>' +
+        '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' +
+        '<Override PartName="/word/settings.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.settings+xml"/>' +
         '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
         '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>');
       z.file("_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
@@ -252,8 +280,12 @@
       z.file("word/document.xml", doc);
       z.file("word/styles.xml", styles);
       z.file("word/numbering.xml", numbering);
+      z.file("word/footer1.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="' + W + '" xmlns:r="' + R + '"><w:p><w:pPr><w:pStyle w:val="Footer"/></w:pPr>' +
+        '<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>1</w:t></w:r><w:r><w:fldChar w:fldCharType="end"/></w:r></w:p></w:ftr>');
+      z.file("word/settings.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:settings xmlns:w="' + W + '">' + (bgc ? "<w:displayBackgroundShape/>" : "") + '<w:defaultTabStop w:val="720"/><w:compat><w:compatSetting w:name="compatibilityMode" w:uri="http://schemas.microsoft.com/office/word" w:val="15"/></w:compat></w:settings>');
       z.file("word/_rels/document.xml.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-        '<Relationship Id="rId1" Type="' + R + '/styles" Target="styles.xml"/><Relationship Id="rId2" Type="' + R + '/numbering" Target="numbering.xml"/>' + rels.join("") + "</Relationships>");
+        '<Relationship Id="rId1" Type="' + R + '/styles" Target="styles.xml"/><Relationship Id="rId2" Type="' + R + '/numbering" Target="numbering.xml"/>' +
+        '<Relationship Id="rIdFtr1" Type="' + R + '/footer" Target="footer1.xml"/><Relationship Id="rIdSet1" Type="' + R + '/settings" Target="settings.xml"/>' + rels.join("") + "</Relationships>");
       media.forEach(function (m) { z.file("word/media/" + m.name, m.data, { base64: true }); });
       return z.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", compression: "DEFLATE" });
     });
@@ -330,6 +362,7 @@
         var ln = c.localName;
         if (ln === "t") t += e(c.textContent);
         else if (ln === "tab") t += "&nbsp;&nbsp;&nbsp;&nbsp;";
+        else if ((ln === "br" && att(c, "type") === "page") || ln === "lastRenderedPageBreak_x") pendingPB = true;
         else if (ln === "br" || ln === "cr") t += "<br>";
         else if (ln === "drawing" || ln === "pict") {
           var b = c.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/main", "blip")[0];
@@ -354,7 +387,13 @@
       if (va && att(va, "val") === "subscript") t = "<sub>" + t + "</sub>";
       return st.length ? '<span style="' + st.join(";") + '">' + t + "</span>" : t;
     }
+    var pendingPB = false;
     function para(p) {
+      var ppr0 = kid(p, "pPr"); if (ppr0 && kid(ppr0, "pageBreakBefore")) { closeLists(0); out.push('<hr class="pb">'); }
+      para2(p);
+      if (pendingPB) { pendingPB = false; closeLists(0); out.push('<hr class="pb">'); }
+    }
+    function para2(p) {
       var pr = kid(p, "pPr"), ps = pr && kid(pr, "pStyle"), sid = ps ? att(ps, "val") : "", name = styles[sid] || (sid || "").toLowerCase();
       var jc = pr && kid(pr, "jc"), al = jc ? { center: "center", right: "right", end: "right", both: "justify", distribute: "justify" }[att(jc, "val")] : "";
       var inner = runs(p) || "<br>", style = al ? ' style="text-align:' + al + '"' : "";
@@ -375,7 +414,7 @@
       var m = name.match(/^heading ([1-6])$/);
       if (m) { var h = Math.min(3, +m[1]); out.push("<h" + h + style + ">" + inner + "</h" + h + ">"); }
       else if (name === "title") out.push('<p class="doc-title"' + style + ">" + inner + "</p>");
-      else if (name === "subtitle") out.push("<h2" + style + ">" + inner + "</h2>");
+      else if (name === "subtitle") out.push('<p class="doc-subtitle"' + style + ">" + inner + "</p>");
       else if (/quote/.test(name)) out.push("<blockquote" + style + ">" + inner + "</blockquote>");
       else out.push("<p" + style + ">" + inner + "</p>");
     }
@@ -401,6 +440,19 @@
       });
     }
     walk(body); closeLists(0);
+    // the page setup, so Write can match it
+    var sp = kids(body, "sectPr")[0], L = {};
+    if (sp) {
+      var sz = kid(sp, "pgSz"), mg = kid(sp, "pgMar"), co = kid(sp, "cols");
+      if (sz) { var w = +att(sz, "w"), h = +att(sz, "h"), a = Math.min(w, h), b = Math.max(w, h);
+        L.orient = att(sz, "orient") === "landscape" || w > h ? "landscape" : "portrait";
+        L.size = Math.abs(a - 12240) < 200 && Math.abs(b - 15840) < 200 ? "Letter" : a < 9500 ? "A5" : "A4"; }
+      if (mg) { var l = +att(mg, "left") || 1440; L.margins = l <= 800 ? "narrow" : l <= 1250 ? "moderate" : l >= 2000 ? "wide" : "normal"; }
+      if (co && +att(co, "num") > 1) L.cols = Math.min(3, +att(co, "num"));
+    }
+    var bgEl = doc.getElementsByTagNameNS(W, "background")[0];
+    if (bgEl && /^[0-9a-f]{6}$/i.test(att(bgEl, "color") || "")) L.pc = "#" + att(bgEl, "color").toLowerCase();
+    window.Docx.lastLayout = L;
     return out.join("");
   }
 

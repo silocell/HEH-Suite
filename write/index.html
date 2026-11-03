@@ -4,50 +4,149 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Write - Homework Launchpad</title>
+<title>Write - Launchpad Suite</title>
 <link rel="icon" type="image/png" href="/favicon.png">
 <script>
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261103a">
+<link rel="stylesheet" href="/office/office.css?b=20261103c">
 <style>
-:root{--a1:#2563eb}
-.desk{flex:1;overflow:auto;padding:28px 16px 60px;background:var(--bg)}
-.zoomer{transform-origin:top center;margin:0 auto;width:794px;max-width:100%}
-.page{background:var(--paper);color:var(--paper-ink);width:794px;max-width:100%;min-height:1123px;margin:0 auto;padding:84px 88px;
-  box-shadow:0 1px 3px rgba(0,0,0,.12),0 12px 32px -12px rgba(0,0,0,.28);border-radius:4px;
-  font:12pt/1.5 Calibri,Carlito,"Segoe UI",system-ui,sans-serif;outline:none;word-wrap:break-word;caret-color:#2563eb}
-@media (max-width:700px){ .page{padding:36px 24px;min-height:70vh} .desk{padding:12px 8px 40px} }
+:root{--a1:#2563eb;--pw:794px;--ph:1123px;--pm:96px;--ls:1.5;--paper:#ffffff}
+/* ---- tabs and ribbon, like Word ---- */
+.tabsbar{flex:none;display:flex;gap:2px;padding:4px 10px 0;background:var(--tool);overflow-x:auto;scrollbar-width:none}
+.tabsbar button{border:0;background:transparent;padding:7px 14px 8px;border-radius:10px 10px 0 0;font-weight:600;font-size:.9rem;color:var(--soft);white-space:nowrap}
+.tabsbar button:hover{color:var(--ink);background:var(--hover)}
+.tabsbar button[aria-selected="true"]{color:var(--a1);background:var(--card);box-shadow:inset 0 -3px 0 var(--a1)}
+.tabsbar button.file{color:#fff;background:var(--a1);margin-right:6px}
+.tabsbar button.ctx{color:#b45309}
+.tabsbar button.ctx[aria-selected="true"]{color:#b45309;box-shadow:inset 0 -3px 0 #f59e0b}
+.ribbon{align-items:stretch;padding:6px 8px 4px;min-height:96px;background:var(--card)}
+.ribbon[hidden]{display:none!important}
+.rg{display:flex;flex-direction:column;justify-content:space-between;padding:0 8px;border-right:1px solid var(--rule);gap:3px}
+.rg:last-child{border-right:0}
+.rg .row{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
+.rg .gl{font-size:.7rem;color:var(--soft);text-align:center;padding-top:2px;white-space:nowrap}
+.big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;height:62px;border:1px solid transparent;background:transparent;border-radius:10px;font-size:.74rem;font-weight:600;color:var(--ink);padding:2px 6px;line-height:1.1;text-align:center}
+.big i{font-style:normal;font-size:1.5rem;line-height:1}
+.big:hover{background:var(--hover)}
+.big[aria-pressed="true"]{background:var(--on)}
+label.big{cursor:pointer}
+.gallery{display:flex;gap:4px;overflow-x:auto;max-width:300px;padding:2px;flex-wrap:nowrap!important}
+@media (min-width:1400px){ .gallery{max-width:560px} }
+.gallery button{flex:none;width:86px;height:56px;border:1px solid var(--rule);border-radius:9px;background:#fff;color:#1b1b1b;text-align:left;padding:4px 8px;overflow:hidden;white-space:nowrap}
+.gallery button small{display:block;font:500 9px var(--ui);color:#6b7280;margin-top:2px}
+.gallery button[aria-pressed="true"]{border-color:var(--a1);box-shadow:0 0 0 2px color-mix(in srgb,var(--a1) 30%,transparent)}
+.ddwrap{position:relative}
+.dd{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:8px;box-shadow:0 14px 34px -10px rgba(0,0,0,.35);min-width:170px}
+.dd button.opt{display:flex;width:100%;gap:8px;align-items:center;border:0;background:transparent;padding:8px 10px;border-radius:8px;text-align:left;white-space:nowrap}
+.dd button.opt:hover{background:var(--hover)}
+.dd button.opt[aria-pressed="true"]{background:var(--on)}
+.tgrid{display:grid;grid-template-columns:repeat(10,18px);gap:3px}
+.tgrid span{width:18px;height:18px;border:1px solid var(--rule);border-radius:3px;background:var(--tool)}
+.tgrid span.on{background:color-mix(in srgb,var(--a1) 35%,transparent);border-color:var(--a1)}
+.tgrid-lbl{font-size:.8rem;color:var(--soft);margin:6px 0 2px;text-align:center}
+.symgrid{display:grid;grid-template-columns:repeat(10,34px);gap:4px}
+.symgrid button{height:34px;border:1px solid var(--rule);border-radius:8px;background:var(--tool);font-size:1.05rem}
+.symgrid button:hover{background:var(--hover)}
+
+/* ---- the desk and pages ---- */
+.work{flex:1;display:flex;min-height:0}
+.desk{flex:1;overflow:auto;padding:28px 16px 70px;background:var(--bg);min-width:0}
+.zoomer{margin:0 auto;width:var(--pw);max-width:100%}
+.pagewrap{position:relative}
+.page{background:var(--paper);color:var(--paper-ink);width:var(--pw);max-width:100%;min-height:var(--ph);margin:0 auto;padding:var(--pm);box-sizing:border-box;
+  box-shadow:0 1px 3px rgba(0,0,0,.12),0 12px 32px -12px rgba(0,0,0,.28);border-radius:3px;
+  font:12pt/var(--ls) Calibri,Carlito,"Segoe UI",system-ui,sans-serif;outline:none;word-wrap:break-word;caret-color:#2563eb}
+.page.cols2{column-count:2;column-gap:36px}.page.cols3{column-count:3;column-gap:28px}
+@media (max-width:700px){ .page{padding:32px 22px!important;min-height:70vh} .desk{padding:12px 8px 40px} }
 .page:empty::before{content:attr(data-placeholder);color:#9aa3ae}
-.page h1{font-size:20pt;margin:.6em 0 .3em;color:#1f3864;font-weight:600}
-.page h2{font-size:15pt;margin:.6em 0 .3em;color:#2f5496;font-weight:600}
-.page h3{font-size:13pt;margin:.6em 0 .3em;color:#2f5496;font-weight:600}
-.page .doc-title{font-size:28pt;font-weight:300;margin:0 0 .3em;letter-spacing:-.01em;color:#111}
+.page h1{font-size:20pt;margin:.6em 0 .3em;color:#1f3864;font-weight:600;line-height:1.25}
+.page h2{font-size:15pt;margin:.6em 0 .3em;color:#2f5496;font-weight:600;line-height:1.25}
+.page h3{font-size:13pt;margin:.6em 0 .3em;color:#2f5496;font-weight:600;line-height:1.25}
+.page .doc-title{font-size:28pt;font-weight:300;margin:0 0 .2em;letter-spacing:-.01em;color:#111;line-height:1.15}
+.page .doc-subtitle{font-size:15pt;color:#5a5a5a;margin:0 0 .8em;letter-spacing:.01em}
 .page p{margin:0 0 .55em}
+.page pre{font:10.5pt/1.45 Consolas,"Courier New",monospace;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:4px;padding:8px 10px;white-space:pre-wrap;margin:.4em 0 .8em}
 .page blockquote{margin:.6em 0;padding:.2em 1em;border-left:4px solid #b4c6e7;color:#404040;font-style:italic}
 .page blockquote[style*="margin"]{border-left:0;font-style:normal;color:inherit;padding:0}
 .page ul,.page ol{margin:0 0 .55em;padding-left:2em}
 .page a{color:#0563c1}
-.page img{max-width:100%;height:auto}
-.page table{border-collapse:collapse;width:100%;margin:.4em 0 .8em}
+.page img{max-width:100%;height:auto;cursor:pointer}
+.page img.picked{outline:3px solid #f59e0b;outline-offset:2px}
+.page table{border-collapse:collapse;width:100%;margin:.4em 0 .8em;break-inside:avoid}
 .page td,.page th{border:1px solid #9aa3ae;padding:5px 8px;vertical-align:top;min-width:40px}
 .page th{background:#eef2f8}
 .page hr{border:0;border-top:1px solid #9aa3ae;margin:1em 0}
+.page hr.pb{border:0;border-top:2px dashed #9aa3ae;margin:1.4em -20px;position:relative;overflow:visible;height:0}
+.page hr.pb::after{content:"Page break";position:absolute;left:50%;top:-.75em;transform:translateX(-50%);background:var(--paper);color:#8b95a3;font:600 9pt var(--ui);padding:0 8px}
+.page ul.toc{list-style:none;padding:8px 0 8px 0;margin:0 0 1em;border-top:1px solid #d1d5db;border-bottom:1px solid #d1d5db}
+.page ul.toc li{margin:.2em 0;cursor:pointer;color:#1f3864}
+.page ul.toc li:hover{text-decoration:underline}
+.page ul.toc li.toch{font-weight:700;color:#111;cursor:default;text-decoration:none;font-size:13pt}
+.page ul.todo{list-style:none;padding-left:4px}
+.page ul.todo li{position:relative;padding-left:28px}
+.page ul.todo li::before{content:"";position:absolute;left:0;top:.25em;width:16px;height:16px;border:2px solid #2563eb;border-radius:4px;box-sizing:border-box;cursor:pointer}
+.page ul.todo li.done{color:#6b7280;text-decoration:line-through}
+.page ul.todo li.done::before{background:#2563eb}
+.page span.cmt{background:#fef08a;border-bottom:2px solid #f59e0b;cursor:pointer}
+.page span.cmt.now{background:#fde047}
 .page mark.find{background:#ffe066;color:inherit}
 .page mark.find.now{background:#ff9f1c}
+.pmark{position:absolute;left:-2px;right:-2px;height:0;border-top:1px dashed rgba(100,116,139,.55);pointer-events:none}
+.pmark span{position:absolute;right:8px;top:-9px;background:var(--bg);color:var(--soft);font:600 10px var(--ui);padding:1px 6px;border-radius:999px;border:1px solid var(--rule)}
+body.nolines .pmark{display:none}
+
+/* side panes */
+.side{width:250px;flex:none;background:var(--card);border-right:1px solid var(--rule);overflow:auto;padding:12px}
+.side.right{border-right:0;border-left:1px solid var(--rule)}
+.side h3{margin:0 0 8px;font-size:.95rem;display:flex;align-items:center;justify-content:space-between}
+.side h3 button{border:0;background:var(--hover);border-radius:999px;width:26px;height:26px}
+.navlist{list-style:none;margin:0;padding:0}
+.navlist button{width:100%;text-align:left;border:0;background:transparent;border-radius:8px;padding:6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem}
+.navlist button:hover{background:var(--hover)}
+.navlist .l1{font-weight:700}.navlist .l2{padding-left:20px}.navlist .l3{padding-left:34px;color:var(--soft)}
+.cbox{border:1px solid var(--rule);border-radius:12px;padding:10px;margin-bottom:10px;background:var(--tool)}
+.cbox.now{border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.25)}
+.cbox q{display:block;font-size:.8rem;color:var(--soft);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbox textarea{width:100%;min-height:54px;border:1px solid var(--rule);border-radius:8px;background:var(--card);padding:6px 8px;resize:vertical;font:inherit;font-size:.88rem;box-sizing:border-box}
+.cbox .row{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:.75rem;color:var(--soft)}
+.cbox .row button{border:1px solid var(--rule);background:var(--card);border-radius:999px;padding:3px 10px;font-size:.78rem}
+@media (max-width:900px){ .side{position:fixed;top:0;bottom:0;z-index:60;box-shadow:0 0 40px rgba(0,0,0,.35)} .side.right{right:0} }
 
 .findbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 12px;background:var(--tool);border-bottom:1px solid var(--rule);flex:none}
 .findbar input{height:32px;border:1px solid var(--rule);border-radius:8px;background:var(--card);padding:0 10px;width:180px}
 .findbar .n{color:var(--soft);font-size:.85rem;min-width:70px}
+.foot button{border:0;background:transparent;color:inherit;font:inherit;padding:2px 6px;border-radius:6px}
+.foot button:hover{background:var(--hover)}
+
+/* backstage (File) */
+#backstage{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex}
+#backstage nav{width:230px;background:var(--a1);color:#fff;padding:16px 10px;display:flex;flex-direction:column;gap:4px}
+#backstage nav button{border:0;background:transparent;color:#fff;text-align:left;padding:10px 14px;border-radius:10px;font-weight:600;font-size:.95rem}
+#backstage nav button:hover,#backstage nav button[aria-selected="true"]{background:rgba(255,255,255,.18)}
+#backstage section{flex:1;overflow:auto;padding:28px 34px}
+#backstage h2{margin:0 0 16px}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;max-width:900px}
+.bgrid button{display:flex;gap:12px;align-items:center;text-align:left;padding:14px;border-radius:16px;border:1px solid var(--rule);background:var(--card)}
+.bgrid button:hover{background:var(--hover)}
+.bgrid i{font-style:normal;font-size:1.8rem}
+.bgrid small{display:block;color:var(--soft);font-size:.8rem}
+.info dt{color:var(--soft);font-size:.85rem}.info dd{margin:0 0 12px;font-weight:600}
+@media (max-width:700px){ #backstage{flex-direction:column} #backstage nav{width:auto;flex-direction:row;overflow-x:auto} }
+
+body.focus .top,body.focus .tabsbar,body.focus .ribbon,body.focus .foot{display:none!important}
+#focusExit{position:fixed;top:12px;right:14px;z-index:70}
 
 @media print{
-  @page{size:A4;margin:20mm}
+  @page{size:var(--print-size, A4);margin:0}
   body{display:block;overflow:visible;background:#fff}
-  .top,.ribbon,.findbar,.foot,#ofToast,dialog{display:none!important}
+  .top,.tabsbar,.ribbon,.findbar,.foot,.side,#ofToast,dialog,#backstage,#focusExit,.pmark{display:none!important}
   .desk{padding:0;overflow:visible}
-  .zoomer{transform:none!important;width:auto}
-  .page{box-shadow:none;padding:0;min-height:0;width:auto;border-radius:0}
+  .zoomer{zoom:1!important;width:auto}
+  .page{box-shadow:none;min-height:0;width:auto;max-width:none;border-radius:0}
+  .page hr.pb{break-after:page;border:0;margin:0}.page hr.pb::after{display:none}
+  .page span.cmt{background:none;border:0}
   body::before{display:none!important}
 }
 </style>
@@ -64,70 +163,212 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
 
-<div class="ribbon" role="toolbar" aria-label="Formatting">
-  <div class="grp">
-    <button class="tb" data-cmd="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
-    <button class="tb" data-cmd="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
-  </div>
-  <div class="grp">
-    <select id="style" aria-label="Paragraph style" title="Style">
-      <option value="p">Normal</option><option value="title">Title</option><option value="h1">Heading 1</option>
-      <option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Quote</option>
-    </select>
-    <select id="font" aria-label="Font" title="Font">
-      <option value="Calibri, Carlito, 'Segoe UI', sans-serif">Calibri</option>
-      <option value="Arial, Helvetica, sans-serif">Arial</option>
-      <option value="'Times New Roman', Tinos, serif">Times New Roman</option>
-      <option value="Georgia, serif">Georgia</option>
-      <option value="Verdana, sans-serif">Verdana</option>
-      <option value="'Comic Sans MS', 'Comic Neue', cursive">Comic Sans</option>
-      <option value="'Courier New', monospace">Courier New</option>
-    </select>
-    <select id="size" aria-label="Font size" title="Size">
-      <option>8</option><option>9</option><option>10</option><option>11</option><option selected>12</option><option>14</option>
-      <option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option><option>48</option><option>72</option>
-    </select>
-  </div>
-  <div class="grp">
-    <button class="tb" data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
-    <button class="tb" data-cmd="italic" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
-    <button class="tb" data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
-    <button class="tb" data-cmd="strikeThrough" title="Strikethrough" aria-label="Strikethrough"><s>S</s></button>
-    <button class="tb" data-cmd="superscript" title="Superscript" aria-label="Superscript">x²</button>
-    <button class="tb" data-cmd="subscript" title="Subscript" aria-label="Subscript">x₂</button>
-    <label class="tb colorbtn" title="Text colour">A<span class="bar" id="fgBar" style="background:#c00000"></span><input type="color" id="fg" value="#c00000" aria-label="Text colour"></label>
-    <label class="tb colorbtn" title="Highlight">🖍<span class="bar" id="hlBar" style="background:#ffff00"></span><input type="color" id="hl" value="#ffff00" aria-label="Highlight colour"></label>
-    <button class="tb" data-cmd="removeFormat" title="Clear formatting" aria-label="Clear formatting">⌫</button>
-  </div>
-  <div class="grp">
-    <button class="tb" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bulleted list">•≡</button>
-    <button class="tb" data-cmd="insertOrderedList" title="Numbering" aria-label="Numbered list">1≡</button>
-    <button class="tb" data-cmd="outdent" title="Decrease indent" aria-label="Decrease indent">⇤</button>
-    <button class="tb" data-cmd="indent" title="Increase indent" aria-label="Increase indent">⇥</button>
-    <button class="tb" data-cmd="justifyLeft" title="Align left" aria-label="Align left">⟸</button>
-    <button class="tb" data-cmd="justifyCenter" title="Centre" aria-label="Centre">≡</button>
-    <button class="tb" data-cmd="justifyRight" title="Align right" aria-label="Align right">⟹</button>
-    <button class="tb" data-cmd="justifyFull" title="Justify" aria-label="Justify">☰</button>
-  </div>
-  <div class="grp">
-    <button class="tb" id="linkBtn" title="Link" aria-label="Insert link">🔗</button>
-    <label class="tb" title="Picture" aria-label="Insert picture">🖼<input type="file" id="imgIn" accept="image/*" hidden></label>
-    <button class="tb" id="tableBtn" title="Table" aria-label="Insert table">▦</button>
-    <button class="tb" data-cmd="insertHorizontalRule" title="Line" aria-label="Insert line">―</button>
-  </div>
-  <div class="grp">
-    <button class="tb" id="findBtn" title="Find and replace (Ctrl+F)" aria-label="Find and replace">🔍</button>
-    <button class="tb" id="speakBtn" title="Read aloud" aria-label="Read aloud" aria-pressed="false">🔊</button>
-    <div class="menuwrap">
-      <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
-      <div class="menu" id="exportMenu" hidden>
-        <button type="button" data-ex="docx">📘<span>Word document<small>.docx - opens in Word, Pages and Google Docs</small></span></button>
-        <button type="button" data-ex="pdf">📄<span>PDF or print<small>Choose “Save as PDF” to make a PDF</small></span></button>
-        <button type="button" data-ex="txt">📝<span>Plain text<small>.txt</small></span></button>
-        <button type="button" data-ex="html">🌐<span>Web page<small>.html</small></span></button>
+<nav class="tabsbar" role="tablist" aria-label="Ribbon">
+  <button type="button" class="file" id="fileTab">File</button>
+  <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button type="button" role="tab" data-tab="insert" aria-selected="false">Insert</button>
+  <button type="button" role="tab" data-tab="layout" aria-selected="false">Layout</button>
+  <button type="button" role="tab" data-tab="review" aria-selected="false">Review</button>
+  <button type="button" role="tab" data-tab="view" aria-selected="false">View</button>
+  <button type="button" role="tab" data-tab="table" aria-selected="false" class="ctx" id="tableTab" hidden>Table</button>
+  <button type="button" role="tab" data-tab="picture" aria-selected="false" class="ctx" id="picTab" hidden>Picture</button>
+</nav>
+
+<!-- HOME -->
+<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home">
+  <div class="rg"><div class="row">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" data-cmd="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="tb" data-cmd="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
       </div>
-    </div>
-  </div>
+      <button class="big" id="pasteBtn" title="Paste (Ctrl+V)"><i>📋</i>Paste</button>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" data-cmd="cut" title="Cut (Ctrl+X)" aria-label="Cut">✂</button>
+        <button class="tb" data-cmd="copy" title="Copy (Ctrl+C)" aria-label="Copy">⧉</button>
+      </div>
+    </div><div class="gl">Clipboard</div></div>
+  <div class="rg"><div class="row">
+      <select id="font" aria-label="Font" title="Font">
+        <option value="Calibri, Carlito, 'Segoe UI', sans-serif">Calibri</option>
+        <option value="Arial, Helvetica, sans-serif">Arial</option>
+        <option value="'Times New Roman', Tinos, serif">Times New Roman</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+        <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+        <option value="'Comic Sans MS', 'Comic Neue', cursive">Comic Sans</option>
+        <option value="'Courier New', monospace">Courier New</option>
+        <option value="Garamond, 'EB Garamond', serif">Garamond</option>
+      </select>
+      <select id="size" aria-label="Font size" title="Size">
+        <option>8</option><option>9</option><option>10</option><option>11</option><option selected>12</option><option>14</option>
+        <option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>36</option><option>48</option><option>72</option>
+      </select>
+      <button class="tb" id="growBtn" title="Bigger text" aria-label="Bigger text">A<sup>+</sup></button>
+      <button class="tb" id="shrinkBtn" title="Smaller text" aria-label="Smaller text">A<sup>−</sup></button>
+      <div class="ddwrap"><button class="tb" id="caseBtn" title="Change case" aria-label="Change case">Aa▾</button>
+        <div class="dd" id="caseDd" hidden>
+          <button type="button" class="opt" data-case="sentence">Sentence case.</button>
+          <button type="button" class="opt" data-case="lower">lowercase</button>
+          <button type="button" class="opt" data-case="upper">UPPERCASE</button>
+          <button type="button" class="opt" data-case="title">Capitalise Each Word</button>
+        </div></div>
+    </div><div class="row">
+      <button class="tb" data-cmd="bold" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+      <button class="tb" data-cmd="italic" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
+      <button class="tb" data-cmd="underline" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
+      <button class="tb" data-cmd="strikeThrough" title="Strikethrough" aria-label="Strikethrough"><s>S</s></button>
+      <button class="tb" data-cmd="subscript" title="Subscript" aria-label="Subscript">x₂</button>
+      <button class="tb" data-cmd="superscript" title="Superscript" aria-label="Superscript">x²</button>
+      <label class="tb colorbtn" title="Text colour">A<span class="bar" id="fgBar" style="background:#c00000"></span><input type="color" id="fg" value="#c00000" aria-label="Text colour"></label>
+      <label class="tb colorbtn" title="Highlight">🖍<span class="bar" id="hlBar" style="background:#ffff00"></span><input type="color" id="hl" value="#ffff00" aria-label="Highlight colour"></label>
+      <button class="tb" data-cmd="removeFormat" title="Clear formatting" aria-label="Clear formatting">⌫</button>
+    </div><div class="gl">Font</div></div>
+  <div class="rg"><div class="row">
+      <button class="tb" data-cmd="insertUnorderedList" title="Bullets" aria-label="Bulleted list">•≡</button>
+      <button class="tb" data-cmd="insertOrderedList" title="Numbering" aria-label="Numbered list">1≡</button>
+      <button class="tb" id="todoBtn" title="Checklist" aria-label="Checklist">☑</button>
+      <button class="tb" data-cmd="outdent" title="Decrease indent" aria-label="Decrease indent">⇤</button>
+      <button class="tb" data-cmd="indent" title="Increase indent" aria-label="Increase indent">⇥</button>
+    </div><div class="row">
+      <button class="tb" data-cmd="justifyLeft" title="Align left" aria-label="Align left">⫷</button>
+      <button class="tb" data-cmd="justifyCenter" title="Centre" aria-label="Centre">☰</button>
+      <button class="tb" data-cmd="justifyRight" title="Align right" aria-label="Align right">⫸</button>
+      <button class="tb" data-cmd="justifyFull" title="Justify" aria-label="Justify">▤</button>
+      <div class="ddwrap"><button class="tb" id="lsBtn" title="Line spacing" aria-label="Line spacing">↕▾</button>
+        <div class="dd" id="lsDd" hidden>
+          <button type="button" class="opt" data-ls="1">1.0</button><button type="button" class="opt" data-ls="1.15">1.15</button>
+          <button type="button" class="opt" data-ls="1.5">1.5</button><button type="button" class="opt" data-ls="2">2.0 (double)</button>
+        </div></div>
+    </div><div class="gl">Paragraph</div></div>
+  <div class="rg"><div class="row gallery" id="gallery" role="group" aria-label="Styles">
+      <button type="button" data-style="p"><span style="font:12px Calibri,Carlito,sans-serif">AaBbCc</span><small>Normal</small></button>
+      <button type="button" data-style="title"><span style="font:300 19px Calibri,Carlito,sans-serif">AaBb</span><small>Title</small></button>
+      <button type="button" data-style="subtitle"><span style="font:13px Calibri,Carlito,sans-serif;color:#5a5a5a">AaBbC</span><small>Subtitle</small></button>
+      <button type="button" data-style="h1"><span style="font:600 15px Calibri,Carlito,sans-serif;color:#1f3864">AaBbC</span><small>Heading 1</small></button>
+      <button type="button" data-style="h2"><span style="font:600 13px Calibri,Carlito,sans-serif;color:#2f5496">AaBbCc</span><small>Heading 2</small></button>
+      <button type="button" data-style="h3"><span style="font:600 12px Calibri,Carlito,sans-serif;color:#2f5496">AaBbCc</span><small>Heading 3</small></button>
+      <button type="button" data-style="blockquote"><span style="font:italic 12px Calibri,Carlito,sans-serif;color:#404040">AaBbCc</span><small>Quote</small></button>
+      <button type="button" data-style="pre"><span style="font:11px Consolas,monospace">AaBbCc</span><small>Code</small></button>
+    </div><div class="gl">Styles</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="findBtn" title="Find and replace (Ctrl+F)"><i>🔍</i>Find</button>
+    </div><div class="gl">Editing</div></div>
+</div>
+
+<!-- INSERT -->
+<div class="ribbon" data-panel="insert" role="tabpanel" aria-label="Insert" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="pbBtn" title="Page break (Ctrl+Enter)"><i>⤓</i>Page<br>break</button>
+      <button class="big" id="tocBtn" title="Table of contents from your headings"><i>📑</i>Contents</button>
+    </div><div class="gl">Pages</div></div>
+  <div class="rg"><div class="row">
+      <div class="ddwrap"><button class="big" id="tableBtn" title="Table"><i>▦</i>Table ▾</button>
+        <div class="dd" id="tableDd" hidden><div class="tgrid" id="tgrid"></div><div class="tgrid-lbl" id="tlbl">Pick a size</div></div></div>
+    </div><div class="gl">Tables</div></div>
+  <div class="rg"><div class="row">
+      <label class="big" title="Picture"><i>🖼</i>Picture<input type="file" id="imgIn" accept="image/*" hidden></label>
+      <button class="big" data-cmd="insertHorizontalRule" title="Line"><i>―</i>Line</button>
+    </div><div class="gl">Pictures</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="linkBtn" title="Link (Ctrl+K)"><i>🔗</i>Link</button>
+      <button class="big" id="cmtBtn" title="Comment"><i>💬</i>Comment</button>
+    </div><div class="gl">Links</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="dateBtn" title="Date and time"><i>📅</i>Date</button>
+      <div class="ddwrap"><button class="big" id="symBtn" title="Symbols and maths"><i>Ω</i>Symbol ▾</button>
+        <div class="dd" id="symDd" hidden><div class="symgrid" id="symgrid"></div></div></div>
+    </div><div class="gl">Symbols</div></div>
+</div>
+
+<!-- LAYOUT -->
+<div class="ribbon" data-panel="layout" role="tabpanel" aria-label="Layout" hidden>
+  <div class="rg"><div class="row">
+      <div class="ddwrap"><button class="big" id="mgBtn"><i>▭</i>Margins ▾</button>
+        <div class="dd" id="mgDd" hidden>
+          <button type="button" class="opt" data-mg="normal">Normal - 2.54 cm</button><button type="button" class="opt" data-mg="narrow">Narrow - 1.27 cm</button>
+          <button type="button" class="opt" data-mg="moderate">Moderate - 1.9 cm</button><button type="button" class="opt" data-mg="wide">Wide - 3.8 cm</button>
+        </div></div>
+      <div class="ddwrap"><button class="big" id="orBtn"><i>⟳</i>Orientation ▾</button>
+        <div class="dd" id="orDd" hidden><button type="button" class="opt" data-or="portrait">▯ Portrait</button><button type="button" class="opt" data-or="landscape">▭ Landscape</button></div></div>
+      <div class="ddwrap"><button class="big" id="szBtn"><i>📄</i>Size ▾</button>
+        <div class="dd" id="szDd" hidden><button type="button" class="opt" data-sz="A4">A4 - 21 × 29.7 cm</button><button type="button" class="opt" data-sz="Letter">Letter - 8.5 × 11 in</button><button type="button" class="opt" data-sz="A5">A5 - 14.8 × 21 cm</button></div></div>
+      <div class="ddwrap"><button class="big" id="colBtn"><i>▥</i>Columns ▾</button>
+        <div class="dd" id="colDd" hidden><button type="button" class="opt" data-cols="1">One</button><button type="button" class="opt" data-cols="2">Two</button><button type="button" class="opt" data-cols="3">Three</button></div></div>
+    </div><div class="gl">Page setup</div></div>
+  <div class="rg"><div class="row">
+      <div class="ddwrap"><button class="big" id="pcBtn"><i>🎨</i>Page colour ▾</button>
+        <div class="dd" id="pcDd" hidden>
+          <button type="button" class="opt" data-pc="#ffffff">⬜ White</button><button type="button" class="opt" data-pc="#fdf6e3">🟨 Cream</button>
+          <button type="button" class="opt" data-pc="#eef6ff">🟦 Light blue</button><button type="button" class="opt" data-pc="#effaf1">🟩 Light green</button>
+          <button type="button" class="opt" data-pc="#fdf0f6">🟪 Light pink</button>
+        </div></div>
+      <div class="ddwrap"><button class="big" id="ls2Btn"><i>↕</i>Spacing ▾</button>
+        <div class="dd" id="ls2Dd" hidden>
+          <button type="button" class="opt" data-ls="1">1.0</button><button type="button" class="opt" data-ls="1.15">1.15</button>
+          <button type="button" class="opt" data-ls="1.5">1.5</button><button type="button" class="opt" data-ls="2">2.0 (double)</button>
+        </div></div>
+    </div><div class="gl">Design</div></div>
+</div>
+
+<!-- REVIEW -->
+<div class="ribbon" data-panel="review" role="tabpanel" aria-label="Review" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="spellBtn" aria-pressed="true" title="Underline spelling mistakes"><i>abc✓</i>Spelling</button>
+      <button class="big" id="wcBtn" title="Word count"><i>🔢</i>Word count</button>
+    </div><div class="gl">Proofing</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="speakBtn" aria-pressed="false" title="Read aloud"><i>🔊</i>Read aloud</button>
+      <button class="big" id="dictBtn" aria-pressed="false" title="Dictate - talk and it types"><i>🎙️</i>Dictate</button>
+    </div><div class="gl">Speech</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="cmtBtn2" title="New comment"><i>💬</i>New<br>comment</button>
+      <button class="big" id="cpBtn" aria-pressed="false" title="Show comments"><i>🗂️</i>Show<br>comments</button>
+    </div><div class="gl">Comments</div></div>
+</div>
+
+<!-- VIEW -->
+<div class="ribbon" data-panel="view" role="tabpanel" aria-label="View" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="navBtn" aria-pressed="false" title="Headings down the side"><i>🧭</i>Navigation</button>
+      <button class="big" id="linesBtn" aria-pressed="true" title="Show where pages end"><i>┅</i>Page<br>lines</button>
+      <button class="big" id="focusBtn" title="Hide everything but the page"><i>🎯</i>Focus</button>
+    </div><div class="gl">Show</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="zOut"><i>➖</i>Zoom out</button>
+      <button class="big" id="z100"><i>💯</i>100%</button>
+      <button class="big" id="zIn"><i>➕</i>Zoom in</button>
+      <button class="big" id="zFit"><i>↔</i>Page width</button>
+    </div><div class="gl">Zoom</div></div>
+</div>
+
+<!-- TABLE (shows when the cursor is in a table) -->
+<div class="ribbon" data-panel="table" role="tabpanel" aria-label="Table" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-tb="rowAbove"><i>⬆</i>Row above</button><button class="big" data-tb="rowBelow"><i>⬇</i>Row below</button>
+      <button class="big" data-tb="colLeft"><i>⬅</i>Column left</button><button class="big" data-tb="colRight"><i>➡</i>Column right</button>
+    </div><div class="gl">Add</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-tb="delRow"><i>✕</i>Delete row</button><button class="big" data-tb="delCol"><i>✕</i>Delete column</button>
+      <button class="big" data-tb="delTable"><i>🗑</i>Delete table</button>
+    </div><div class="gl">Delete</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-tb="header"><i>▀</i>Header row</button>
+      <label class="big" title="Shade the cell">🪣<span>Shade</span><input type="color" id="cellBg" value="#dbeafe" hidden></label>
+    </div><div class="gl">Style</div></div>
+</div>
+
+<!-- PICTURE (shows when a picture is picked) -->
+<div class="ribbon" data-panel="picture" role="tabpanel" aria-label="Picture" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-img="25"><i>▫</i>Small</button><button class="big" data-img="50"><i>◻</i>Medium</button>
+      <button class="big" data-img="75"><i>⬜</i>Large</button><button class="big" data-img="100"><i>⬛</i>Full width</button>
+    </div><div class="gl">Size</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-ial="left"><i>⫷</i>Left</button><button class="big" data-ial="center"><i>☰</i>Centre</button><button class="big" data-ial="right"><i>⫸</i>Right</button>
+    </div><div class="gl">Position</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-img="del"><i>🗑</i>Delete</button>
+    </div><div class="gl">Picture</div></div>
 </div>
 
 <div class="findbar" id="findbar" hidden>
@@ -141,15 +382,27 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
   <button class="tb" id="findClose" type="button" aria-label="Close find">✕</button>
 </div>
 
-<main class="desk" id="desk">
-  <div class="zoomer" id="zoomer">
-    <article class="page" id="page" contenteditable="true" spellcheck="true" lang="en-GB"
-      data-placeholder="Start typing…" aria-label="Document" aria-multiline="true" role="textbox"></article>
-  </div>
-</main>
+<div class="work">
+  <aside class="side" id="navPane" hidden aria-label="Navigation">
+    <h3>Headings <button type="button" id="navClose" aria-label="Close">✕</button></h3>
+    <ul class="navlist" id="navList"></ul>
+  </aside>
+  <main class="desk" id="desk">
+    <div class="zoomer" id="zoomer">
+      <div class="pagewrap" id="pagewrap">
+        <article class="page" id="page" contenteditable="true" spellcheck="true" lang="en-GB"
+          data-placeholder="Start typing…" aria-label="Document" aria-multiline="true" role="textbox"></article>
+      </div>
+    </div>
+  </main>
+  <aside class="side right" id="cPane" hidden aria-label="Comments">
+    <h3>Comments <button type="button" id="cClose" aria-label="Close">✕</button></h3>
+    <div id="cList"></div>
+  </aside>
+</div>
 
 <footer class="foot">
-  <span id="wc">0 words</span><span id="cc">0 characters</span><span id="rt"></span>
+  <span id="pgN">Page 1 of 1</span><button type="button" id="wc">0 words</button><span id="cc">0 characters</span><span id="rt"></span><span>English (UK)</span>
   <span class="sp"></span>
   <label>Zoom <input type="range" id="zoom" min="50" max="200" step="10" value="100" aria-label="Zoom"></label><span id="zoomN">100%</span>
 </footer>
@@ -157,8 +410,8 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/jszip.min.js"></script>
-<script src="/office/office.js?b=20261103c"></script>
-<script src="/write/docx.js?b=20261103a"></script>
-<script src="/write/write.js?b=20261103a"></script>
+<script src="/office/office.js?b=20261103d"></script>
+<script src="/write/docx.js?b=20261103d"></script>
+<script src="/write/write.js?b=20261103d"></script>
 </body>
 </html>
