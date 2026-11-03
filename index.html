@@ -34,6 +34,10 @@ main{max-width:1040px;margin:0 auto;padding:34px 18px 60px}
 .g{background:linear-gradient(140deg,#166534,#22c55e);box-shadow:0 14px 34px -16px #16a34a}
 .p{background:linear-gradient(140deg,#9a3412,#f97316);box-shadow:0 14px 34px -16px #ea580c}
 .n{background:linear-gradient(140deg,#5b21b6,#a855f7);box-shadow:0 14px 34px -16px #7c3aed}
+.d{background:linear-gradient(140deg,#991b1b,#ef4444);box-shadow:0 14px 34px -16px #dc2626}
+.b{background:linear-gradient(140deg,#115e59,#14b8a6);box-shadow:0 14px 34px -16px #0d9488}
+.f{background:linear-gradient(140deg,#6b21a8,#d946ef);box-shadow:0 14px 34px -16px #c026d3}
+.i{background:linear-gradient(140deg,#1e293b,#475569);box-shadow:0 14px 34px -16px #334155}
 h2{font-size:1.15rem;margin:0 0 12px}
 .recent{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .recent a{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;background:var(--card);border:1px solid var(--rule);text-decoration:none;color:var(--ink);min-width:0}
@@ -66,13 +70,17 @@ h2{font-size:1.15rem;margin:0 0 12px}
 <main>
   <section class="hero">
     <h1>Write it. Work it out. Show it.</h1>
-    <p>Four apps for homework, made for the Launchpad. They open and save Word, Excel and PowerPoint files, and everything saves by itself.</p>
+    <p>Seven apps for homework, made for the Launchpad. They open and save Word, Excel, PowerPoint and PDF files, and everything saves by itself.</p>
   </section>
   <nav class="apps" aria-label="Apps">
     <a class="app w" href="/write/"><i aria-hidden="true">✍️</i><b>Write</b><span>Essays and documents, with spell check, tables and pictures.</span><small>Opens .docx →</small></a>
     <a class="app g" href="/grid/"><i aria-hidden="true">📊</i><b>Grid</b><span>Spreadsheets with formulas, charts and sorting.</span><small>Opens .xlsx and .csv →</small></a>
     <a class="app p" href="/present/"><i aria-hidden="true">🎞️</i><b>Present</b><span>Slides with themes, shapes and a full-screen show.</span><small>Opens .pptx →</small></a>
     <a class="app n" href="/notebook/"><i aria-hidden="true">📓</i><b>Notebook</b><span>Notes, checklists and drawing with a finger or pencil.</span><small>Sections and pages →</small></a>
+    <a class="app d" href="/pdf/"><i aria-hidden="true">📕</i><b>PDF</b><span>Write on PDFs, sign, fill in forms, merge, split, rotate.</span><small>Pictures to PDF too →</small></a>
+    <a class="app b" href="/draw/"><i aria-hidden="true">🎨</i><b>Draw</b><span>A whiteboard for mind maps, flowcharts and sticky notes.</span><small>Saves .png and .svg →</small></a>
+    <a class="app f" href="/forms/"><i aria-hidden="true">📋</i><b>Forms</b><span>Surveys and quizzes that mark themselves. Share a link.</span><small>See every answer →</small></a>
+    <a class="app i" href="#getH" id="getTile"><i aria-hidden="true">⬇️</i><b>Get the app</b><span>Install the Suite on iPad, PC, Mac, Chromebook or Android.</span><small>Works offline →</small></a>
   </nav>
   <h2>Recent files</h2>
   <ul class="recent" id="recent"><li class="empty">Loading…</li></ul>
@@ -90,14 +98,14 @@ h2{font-size:1.15rem;margin:0 0 12px}
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
-<script src="/office/office.js?b=20261103e"></script>
+<script src="/office/office.js?b=20261103f"></script>
 <script>
 (function(){
   Office.themeToggle(document.getElementById("themeBtn"));
   var ib = document.getElementById("installBtn");
   if (Office.isApp()) ib.closest("section").hidden = true;
   ib.onclick = function () { Office.install(); };
-  var APPS = [["doc","write","📘"],["sheet","grid","📗"],["deck","present","📙"],["note","notebook","📓"]], all = [], cloud = false, user = null;
+  var APPS = [["doc","write","📘"],["sheet","grid","📗"],["deck","present","📙"],["note","notebook","📓"],["draw","draw","🎨"]], all = [], cloud = false, user = null;
   APPS.reduce(function(p, a){
     return p.then(function(){ return Office.init(a[0]); }).then(function(st){
       cloud = st.cloud; user = st.user;

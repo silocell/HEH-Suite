@@ -369,7 +369,7 @@
   function setImporter(fn) { importer = fn; waiting.splice(0).forEach(fn); }
 
   window.Office = {
-    install: install, canInstall: canInstall, isApp: isApp, setImporter: setImporter,
+    install: install, canInstall: canInstall, isApp: isApp, setImporter: setImporter, sb: function () { return sb; },
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
