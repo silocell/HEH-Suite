@@ -28,6 +28,7 @@
             created: p.created || now(), updated: p.updated || now() };
         }) };
     });
+    var lk = b.look || {}; b.look = { pc: /^#[0-9a-f]{6}$/i.test(lk.pc || "") ? lk.pc : "", rl: /^(lines|grid)$/.test(lk.rl || "") ? lk.rl : "" };
     return b;
   }
 
@@ -220,12 +221,15 @@
     var r = window.devicePixelRatio || 1; g.setTransform(r, 0, 0, r, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
     if (page) page.ink.forEach(paint);
   }
-  $("drawBtn").onclick = function () {
-    drawing = !drawing; this.setAttribute("aria-pressed", String(drawing));
-    $("inkbar").hidden = !drawing; sheetEl.classList.toggle("drawing", drawing); sizeInk();
-  };
+  function setDrawing(on) {
+    drawing = on; $("drawBtn").setAttribute("aria-pressed", String(on)); $("typeBtn").setAttribute("aria-pressed", String(!on));
+    sheetEl.classList.toggle("drawing", on); sizeInk();
+  }
+  $("drawBtn").onclick = function () { setDrawing(true); };
+  $("typeBtn").onclick = function () { setDrawing(false); note.focus(); };
   document.querySelectorAll("[data-pen]").forEach(function (b) {
     b.onclick = function () {
+      if (!drawing) setDrawing(true);
       erasing = b.dataset.pen === "eraser"; if (!erasing) pen = b.dataset.pen;
       document.querySelectorAll("[data-pen]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
     };
@@ -296,12 +300,96 @@
     Office.download(new Blob([html + "</body></html>"], { type: "text/html;charset=utf-8" }), Office.safeName(titleIn.value || "Notebook", ".html"));
   };
 
+  /* ---------- the Office-style parts ---------- */
+  Office.ribbon();
+  $("fc").addEventListener("input", function () { $("fcBar").style.background = this.value; });
+  $("fc").addEventListener("change", function () { note.focus(); document.execCommand("foreColor", false, this.value); edited(); });
+  ["timeBtn", "tableBtn", "linkBtn"].forEach(function (id) { $(id).addEventListener("mousedown", function (e) { e.preventDefault(); }); });
+  $("timeBtn").onclick = function () { note.focus(); document.execCommand("insertText", false, new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + " "); edited(); };
+  $("tableBtn").onclick = function () {
+    note.focus(); var h = "<table><tbody>"; for (var r = 0; r < 3; r++) { h += "<tr>"; for (var c = 0; c < 3; c++) h += r === 0 ? "<th><br></th>" : "<td><br></td>"; h += "</tr>"; }
+    document.execCommand("insertHTML", false, h + "</tbody></table><p><br></p>"); edited();
+  };
+  $("linkBtn").onclick = function () {
+    var s = getSelection(), keepR = s.rangeCount ? s.getRangeAt(0).cloneRange() : null;
+    var d = document.createElement("dialog"); d.className = "of-dialog";
+    d.innerHTML = '<div class="of-dhead"><h2>Add a link</h2><button type="button" class="of-x" aria-label="Close">✕</button></div><input id="lk" placeholder="https://…" style="width:100%;height:40px;border:1px solid var(--rule);border-radius:10px;padding:0 12px;background:var(--tool);margin:12px 0;box-sizing:border-box"><div class="of-new"><button type="button" class="of-btn" id="lkOk">Add link</button></div>';
+    document.body.appendChild(d); d.showModal(); var inp = d.querySelector("input"); inp.focus();
+    d.querySelector(".of-x").onclick = function () { d.close(); d.remove(); };
+    d.querySelector("#lkOk").onclick = function () {
+      var u = inp.value.trim(); d.close(); d.remove(); if (!u) return; if (!/^(https?:|mailto:)/i.test(u)) u = "https://" + u;
+      note.focus(); if (keepR) { s.removeAllRanges(); s.addRange(keepR); }
+      if (s.isCollapsed) document.execCommand("insertHTML", false, '<a href="' + Office.esc(u) + '">' + Office.esc(u) + "</a>"); else document.execCommand("createLink", false, u);
+      edited();
+    };
+  };
+  $("addPage2").onclick = function () { $("addPage").click(); };
+  $("addSec2").onclick = function () { $("addSec").click(); };
+  /* Find tags: every tagged line in the notebook */
+  $("findTags").onclick = function () {
+    flush(); var out = [];
+    nb.sections.forEach(function (s) { s.pages.forEach(function (p) {
+      var d = document.createElement("div"); d.innerHTML = p.html;
+      d.querySelectorAll("p,li,h1,h2,h3,div").forEach(function (b) {
+        if (b.querySelector("p,li,ul,ol")) return;
+        var t = b.textContent.trim(), tag = (t.match(/[⭐❓💡📌]/u) || [])[0];
+        if (b.closest("ul.todo") && !b.classList.contains("done")) tag = "☐";
+        if (tag) out.push({ tag: tag, t: t, s: s, p: p });
+      });
+    }); });
+    var names = { "⭐": "Important", "❓": "Questions", "💡": "Ideas", "📌": "Remember", "☐": "To do" };
+    var d = document.createElement("dialog"); d.className = "of-dialog";
+    d.innerHTML = '<div class="of-dhead"><h2>Tags</h2><button type="button" class="of-x" aria-label="Close">✕</button></div>' + (out.length ? Object.keys(names).map(function (k) {
+      var list = out.filter(function (o) { return o.tag === k; }); if (!list.length) return "";
+      return "<h3 style='margin:14px 0 6px'>" + k + " " + names[k] + "</h3>" + list.map(function (o, i) { return '<button type="button" class="pg" data-s="' + o.s.id + '" data-p="' + o.p.id + '" style="border:1px solid var(--rule);margin-bottom:4px"><strong>' + Office.esc(o.t.slice(0, 90)) + "</strong><small>" + Office.esc(o.s.name + " › " + (o.p.title || "Untitled page")) + "</small></button>"; }).join("");
+    }).join("") : '<p class="of-where">No tags yet. Use ⭐ ❓ 💡 📌 or To Do on the Home tab.</p>');
+    document.body.appendChild(d); d.showModal();
+    d.onclick = function (e) {
+      if (e.target === d || e.target.closest(".of-x")) { d.close(); d.remove(); return; }
+      var b = e.target.closest("[data-p]"); if (!b) return; d.close(); d.remove();
+      var s = nb.sections.filter(function (x) { return x.id === b.dataset.s; })[0], p = s && s.pages.filter(function (x) { return x.id === b.dataset.p; })[0];
+      if (p) { sec = s; openPage(p); drawSecs(); drawPages(); }
+    };
+  };
+  $("navToggle").onclick = function () { var off = document.body.classList.toggle("nonav"); this.setAttribute("aria-pressed", String(!off)); sizeInk(); };
+  $("fullPage").onclick = function () { var on = document.body.classList.toggle("nonav"); this.setAttribute("aria-pressed", String(on)); $("navToggle").setAttribute("aria-pressed", String(!on)); if (on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {}); if (!on && document.fullscreenElement) document.exitFullscreen().catch(function () {}); sizeInk(); };
+  function pageLook() {
+    var v = (nb && nb.look) || {};
+    if (v.pc) sheetEl.style.setProperty("background-color", v.pc, "important"); else sheetEl.style.removeProperty("background-color"); sheetEl.classList.toggle("lines", v.rl === "lines"); sheetEl.classList.toggle("grid", v.rl === "grid");
+  }
+  document.querySelectorAll("[data-pc]").forEach(function (b) { b.onclick = function () { nb.look = nb.look || {}; nb.look.pc = b.dataset.pc; pageLook(); saver.poke(); }; });
+  document.querySelectorAll("[data-rl]").forEach(function (b) { b.onclick = function () { nb.look = nb.look || {}; nb.look.rl = b.dataset.rl; pageLook(); saver.poke(); }; });
+  var zl = 1; function zoom(z) { zl = Math.max(0.6, Math.min(2, z)); sheetEl.style.zoom = zl; sizeInk(); }
+  $("zIn").onclick = function () { zoom(zl + 0.1); }; $("zOut").onclick = function () { zoom(zl - 0.1); }; $("z100").onclick = function () { zoom(1); };
+  $("fileTab").onclick = function () {
+    flush(); saver.now();
+    var pages = 0; nb.sections.forEach(function (s) { pages += s.pages.length; });
+    Office.backstage({
+      print: true,
+      pages: {
+        home: { label: "Home", title: titleIn.value, items: [
+          { a: "new", icon: "📓", title: "New notebook", sub: "Start a fresh notebook" },
+          { a: "open", icon: "📂", title: "Open", sub: "Your notebooks" },
+          { a: "import", icon: "📥", title: "Add a file as a page", sub: "A .docx, .txt, .md or .html" }] },
+        save: { label: "Save a copy", title: "Save a copy", items: [
+          { a: "ex-docx", icon: "📘", title: "This page as Word", sub: ".docx" },
+          { a: "ex-pdf", icon: "📄", title: "This page as PDF", sub: "Print, then “Save as PDF”" },
+          { a: "ex-html", icon: "🌐", title: "The whole notebook", sub: "One web page with every section" }] },
+        info: { label: "Info", html: function () { return '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + Office.esc(titleIn.value) + "</dd><dt>Saved</dt><dd>" + (Office.isCloud() ? "In your Launchpad account" : "In this browser") + "</dd><dt>Size</dt><dd>" + nb.sections.length + " sections · " + pages + " pages</dd></dl>"; } }
+      },
+      onPick: function (a) {
+        if (a === "new") fresh(); else if (a === "open" || a === "import") $("filesBtn").click();
+        else if (a.indexOf("ex-") === 0) $("exportMenu").querySelector('[data-ex="' + a.slice(3) + '"]').click();
+      }
+    });
+  };
+
   /* ---------- files ---------- */
   function use(body, keepCur) {
     nb = clean(body); sec = nb.sections[0]; var p = sec.pages[0] || null;
     if (keepCur) { try { var c = JSON.parse(localStorage.getItem("hl.nb.cur") || "{}");
       nb.sections.forEach(function (s) { if (s.id === c.s) { sec = s; p = s.pages[0] || null; s.pages.forEach(function (x) { if (x.id === c.p) p = x; }); } }); } catch (e) {} }
-    openPage(p); drawSecs(); drawPages();
+    openPage(p); drawSecs(); drawPages(); pageLook();
   }
   function load(f) {
     file = { id: f.id, title: f.title || "My Notebook" }; titleIn.value = file.title; use(f.body, true);

@@ -3,7 +3,7 @@
    you make while offline are saved in the browser and move to your account
    when you're back online. Nothing personal is ever cached: sign-in and
    the database (hehs-live.duckdns.org) always go straight to the network. */
-var VERSION = "suite-20261103g";
+var VERSION = "suite-20261107a";
 var SHELL = [
   "/", "/write/", "/grid/", "/present/", "/notebook/", "/pdf/", "/draw/", "/forms/",
   "/office/office.css", "/office/office.js", "/office/jszip.min.js", "/office/odf.js", "/auth-store.js", "/favicon.png", "/manifest.webmanifest",

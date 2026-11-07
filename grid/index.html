@@ -15,7 +15,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261103a">
+<link rel="stylesheet" href="/office/office.css?b=20261107a">
 <style>
 :root{--a1:#16a34a;--cell:#ffffff;--cellink:#1b1b1b;--grid:#e1e5eb;--head:#f3f5f8;--headon:#dcefe2;--sel:rgba(22,163,74,.12)}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --cell:#151b23;--cellink:#e6ebf2;--grid:#2a333f;--head:#1c232d;--headon:#1f3b2a;--sel:rgba(74,222,128,.14) } }
@@ -37,6 +37,12 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
 .sheet thead th.corner{left:0;z-index:4;cursor:default}
 .sheet th.on{background:var(--headon);color:var(--a1)}
 .sheet thead th .rs{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:2}
+.sheet.nogrid td{border-color:transparent}
+.nohead .sheet thead,.nohead .sheet th.rh{visibility:collapse}
+.sheet.frow tbody tr:first-child td{position:sticky;top:25px;z-index:2;box-shadow:0 2px 0 var(--a1)}
+.sheet.fcol tbody td:first-of-type{position:sticky;left:47px;z-index:1;box-shadow:2px 0 0 var(--a1)}
+.sheet td.wr{white-space:normal;word-break:break-word}
+.filt{position:absolute;z-index:4;width:18px;height:18px;border:1px solid var(--rule);border-radius:4px;background:var(--card);font-size:10px;line-height:16px;text-align:center;cursor:pointer;padding:0}
 .box{position:absolute;pointer-events:none;z-index:1}
 #selBox{background:var(--sel);border:1px solid var(--a1)}
 #actBox{border:2px solid var(--a1)}
@@ -79,53 +85,136 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
 
-<div class="ribbon" role="toolbar" aria-label="Formatting">
-  <div class="grp">
-    <button class="tb" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
-    <button class="tb" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
-  </div>
-  <div class="grp">
-    <button class="tb" data-tog="b" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
-    <button class="tb" data-tog="i" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
-    <button class="tb" data-tog="u" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
-    <label class="tb colorbtn" title="Text colour">A<span class="bar" id="fgBar" style="background:#c00000"></span><input type="color" id="fg" value="#c00000" aria-label="Text colour"></label>
-    <label class="tb colorbtn" title="Fill colour">🪣<span class="bar" id="bgBar" style="background:#fff2a8"></span><input type="color" id="bg" value="#fff2a8" aria-label="Fill colour"></label>
-    <button class="tb" id="clearFmt" title="Clear formatting" aria-label="Clear formatting">⌫</button>
-  </div>
-  <div class="grp">
-    <button class="tb" data-al="l" title="Align left" aria-label="Align left">⟸</button>
-    <button class="tb" data-al="c" title="Centre" aria-label="Centre">≡</button>
-    <button class="tb" data-al="r" title="Align right" aria-label="Align right">⟹</button>
-    <select id="nf" aria-label="Number format" title="Number format">
-      <option value="">General</option><option value="n2">1,234.50</option><option value="int">1,235</option>
-      <option value="gbp">£ Pounds</option><option value="pct">% Percent</option>
-    </select>
-  </div>
-  <div class="grp">
-    <button class="tb wide" id="sumBtn" title="AutoSum" aria-label="AutoSum">Σ Sum</button>
-    <button class="tb wide" id="fxBtn" title="Insert a function" aria-label="Insert a function"><i style="font-family:Georgia,serif">fx</i></button>
-    <button class="tb" id="sortUp" title="Sort A to Z" aria-label="Sort A to Z">A↓</button>
-    <button class="tb" id="sortDown" title="Sort Z to A" aria-label="Sort Z to A">Z↓</button>
-    <button class="tb wide" id="chartBtn" title="Make a chart from the selected cells" aria-label="Chart">📈 Chart</button>
-  </div>
-  <div class="grp">
-    <button class="tb wide" id="addRow" title="Insert a row above" aria-label="Insert row">＋ Row</button>
-    <button class="tb wide" id="addCol" title="Insert a column to the left" aria-label="Insert column">＋ Col</button>
-    <button class="tb wide" id="delRow" title="Delete the selected rows" aria-label="Delete rows">－ Row</button>
-    <button class="tb wide" id="delCol" title="Delete the selected columns" aria-label="Delete columns">－ Col</button>
-  </div>
-  <div class="grp">
-    <div class="menuwrap">
-      <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
-      <div class="menu" id="exportMenu" hidden>
-        <button type="button" data-ex="xlsx">📗<span>Excel workbook<small>.xlsx - every sheet, formulas and colours</small></span></button>
-        <button type="button" data-ex="ods">📙<span>OpenDocument<small>.ods - LibreOffice and OpenOffice</small></span></button>
-        <button type="button" data-ex="csv">🧾<span>CSV<small>This sheet's values, for any app</small></span></button>
-        <button type="button" data-ex="tsv">🧾<span>Tab-separated<small>.tsv</small></span></button>
-        <button type="button" data-ex="pdf">📄<span>PDF or print<small>Choose “Save as PDF” to make a PDF</small></span></button>
+<nav class="tabsbar" role="tablist" aria-label="Ribbon">
+  <button type="button" class="file" id="fileTab">File</button>
+  <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button type="button" role="tab" data-tab="insert" aria-selected="false">Insert</button>
+  <button type="button" role="tab" data-tab="formulas" aria-selected="false">Formulas</button>
+  <button type="button" role="tab" data-tab="data" aria-selected="false">Data</button>
+  <button type="button" role="tab" data-tab="view" aria-selected="false">View</button>
+</nav>
+
+<!-- HOME -->
+<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home">
+  <div class="rg"><div class="row">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="tb" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
       </div>
-    </div>
-  </div>
+      <button class="big" id="pasteBtn" title="Paste (Ctrl+V)"><i>📋</i>Paste</button>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" id="cutBtn" title="Cut (Ctrl+X)" aria-label="Cut">✂</button>
+        <button class="tb" id="copyBtn" title="Copy (Ctrl+C)" aria-label="Copy">⧉</button>
+      </div>
+    </div><div class="gl">Clipboard</div></div>
+  <div class="rg"><div class="row">
+      <select id="fsz" aria-label="Font size" title="Font size"><option value="">11</option><option>9</option><option>10</option><option>12</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option></select>
+      <button class="tb" data-tog="b" title="Bold (Ctrl+B)" aria-label="Bold"><b>B</b></button>
+      <button class="tb" data-tog="i" title="Italic (Ctrl+I)" aria-label="Italic"><i>I</i></button>
+      <button class="tb" data-tog="u" title="Underline (Ctrl+U)" aria-label="Underline"><u>U</u></button>
+    </div><div class="row">
+      <button class="tb" data-tog="bd" title="Borders round each cell" aria-label="Borders">▦</button>
+      <label class="tb colorbtn" title="Fill colour">🪣<span class="bar" id="bgBar" style="background:#fff2a8"></span><input type="color" id="bg" value="#fff2a8" aria-label="Fill colour"></label>
+      <label class="tb colorbtn" title="Font colour">A<span class="bar" id="fgBar" style="background:#c00000"></span><input type="color" id="fg" value="#c00000" aria-label="Font colour"></label>
+      <button class="tb" id="clearFmt" title="Clear formatting" aria-label="Clear formatting">⌫</button>
+    </div><div class="gl">Font</div></div>
+  <div class="rg"><div class="row">
+      <button class="tb" data-al="l" title="Align left" aria-label="Align left">⫷</button>
+      <button class="tb" data-al="c" title="Centre" aria-label="Centre">☰</button>
+      <button class="tb" data-al="r" title="Align right" aria-label="Align right">⫸</button>
+    </div><div class="row">
+      <button class="tb wide" data-tog="wr" title="Wrap text so it all shows" aria-label="Wrap text">↩ Wrap</button>
+    </div><div class="gl">Alignment</div></div>
+  <div class="rg"><div class="row">
+      <select id="nf" aria-label="Number format" title="Number format">
+        <option value="">General</option><option value="n2">Number</option><option value="int">Whole number</option>
+        <option value="gbp">Currency (£)</option><option value="pct">Percentage</option>
+      </select>
+    </div><div class="row">
+      <button class="tb" data-nfq="gbp" title="Currency" aria-label="Currency">£</button>
+      <button class="tb" data-nfq="pct" title="Percentage" aria-label="Percentage">%</button>
+      <button class="tb" data-nfq="n2" title="Comma style" aria-label="Comma style">,</button>
+    </div><div class="gl">Number</div></div>
+  <div class="rg"><div class="row">
+      <div class="ddwrap"><button class="big" data-dd="insDd"><i>⊞</i>Insert ▾</button>
+        <div class="dd" id="insDd" hidden><button type="button" class="opt" id="addRow">Insert rows above</button><button type="button" class="opt" id="addCol">Insert columns left</button><button type="button" class="opt" id="addSheet2">Insert sheet</button></div></div>
+      <div class="ddwrap"><button class="big" data-dd="delDd"><i>⊟</i>Delete ▾</button>
+        <div class="dd" id="delDd" hidden><button type="button" class="opt" id="delRow">Delete rows</button><button type="button" class="opt" id="delCol">Delete columns</button></div></div>
+    </div><div class="gl">Cells</div></div>
+  <div class="rg"><div class="row">
+      <div class="ddwrap"><button class="big" data-dd="sumDd" title="AutoSum"><i>Σ</i>AutoSum ▾</button>
+        <div class="dd" id="sumDd" hidden><button type="button" class="opt" data-agg="SUM">Σ Sum</button><button type="button" class="opt" data-agg="AVERAGE">Average</button><button type="button" class="opt" data-agg="COUNT">Count numbers</button><button type="button" class="opt" data-agg="MAX">Max</button><button type="button" class="opt" data-agg="MIN">Min</button></div></div>
+      <div class="ddwrap"><button class="big" data-dd="sortDd"><i>⇅</i>Sort ▾</button>
+        <div class="dd" id="sortDd" hidden><button type="button" class="opt" id="sortUp">A→Z Sort smallest to largest</button><button type="button" class="opt" id="sortDown">Z→A Sort largest to smallest</button></div></div>
+      <button class="big" id="findBtn" title="Find (Ctrl+F)"><i>🔍</i>Find</button>
+    </div><div class="gl">Editing</div></div>
+</div>
+
+<!-- INSERT -->
+<div class="ribbon" data-panel="insert" role="tabpanel" aria-label="Insert" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-chart="bar"><i>📊</i>Column</button>
+      <button class="big" data-chart="line"><i>📈</i>Line</button>
+      <button class="big" data-chart="pie"><i>🥧</i>Pie</button>
+      <button class="big" data-chart="scatter"><i>⁘</i>Scatter</button>
+      <button class="big" id="chartBtn" title="Pick the chart for me"><i>✨</i>Recommended</button>
+    </div><div class="gl">Charts</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="fxBtn2"><i style="font-family:Georgia,serif">fx</i>Function</button>
+      <button class="big" id="dateIns"><i>📅</i>Today's date</button>
+    </div><div class="gl">Insert</div></div>
+</div>
+
+<!-- FORMULAS -->
+<div class="ribbon" data-panel="formulas" role="tabpanel" aria-label="Formulas" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="fxBtn" title="Insert a function"><i style="font-family:Georgia,serif">fx</i>Insert<br>function</button>
+      <button class="big" id="sumBtn" title="AutoSum"><i>Σ</i>AutoSum</button>
+      <div class="ddwrap"><button class="big" data-dd="fnMaths"><i>θ</i>Maths ▾</button><div class="dd" id="fnMaths" hidden style="max-height:320px;overflow:auto"><button type="button" class="opt" data-fn="SUM">SUM</button><button type="button" class="opt" data-fn="PRODUCT">PRODUCT</button><button type="button" class="opt" data-fn="ROUND">ROUND</button><button type="button" class="opt" data-fn="ROUNDUP">ROUNDUP</button><button type="button" class="opt" data-fn="ROUNDDOWN">ROUNDDOWN</button><button type="button" class="opt" data-fn="INT">INT</button><button type="button" class="opt" data-fn="ABS">ABS</button><button type="button" class="opt" data-fn="SQRT">SQRT</button><button type="button" class="opt" data-fn="POWER">POWER</button><button type="button" class="opt" data-fn="MOD">MOD</button><button type="button" class="opt" data-fn="PI">PI</button><button type="button" class="opt" data-fn="RAND">RAND</button><button type="button" class="opt" data-fn="RANDBETWEEN">RANDBETWEEN</button></div></div><div class="ddwrap"><button class="big" data-dd="fnStatistics"><i>📊</i>Statistics ▾</button><div class="dd" id="fnStatistics" hidden style="max-height:320px;overflow:auto"><button type="button" class="opt" data-fn="AVERAGE">AVERAGE</button><button type="button" class="opt" data-fn="MEDIAN">MEDIAN</button><button type="button" class="opt" data-fn="MODE">MODE</button><button type="button" class="opt" data-fn="MIN">MIN</button><button type="button" class="opt" data-fn="MAX">MAX</button><button type="button" class="opt" data-fn="COUNT">COUNT</button><button type="button" class="opt" data-fn="COUNTA">COUNTA</button><button type="button" class="opt" data-fn="COUNTBLANK">COUNTBLANK</button><button type="button" class="opt" data-fn="COUNTIF">COUNTIF</button><button type="button" class="opt" data-fn="SUMIF">SUMIF</button><button type="button" class="opt" data-fn="AVERAGEIF">AVERAGEIF</button><button type="button" class="opt" data-fn="STDEV">STDEV</button><button type="button" class="opt" data-fn="RANK">RANK</button></div></div><div class="ddwrap"><button class="big" data-dd="fnLogical"><i>❓</i>Logical ▾</button><div class="dd" id="fnLogical" hidden style="max-height:320px;overflow:auto"><button type="button" class="opt" data-fn="IF">IF</button><button type="button" class="opt" data-fn="IFERROR">IFERROR</button><button type="button" class="opt" data-fn="AND">AND</button><button type="button" class="opt" data-fn="OR">OR</button><button type="button" class="opt" data-fn="NOT">NOT</button></div></div><div class="ddwrap"><button class="big" data-dd="fnText"><i>A</i>Text ▾</button><div class="dd" id="fnText" hidden style="max-height:320px;overflow:auto"><button type="button" class="opt" data-fn="CONCAT">CONCAT</button><button type="button" class="opt" data-fn="LEN">LEN</button><button type="button" class="opt" data-fn="UPPER">UPPER</button><button type="button" class="opt" data-fn="LOWER">LOWER</button><button type="button" class="opt" data-fn="PROPER">PROPER</button><button type="button" class="opt" data-fn="TRIM">TRIM</button><button type="button" class="opt" data-fn="LEFT">LEFT</button><button type="button" class="opt" data-fn="RIGHT">RIGHT</button><button type="button" class="opt" data-fn="MID">MID</button></div></div><div class="ddwrap"><button class="big" data-dd="fnLookup"><i>🔍</i>Lookup ▾</button><div class="dd" id="fnLookup" hidden style="max-height:320px;overflow:auto"><button type="button" class="opt" data-fn="VLOOKUP">VLOOKUP</button><button type="button" class="opt" data-fn="HLOOKUP">HLOOKUP</button><button type="button" class="opt" data-fn="INDEX">INDEX</button><button type="button" class="opt" data-fn="MATCH">MATCH</button></div></div><div class="ddwrap"><button class="big" data-dd="fnDate"><i>📅</i>Date ▾</button><div class="dd" id="fnDate" hidden style="max-height:320px;overflow:auto"><button type="button" class="opt" data-fn="TODAY">TODAY</button><button type="button" class="opt" data-fn="NOW">NOW</button></div></div>
+    </div><div class="gl">Function library</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="showF" aria-pressed="false" title="Show the formulas instead of the answers"><i>𝑓</i>Show<br>formulas</button>
+    </div><div class="gl">Formula auditing</div></div>
+</div>
+
+<!-- DATA -->
+<div class="ribbon" data-panel="data" role="tabpanel" aria-label="Data" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="getData"><i>📥</i>From file</button>
+    </div><div class="gl">Get data</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="sortUp2"><i>A↓Z</i>Sort A to Z</button>
+      <button class="big" id="sortDown2"><i>Z↓A</i>Sort Z to A</button>
+      <button class="big" id="filterBtn" aria-pressed="false"><i>⏷</i>Filter</button>
+    </div><div class="gl">Sort &amp; filter</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="dedupe"><i>⧉✕</i>Remove<br>duplicates</button>
+      <button class="big" id="fillDown" title="Ctrl+D"><i>⬇</i>Fill down</button>
+    </div><div class="gl">Data tools</div></div>
+</div>
+
+<!-- VIEW -->
+<div class="ribbon" data-panel="view" role="tabpanel" aria-label="View" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="freezeBtn" aria-pressed="false"><i>❄</i>Freeze<br>top row</button>
+      <button class="big" id="freezeCol" aria-pressed="false"><i>❄</i>Freeze<br>first column</button>
+    </div><div class="gl">Window</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="gridBtn" aria-pressed="true"><i>▦</i>Gridlines</button>
+      <button class="big" id="headBtn" aria-pressed="true"><i>A1</i>Headings</button>
+    </div><div class="gl">Show</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="zOut"><i>➖</i>Zoom out</button>
+      <button class="big" id="z100"><i>💯</i>100%</button>
+      <button class="big" id="zIn"><i>➕</i>Zoom in</button>
+    </div><div class="gl">Zoom</div></div>
+</div>
+
+<div class="findbar" id="findbar" hidden style="display:flex;gap:6px;align-items:center;padding:6px 12px;background:var(--tool);border-bottom:1px solid var(--rule)">
+  <input id="findIn" placeholder="Find in this sheet" aria-label="Find" style="height:32px;border:1px solid var(--rule);border-radius:8px;background:var(--card);padding:0 10px;width:200px">
+  <input id="replIn" placeholder="Replace with" aria-label="Replace with" style="height:32px;border:1px solid var(--rule);border-radius:8px;background:var(--card);padding:0 10px;width:160px">
+  <button class="tb wide" id="findNext" type="button">Find next</button><button class="tb wide" id="replAll" type="button">Replace all</button>
+  <span id="findN" style="color:var(--soft);font-size:.85rem"></span><button class="tb" id="findClose" type="button" aria-label="Close">✕</button>
 </div>
 
 <div class="fbar">
@@ -154,10 +243,10 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/jszip.min.js"></script>
-<script src="/office/office.js?b=20261103f"></script>
+<script src="/office/office.js?b=20261107a"></script>
 <script src="/grid/formula.js?b=20261103a"></script>
 <script src="/grid/xlsx.js?b=20261103a"></script>
 <script src="/office/odf.js?b=20261103g"></script>
-<script src="/grid/grid.js?b=20261103g"></script>
+<script src="/grid/grid.js?b=20261107a"></script>
 </body>
 </html>

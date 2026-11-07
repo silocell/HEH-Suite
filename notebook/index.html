@@ -15,7 +15,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261103a">
+<link rel="stylesheet" href="/office/office.css?b=20261107a">
 <style>
 :root{--a1:#7c3aed}
 .work{flex:1;display:flex;min-height:0}
@@ -53,6 +53,11 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 .note ul.todo li.done{color:var(--soft);text-decoration:line-through}
 .note ul.todo li.done::before{background:var(--a1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3 3 7-7' fill='none' stroke='white' stroke-width='2.2'/%3E%3C/svg%3E") center/14px no-repeat}
 .note mark.hit{background:#fde047;color:#111}
+.sheet.lines{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 24.4px,rgba(96,165,250,.35) 24.4px,rgba(96,165,250,.35) 25.4px)!important;background-position:0 108px!important}
+.sheet.grid{background-image:linear-gradient(rgba(96,165,250,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(96,165,250,.25) 1px,transparent 1px)!important;background-size:25.4px 25.4px!important}
+.pen{width:28px;height:28px;border-radius:50%;border:2px solid var(--rule);padding:0}
+.pen[aria-pressed="true"]{outline:3px solid var(--a1);outline-offset:1px}
+body.nonav .secs,body.nonav .pages{display:none}
 #ink{position:absolute;left:0;top:0;pointer-events:none;z-index:2}
 .drawing #ink{pointer-events:auto;touch-action:none;cursor:crosshair}
 .inkbar{display:flex;gap:6px;align-items:center;padding:6px 12px;background:var(--tool);border-bottom:1px solid var(--rule);flex-wrap:wrap}
@@ -78,55 +83,125 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
 
-<div class="ribbon" role="toolbar" aria-label="Formatting">
-  <div class="grp">
-    <button class="tb" data-cmd="undo" aria-label="Undo" title="Undo">↶</button>
-    <button class="tb" data-cmd="redo" aria-label="Redo" title="Redo">↷</button>
-  </div>
-  <div class="grp">
-    <button class="tb" data-block="h1" title="Heading" aria-label="Heading">H1</button>
-    <button class="tb" data-block="h2" title="Subheading" aria-label="Subheading">H2</button>
-    <button class="tb" data-block="p" title="Normal text" aria-label="Normal text">¶</button>
-    <button class="tb" data-cmd="bold" aria-label="Bold" title="Bold"><b>B</b></button>
-    <button class="tb" data-cmd="italic" aria-label="Italic" title="Italic"><i>I</i></button>
-    <button class="tb" data-cmd="underline" aria-label="Underline" title="Underline"><u>U</u></button>
-    <button class="tb" data-cmd="strikeThrough" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
-    <label class="tb colorbtn" title="Highlight">🖍<span class="bar" id="hlBar" style="background:#fde047"></span><input type="color" id="hl" value="#fde047" aria-label="Highlight colour"></label>
-  </div>
-  <div class="grp">
-    <button class="tb" id="todoBtn" title="Checklist (Ctrl+1)" aria-label="Checklist">☑</button>
-    <button class="tb" data-cmd="insertUnorderedList" aria-label="Bullets" title="Bullets">•≡</button>
-    <button class="tb" data-cmd="insertOrderedList" aria-label="Numbering" title="Numbering">1≡</button>
-    <button class="tb" data-tag="⭐" title="Tag: important" aria-label="Tag important">⭐</button>
-    <button class="tb" data-tag="❓" title="Tag: question for the teacher" aria-label="Tag question">❓</button>
-    <button class="tb" data-tag="💡" title="Tag: idea" aria-label="Tag idea">💡</button>
-  </div>
-  <div class="grp">
-    <label class="tb" title="Picture" aria-label="Insert picture">🖼<input type="file" id="imgIn" accept="image/*" hidden></label>
-    <button class="tb" id="dateBtn" title="Insert today's date" aria-label="Insert date">📅</button>
-    <button class="tb wide" id="drawBtn" aria-pressed="false" title="Draw with a finger, pen or mouse">✏️ Draw</button>
-    <div class="menuwrap">
-      <button class="tb wide" id="exportBtn" aria-haspopup="true" aria-expanded="false">⬇ Export ▾</button>
-      <div class="menu" id="exportMenu" hidden>
-        <button type="button" data-ex="docx">📘<span>This page as Word<small>.docx</small></span></button>
-        <button type="button" data-ex="pdf">📄<span>This page as PDF or print<small>Choose “Save as PDF”</small></span></button>
-        <button type="button" data-ex="html">🌐<span>Whole notebook<small>One web page with every section</small></span></button>
+<nav class="tabsbar" role="tablist" aria-label="Ribbon">
+  <button type="button" class="file" id="fileTab">File</button>
+  <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button type="button" role="tab" data-tab="insert" aria-selected="false">Insert</button>
+  <button type="button" role="tab" data-tab="draw" aria-selected="false">Draw</button>
+  <button type="button" role="tab" data-tab="view" aria-selected="false">View</button>
+</nav>
+
+<!-- HOME -->
+<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home">
+  <div class="rg"><div class="row">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" data-cmd="undo" aria-label="Undo" title="Undo">↶</button>
+        <button class="tb" data-cmd="redo" aria-label="Redo" title="Redo">↷</button>
       </div>
-    </div>
-  </div>
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" data-cmd="cut" aria-label="Cut" title="Cut">✂</button>
+        <button class="tb" data-cmd="copy" aria-label="Copy" title="Copy">⧉</button>
+      </div>
+    </div><div class="gl">Clipboard</div></div>
+  <div class="rg"><div class="row">
+      <button class="tb" data-cmd="bold" aria-label="Bold" title="Bold"><b>B</b></button>
+      <button class="tb" data-cmd="italic" aria-label="Italic" title="Italic"><i>I</i></button>
+      <button class="tb" data-cmd="underline" aria-label="Underline" title="Underline"><u>U</u></button>
+      <button class="tb" data-cmd="strikeThrough" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+      <label class="tb colorbtn" title="Highlight">🖍<span class="bar" id="hlBar" style="background:#fde047"></span><input type="color" id="hl" value="#fde047" aria-label="Highlight colour"></label>
+      <label class="tb colorbtn" title="Font colour">A<span class="bar" id="fcBar" style="background:#c00000"></span><input type="color" id="fc" value="#c00000" aria-label="Font colour"></label>
+    </div><div class="row">
+      <button class="tb" data-cmd="insertUnorderedList" aria-label="Bullets" title="Bullets">•≡</button>
+      <button class="tb" data-cmd="insertOrderedList" aria-label="Numbering" title="Numbering">1≡</button>
+      <button class="tb" data-cmd="outdent" aria-label="Decrease indent" title="Decrease indent">⇤</button>
+      <button class="tb" data-cmd="indent" aria-label="Increase indent" title="Increase indent">⇥</button>
+      <button class="tb" data-cmd="removeFormat" aria-label="Clear formatting" title="Clear formatting">⌫</button>
+    </div><div class="gl">Basic text</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-block="h1"><i style="font-weight:800">H1</i>Heading 1</button>
+      <button class="big" data-block="h2"><i style="font-weight:700;font-size:1.2rem">H2</i>Heading 2</button>
+      <button class="big" data-block="p"><i style="font-size:1.1rem">¶</i>Normal</button>
+    </div><div class="gl">Styles</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="todoBtn" title="To do tag (Ctrl+1)"><i>☑</i>To Do</button>
+      <button class="big" data-tag="⭐"><i>⭐</i>Important</button>
+      <button class="big" data-tag="❓"><i>❓</i>Question</button>
+      <button class="big" data-tag="💡"><i>💡</i>Idea</button>
+      <button class="big" data-tag="📌"><i>📌</i>Remember</button>
+    </div><div class="gl">Tags</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="findTags"><i>🔎</i>Find<br>tags</button>
+    </div><div class="gl">Find</div></div>
 </div>
-<div class="inkbar" id="inkbar" hidden>
-  <strong style="font-size:.85rem">Pen</strong>
-  <button type="button" class="pen" data-pen="#111827" style="background:#111827" aria-label="Black pen" aria-pressed="true"></button>
-  <button type="button" class="pen" data-pen="#2563eb" style="background:#2563eb" aria-label="Blue pen"></button>
-  <button type="button" class="pen" data-pen="#dc2626" style="background:#dc2626" aria-label="Red pen"></button>
-  <button type="button" class="pen" data-pen="#16a34a" style="background:#16a34a" aria-label="Green pen"></button>
-  <button type="button" class="pen" data-pen="hl" style="background:#fde047" aria-label="Highlighter"></button>
-  <button type="button" class="tb wide" data-pen="eraser" aria-pressed="false">🧽 Eraser</button>
-  <label style="font-size:.85rem;display:flex;gap:6px;align-items:center">Size <input type="range" id="penSize" min="1" max="12" value="3"></label>
-  <button type="button" class="tb wide" id="inkClear">Clear drawing</button>
-  <span style="color:var(--soft);font-size:.8rem">Tap ✏️ Draw again to go back to typing.</span>
+
+<!-- INSERT -->
+<div class="ribbon" data-panel="insert" role="tabpanel" aria-label="Insert" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="tableBtn"><i>▦</i>Table</button>
+    </div><div class="gl">Tables</div></div>
+  <div class="rg"><div class="row">
+      <label class="big" title="Picture"><i>🖼</i>Pictures<input type="file" id="imgIn" accept="image/*" hidden></label>
+    </div><div class="gl">Images</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="linkBtn"><i>🔗</i>Link</button>
+    </div><div class="gl">Links</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="dateBtn"><i>📅</i>Date</button>
+      <button class="big" id="timeBtn"><i>🕒</i>Time</button>
+    </div><div class="gl">Time stamp</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="addPage2"><i>📄</i>New page</button>
+      <button class="big" id="addSec2"><i>🗂</i>New section</button>
+    </div><div class="gl">Pages</div></div>
 </div>
+
+<!-- DRAW -->
+<div class="ribbon" data-panel="draw" role="tabpanel" aria-label="Draw" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="typeBtn" aria-pressed="true" title="Back to typing"><i>⌨</i>Type</button>
+      <button class="big" id="drawBtn" aria-pressed="false" title="Draw with a finger, pen or mouse"><i>✏️</i>Draw</button>
+      <button class="big" data-pen="eraser" aria-pressed="false"><i>🧽</i>Eraser</button>
+    </div><div class="gl">Tools</div></div>
+  <div class="rg"><div class="row" style="gap:8px">
+      <button type="button" class="pen" data-pen="#111827" style="background:#111827" aria-label="Black pen" aria-pressed="true"></button>
+      <button type="button" class="pen" data-pen="#2563eb" style="background:#2563eb" aria-label="Blue pen"></button>
+      <button type="button" class="pen" data-pen="#dc2626" style="background:#dc2626" aria-label="Red pen"></button>
+      <button type="button" class="pen" data-pen="#16a34a" style="background:#16a34a" aria-label="Green pen"></button>
+      <button type="button" class="pen" data-pen="#7c3aed" style="background:#7c3aed" aria-label="Purple pen"></button>
+      <button type="button" class="pen" data-pen="hl" style="background:#fde047;border-radius:6px" aria-label="Highlighter"></button>
+    </div><div class="row"><label style="font-size:.8rem;display:flex;gap:6px;align-items:center">Thickness <input type="range" id="penSize" min="1" max="12" value="3"></label></div><div class="gl">Pens</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="inkClear"><i>🗑</i>Clear<br>drawing</button>
+    </div><div class="gl">Edit</div></div>
+</div>
+
+<!-- VIEW -->
+<div class="ribbon" data-panel="view" role="tabpanel" aria-label="View" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="navToggle" aria-pressed="true"><i>📚</i>Navigation</button>
+      <button class="big" id="fullPage" aria-pressed="false"><i>⛶</i>Full page</button>
+    </div><div class="gl">Views</div></div>
+  <div class="rg"><div class="row">
+      <div class="ddwrap"><button class="big" data-dd="pcDd"><i>🎨</i>Page colour ▾</button>
+        <div class="dd" id="pcDd" hidden>
+          <button type="button" class="opt" data-pc="">⬜ None</button><button type="button" class="opt" data-pc="#fffbea">🟨 Yellow</button>
+          <button type="button" class="opt" data-pc="#eef6ff">🟦 Blue</button><button type="button" class="opt" data-pc="#effaf1">🟩 Green</button><button type="button" class="opt" data-pc="#fdf0f6">🟪 Pink</button>
+        </div></div>
+      <div class="ddwrap"><button class="big" data-dd="rlDd"><i>☰</i>Rule lines ▾</button>
+        <div class="dd" id="rlDd" hidden>
+          <button type="button" class="opt" data-rl="">None</button><button type="button" class="opt" data-rl="lines">Lined paper</button><button type="button" class="opt" data-rl="grid">Squared paper</button>
+        </div></div>
+    </div><div class="gl">Page setup</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="zOut"><i>➖</i>Zoom out</button>
+      <button class="big" id="z100"><i>💯</i>100%</button>
+      <button class="big" id="zIn"><i>➕</i>Zoom in</button>
+    </div><div class="gl">Zoom</div></div>
+</div>
+<div id="inkbar" hidden></div>
+<div hidden><button id="exportBtn" type="button"></button><div class="menu" id="exportMenu" hidden>
+  <button type="button" data-ex="docx"></button><button type="button" data-ex="pdf"></button><button type="button" data-ex="html"></button>
+</div></div>
 
 <div class="work">
   <aside class="secs" aria-label="Sections">
@@ -153,8 +228,8 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/jszip.min.js"></script>
-<script src="/office/office.js?b=20261103f"></script>
+<script src="/office/office.js?b=20261107a"></script>
 <script src="/write/docx.js?b=20261103a"></script>
-<script src="/notebook/notebook.js?b=20261103a"></script>
+<script src="/notebook/notebook.js?b=20261107a"></script>
 </body>
 </html>

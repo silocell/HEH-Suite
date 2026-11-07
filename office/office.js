@@ -368,7 +368,68 @@
   });
   function setImporter(fn) { importer = fn; waiting.splice(0).forEach(fn); }
 
+  /* ---- Office-style ribbon tabs and drop-downs ----
+     <nav class="tabsbar"> buttons with data-tab, panels .ribbon[data-panel].
+     A button with data-dd="someId" opens the .dd with that id. */
+  function ribbon(opts) {
+    opts = opts || {};
+    var cur = null;
+    function show(t) {
+      cur = t;
+      document.querySelectorAll(".tabsbar [data-tab]").forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.tab === t)); });
+      document.querySelectorAll(".ribbon[data-panel]").forEach(function (p) { p.hidden = p.dataset.panel !== t; });
+      closeDds(); if (opts.onTab) opts.onTab(t);
+    }
+    function closeDds(except) { document.querySelectorAll(".dd").forEach(function (d) { if (d !== except) d.hidden = true; }); }
+    document.querySelectorAll(".tabsbar [data-tab]").forEach(function (b) {
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      b.onclick = function () { show(b.dataset.tab); };
+    });
+    document.querySelectorAll("[data-dd]").forEach(function (b) {
+      var d = document.getElementById(b.dataset.dd); if (!d) return;
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); if (opts.keep) opts.keep(); });
+      b.addEventListener("click", function (e) { e.stopPropagation(); closeDds(d); d.hidden = !d.hidden; });
+      d.addEventListener("click", function (e) { if (e.target.closest("button")) setTimeout(function () { d.hidden = true; }, 0); });
+    });
+    document.addEventListener("click", function (e) { if (!e.target.closest(".dd")) closeDds(); });
+    var first = document.querySelector('.tabsbar [data-tab][aria-selected="true"]') || document.querySelector(".tabsbar [data-tab]");
+    if (first) show(first.dataset.tab);
+    return { show: show, current: function () { return cur; }, close: closeDds };
+  }
+
+  /* ---- the File screen (like Office's "backstage") ----
+     pages: { home: {title, items:[{a,icon,title,sub}]}, save: {...}, info: fn -> html }
+     onPick(action) gets the data-a of the tile that was chosen. */
+  function backstage(opts) {
+    var old = document.getElementById("backstage"); if (old) old.remove();
+    var bs = document.createElement("div"); bs.id = "backstage"; bs.setAttribute("role", "dialog"); bs.setAttribute("aria-label", "File");
+    var names = Object.keys(opts.pages);
+    bs.innerHTML = '<nav><button type="button" data-bk="back">← Back</button>' + names.map(function (n, i) {
+      return '<button type="button" data-bk="' + n + '"' + (i === 0 ? ' aria-selected="true"' : "") + ">" + esc(opts.pages[n].label || n) + "</button>";
+    }).join("") + (opts.print ? '<button type="button" data-bk="print">Print</button>' : "") + '</nav><section id="bkBody"></section>';
+    document.body.appendChild(bs);
+    function close() { bs.remove(); document.removeEventListener("keydown", key); if (opts.onClose) opts.onClose(); }
+    function key(e) { if (e.key === "Escape") close(); }
+    document.addEventListener("keydown", key);
+    function show(n) {
+      bs.querySelectorAll("[data-bk]").forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.bk === n)); });
+      var pg = opts.pages[n], s = bs.querySelector("#bkBody");
+      if (typeof pg.html === "function") { s.innerHTML = pg.html(); return; }
+      s.innerHTML = "<h2>" + esc(pg.title || pg.label) + '</h2><div class="bgrid">' + (pg.items || []).map(function (it) {
+        return '<button type="button" data-a="' + esc(it.a) + '"><i>' + it.icon + "</i><span><b>" + esc(it.title) + "</b><small>" + esc(it.sub || "") + "</small></span></button>";
+      }).join("") + "</div>";
+    }
+    bs.onclick = function (e) {
+      var nb = e.target.closest("[data-bk]");
+      if (nb) { if (nb.dataset.bk === "back") close(); else if (nb.dataset.bk === "print") { close(); setTimeout(function () { (opts.print === true ? window.print : opts.print)(); }, 120); } else show(nb.dataset.bk); return; }
+      var a = e.target.closest("[data-a]"); if (a) { close(); opts.onPick(a.dataset.a); }
+    };
+    show(names[0]);
+    return { close: close };
+  }
+
   window.Office = {
+    ribbon: ribbon, backstage: backstage,
     install: install, canInstall: canInstall, isApp: isApp, setImporter: setImporter, sb: function () { return sb; },
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,

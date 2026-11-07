@@ -18,7 +18,7 @@
   });
 
   /* ================= values ================= */
-  var vals = {}, busy = {};
+  var vals = {}, busy = {}, showF = false;
   function literal(raw) {
     if (raw == null || raw === "") return null;
     var s = String(raw).trim();
@@ -85,15 +85,16 @@
   function paintCell(k) {
     var p = F.parseRef(k); if (!p || !tds[p.r] || !tds[p.r][p.c]) return;
     var td = tds[p.r][p.c], c = sh.cells[k] || {}, v = value(k);
-    td.textContent = show(v, c.nf);
+    td.textContent = showF && typeof c.v === "string" && c.v[0] === "=" ? c.v : show(v, c.nf);
     var cls = F.isErr(v) ? "e" : typeof v === "number" ? "n" : typeof v === "boolean" ? "t" : "";
-    td.className = cls;
+    td.className = cls + (c.wr ? " wr" : "");
     var st = td.style;
     st.fontWeight = c.b ? "700" : ""; st.fontStyle = c.i ? "italic" : ""; st.textDecoration = c.u ? "underline" : "";
     st.textAlign = c.al ? { l: "left", c: "center", r: "right" }[c.al] : "";
     st.background = c.bg || ""; st.color = c.fg || "";
+    st.boxShadow = c.bd ? "inset 0 0 0 1px #374151" : ""; st.fontSize = c.fs ? c.fs + "px" : "";
     td.title = F.isErr(v) ? errHelp(v.err) : "";
-    if (c.v || c.b || c.i || c.u || c.bg || c.fg || c.al) drawn[k] = 1; else delete drawn[k];
+    if (c.v || c.b || c.i || c.u || c.bg || c.fg || c.al || c.bd || c.wr || c.fs) drawn[k] = 1; else delete drawn[k];
   }
   function paintAll() {
     vals = {};
@@ -163,7 +164,7 @@
 
   /* ================= changing cells (with undo) ================= */
   function clone(c) { return c ? JSON.parse(JSON.stringify(c)) : undefined; }
-  function empty(c) { return !c || ((c.v == null || c.v === "") && !c.b && !c.i && !c.u && !c.bg && !c.fg && !c.nf && !c.al); }
+  function empty(c) { return !c || ((c.v == null || c.v === "") && !c.b && !c.i && !c.u && !c.bg && !c.fg && !c.nf && !c.al && !c.bd && !c.wr && !c.fs); }
   /* changes: {key: newCell or undefined} on the current sheet */
   function apply(changes, noUndo) {
     var rec = { s: book.active, ch: [] };
@@ -531,18 +532,24 @@
   colourPick($("fg"), $("fgBar"), "fg"); colourPick($("bg"), $("bgBar"), "bg");
   $("clearFmt").onclick = function () { eachSel(function (c) { return c.v != null ? { v: c.v } : undefined; }); wrap.focus(); };
 
-  $("sumBtn").onclick = function () {
+  function autoAgg(fn) {
+    fn = fn || "SUM";
     var n = norm(), r = n.r1, c = n.c1;
     if (n.r2 > n.r1 || n.c2 > n.c1) { // a range picked: put the total under it
       var ch = {};
-      for (c = n.c1; c <= n.c2; c++) { var k = RN(n.r2 + 1, c), cell = clone(sh.cells[k]) || {}; cell.v = "=SUM(" + RN(n.r1, c) + ":" + RN(n.r2, c) + ")"; cell.b = 1; ch[k] = cell; }
+      for (c = n.c1; c <= n.c2; c++) { var k = RN(n.r2 + 1, c), cell = clone(sh.cells[k]) || {}; cell.v = "=" + fn + "(" + RN(n.r1, c) + ":" + RN(n.r2, c) + ")"; cell.b = 1; ch[k] = cell; }
       apply(ch); go(n.r2 + 1, n.c1); return;
     }
     var top = r - 1; while (top >= 0 && typeof value(RN(top, c)) === "number") top--;
     var guess = top + 1 < r ? RN(top + 1, c) + ":" + RN(r - 1, c) : "";
     if (!guess) { var left = c - 1; while (left >= 0 && typeof value(RN(r, left)) === "number") left--; if (left + 1 < c) guess = RN(r, left + 1) + ":" + RN(r, c - 1); }
-    startEdit("=SUM(" + guess + (guess ? ")" : ""));
-  };
+    startEdit("=" + fn + "(" + guess + (guess ? ")" : ""));
+  }
+  $("sumBtn").onclick = function () { autoAgg("SUM"); };
+  document.querySelectorAll("[data-agg]").forEach(function (b) { b.onclick = function () { autoAgg(b.dataset.agg); }; });
+  document.querySelectorAll("[data-fn]").forEach(function (b) {
+    b.onclick = function () { var f = b.dataset.fn; startEdit("=" + f + "(" + (/^(PI|TODAY|NOW|RAND)$/.test(f) ? ")" : "")); };
+  });
 
   $("fxBtn").onclick = function () {
     var d = document.createElement("dialog"); d.className = "of-dialog";
@@ -594,8 +601,8 @@
     rows.forEach(function (o, i) { o.row.forEach(function (cell, j) { ch[RN(start + i, g.c1 + j)] = cell; }); });
     apply(ch); Office.toast("Sorted " + rows.length + " rows by column " + CN(col) + (head ? " (kept the heading row)" : ""));
   }
-  $("sortUp").onclick = function () { sortBy(false); wrap.focus(); };
-  $("sortDown").onclick = function () { sortBy(true); wrap.focus(); };
+  $("sortUp").onclick = $("sortUp2").onclick = function () { sortBy(false); wrap.focus(); };
+  $("sortDown").onclick = $("sortDown2").onclick = function () { sortBy(true); wrap.focus(); };
 
   /* rows and columns: insert and delete, fixing formulas that point past them */
   function restructure(axis, at, count) { // count > 0 inserts, < 0 deletes
@@ -628,7 +635,9 @@
   $("delCol").onclick = function () { var n = norm(); restructure("c", n.c1, -(n.c2 - n.c1 + 1)); go(sel.r, n.c1); };
 
   /* ================= charts ================= */
-  $("chartBtn").onclick = function () {
+  document.querySelectorAll("[data-chart]").forEach(function (b) { b.onclick = function () { openChart(b.dataset.chart); }; });
+  $("chartBtn").onclick = function () { openChart(null); };
+  function openChart(kind) {
     var n = norm();
     if (n.r1 === n.r2 && n.c1 === n.c2) { var g = region(); if (g.r2 > g.r1 || g.c2 > g.c1) n = g; }
     var data = [];
@@ -649,11 +658,13 @@
       '<input id="ctitle" placeholder="Chart title" value="' + Office.esc(titleIn.value) + '" style="flex:1;min-width:160px;height:36px;border:1px solid var(--rule);border-radius:9px;background:var(--tool);padding:0 10px">' +
       '<button type="button" class="of-btn" id="cdl">⬇ Save picture</button></div><canvas width="1520" height="860" aria-label="Chart"></canvas></div>';
     document.body.appendChild(d); d.showModal();
+    if (!kind) kind = series.length === 1 && body.length <= 7 && labelCol ? "pie" : labelCol && body.length > 12 ? "line" : !labelCol ? "scatter" : "bar";
+    d.querySelector("#ctype").value = kind;
     var cv = d.querySelector("canvas"), draw = function () { drawChart(cv, d.querySelector("#ctype").value, d.querySelector("#ctitle").value, labels, series); };
     d.querySelector("#ctype").onchange = draw; d.querySelector("#ctitle").oninput = draw; draw();
     d.querySelector("#cdl").onclick = function () { cv.toBlob(function (b) { Office.download(b, Office.safeName(d.querySelector("#ctitle").value || "Chart", ".png")); }); };
     d.querySelector(".of-x").onclick = function () { d.close(); d.remove(); };
-  };
+  }
   var PAL = ["#2563eb", "#16a34a", "#f59e0b", "#dc2626", "#7c3aed", "#0891b2", "#db2777", "#65a30d"];
   function drawChart(cv, type, title, labels, series) {
     var g = cv.getContext("2d"), W = cv.width, H = cv.height;
@@ -815,9 +826,6 @@
     r.readAsText(f);
   }
 
-  var exBtn = $("exportBtn"), exMenu = $("exportMenu");
-  exBtn.onclick = function (e) { e.stopPropagation(); exMenu.hidden = !exMenu.hidden; exBtn.setAttribute("aria-expanded", String(!exMenu.hidden)); };
-  document.addEventListener("click", function (e) { if (!exMenu.hidden && !exMenu.contains(e.target)) { exMenu.hidden = true; exBtn.setAttribute("aria-expanded", "false"); } });
   function csvLike(sep, ext) {
     var t = titleIn.value.trim() || "Untitled spreadsheet", maxR = -1, maxC = -1;
     Object.keys(sh.cells).forEach(function (k) { var p = F.parseRef(k); if (p && sh.cells[k].v != null) { maxR = Math.max(maxR, p.r); maxC = Math.max(maxC, p.c); } });
@@ -829,8 +837,8 @@
     }
     Office.download(new Blob(["\ufeff" + lines.join("\r\n")], { type: (sep === "," ? "text/csv" : "text/tab-separated-values") + ";charset=utf-8" }), Office.safeName(t + (book.sheets.length > 1 ? " - " + sh.name : ""), ext));
   }
-  exMenu.onclick = function (e) {
-    var b = e.target.closest("[data-ex]"); if (!b) return; exMenu.hidden = true;
+  function exportAs(kind) {
+    var b = { dataset: { ex: kind } };
     var t = titleIn.value.trim() || "Untitled spreadsheet";
     if (b.dataset.ex === "pdf") { window.print(); return; }
     if (b.dataset.ex === "csv") { csvLike(",", ".csv"); return; }
@@ -843,7 +851,134 @@
     Office.toast("Making your Excel file…");
     Xlsx.build(book.sheets, valueIn).then(function (blob) { Office.download(blob, Office.safeName(t, ".xlsx")); })
       .catch(function (er) { Office.toast("Couldn't make the Excel file: " + (er.message || er), true); });
+  }
+
+  /* ================= the Office-style parts ================= */
+  Office.ribbon();
+  $("fileTab").onclick = function () {
+    if (editing) stopEdit(true); saver.now();
+    var st = { cells: 0, sheets: book.sheets.length }; book.sheets.forEach(function (x) { st.cells += Object.keys(x.cells).length; });
+    Office.backstage({
+      print: true,
+      pages: {
+        home: { label: "Home", title: titleIn.value, items: [
+          { a: "new", icon: "📄", title: "Blank workbook", sub: "Start fresh" },
+          { a: "tpl-budget", icon: "💷", title: "Pocket money budget", sub: "Money in, money out, what's left" },
+          { a: "tpl-results", icon: "🔬", title: "Science results", sub: "Readings, average and a chart" },
+          { a: "tpl-timetable", icon: "🗓", title: "Revision timetable", sub: "Days and subjects" },
+          { a: "open", icon: "📂", title: "Open", sub: "Your spreadsheets, or a file from this device" }] },
+        save: { label: "Save a copy", title: "Save a copy", items: [
+          { a: "ex-xlsx", icon: "📗", title: "Excel workbook", sub: ".xlsx - every sheet, formulas and colours" },
+          { a: "ex-ods", icon: "📙", title: "OpenDocument", sub: ".ods - LibreOffice and OpenOffice" },
+          { a: "ex-csv", icon: "🧾", title: "CSV", sub: "This sheet's values, for any app" },
+          { a: "ex-tsv", icon: "🧾", title: "Tab-separated", sub: ".tsv" },
+          { a: "ex-pdf", icon: "📄", title: "PDF", sub: "Print, then “Save as PDF”" }] },
+        info: { label: "Info", html: function () { return '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + Office.esc(titleIn.value) + "</dd><dt>Saved</dt><dd>" + (Office.isCloud() ? "In your Launchpad account" : "In this browser") + "</dd><dt>Size</dt><dd>" + st.sheets + (st.sheets === 1 ? " sheet · " : " sheets · ") + st.cells + " cells used</dd></dl>"; } }
+      },
+      onPick: function (a) {
+        if (a === "new") fresh(); else if (a === "open") $("filesBtn").click();
+        else if (a.indexOf("ex-") === 0) exportAs(a.slice(3));
+        else template(a);
+      }
+    });
   };
+  function template(t) {
+    var C = function (v, x) { return Object.assign({ v: String(v) }, x || {}); }, H = { b: 1, bg: "#dcfce7" }, cells = {}, w = {};
+    if (t === "tpl-budget") {
+      cells = { A1: C("Pocket money budget", { b: 1, fs: 18 }), A3: C("Money in", H), B3: C("£", H), A4: C("Pocket money"), B4: C("£20", { nf: "gbp" }), A5: C("Birthday money"), B5: C("£15", { nf: "gbp" }), A6: C("Total in", { b: 1 }), B6: C("=SUM(B4:B5)", { b: 1, nf: "gbp" }),
+        A8: C("Money out", H), B8: C("£", H), A9: C("Snacks"), B9: C("£6", { nf: "gbp" }), A10: C("Games"), B10: C("£10", { nf: "gbp" }), A11: C("Total out", { b: 1 }), B11: C("=SUM(B9:B10)", { b: 1, nf: "gbp" }),
+        A13: C("Left over", { b: 1, bg: "#fef9c3" }), B13: C("=B6-B11", { b: 1, nf: "gbp", bg: "#fef9c3" }) }; w = { A: 170, B: 110 };
+    } else if (t === "tpl-results") {
+      cells = { A1: C("Experiment results", { b: 1, fs: 18 }), A3: C("Time (s)", H), B3: C("Try 1", H), C3: C("Try 2", H), D3: C("Try 3", H), E3: C("Average", H) };
+      for (var i = 0; i < 5; i++) { var r = i + 4; cells["A" + r] = C((i + 1) * 10); cells["B" + r] = C(12 + i * 4); cells["C" + r] = C(13 + i * 4); cells["D" + r] = C(11 + i * 5); cells["E" + r] = C("=ROUND(AVERAGE(B" + r + ":D" + r + "),1)", { b: 1 }); }
+      w = { A: 90, E: 100 };
+    } else if (t === "tpl-timetable") {
+      var days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      cells = { A1: C("Revision timetable", { b: 1, fs: 18 }), A3: C("Time", H), A4: C("4:00"), A5: C("4:30"), A6: C("5:00"), A7: C("5:30") };
+      days.forEach(function (d, j) { cells[F.colName(j + 1) + "3"] = C(d, H); w[F.colName(j + 1)] = 110; });
+    }
+    fresh(t === "tpl-budget" ? "Pocket money budget" : t === "tpl-results" ? "Science results" : "Revision timetable", { sheets: [{ name: "Sheet1", cells: cells, w: w, rows: 100, cols: 26 }] });
+  }
+  /* clipboard buttons */
+  $("copyBtn").onclick = function () { var t = copy(false); if (navigator.clipboard) navigator.clipboard.writeText(t).catch(function () {}); wrap.focus(); };
+  $("cutBtn").onclick = function () { var t = copy(true); if (navigator.clipboard) navigator.clipboard.writeText(t).catch(function () {}); wrap.focus(); };
+  $("pasteBtn").onclick = function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) { Office.toast("Use Ctrl+V (or ⌘V) to paste."); return; }
+    navigator.clipboard.readText().then(function (text) {
+      wrap.focus(); var ev = new Event("paste"); ev.clipboardData = { getData: function () { return text; } }; document.dispatchEvent(ev);
+    }).catch(function () { Office.toast("Use Ctrl+V (or ⌘V) to paste."); });
+  };
+  $("fsz").onchange = function () { var v = +this.value; eachSel(function (c) { if (v) c.fs = Math.round(v * 4 / 3); else delete c.fs; return c; }); wrap.focus(); };
+  document.querySelectorAll("[data-nfq]").forEach(function (b) { b.onclick = function () { var v = b.dataset.nfq; eachSel(function (c) { c.nf = v; return c; }); wrap.focus(); }; });
+  $("addSheet2").onclick = function () { var t = document.getElementById("addSheet"); if (t) t.click(); };
+  $("fxBtn2").onclick = function () { $("fxBtn").click(); };
+  $("dateIns").onclick = function () { var d = new Date(); setRaw(sel.r, sel.c, ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear()); wrap.focus(); };
+  $("showF").onclick = function () { showF = !showF; this.setAttribute("aria-pressed", String(showF)); paintAll(); };
+  $("getData").onclick = function () { $("filesBtn").click(); };
+  $("fillDown").onclick = function () { var n = norm(); if (n.r2 > n.r1) doFill({ r1: n.r1, r2: n.r1, c1: n.c1, c2: n.c2 }, n); else Office.toast("Pick the cell to copy and the cells below it first."); wrap.focus(); };
+  $("dedupe").onclick = function () {
+    var g = region(); if (g.r2 <= g.r1) { Office.toast("Click inside a table of data first."); return; }
+    var head = typeof value(RN(g.r1, g.c1)) === "string" && g.r2 > g.r1, start = g.r1 + (head ? 1 : 0), seen = {}, keepRows = [], gone = 0;
+    for (var r = start; r <= g.r2; r++) {
+      var key = []; for (var c = g.c1; c <= g.c2; c++) key.push(show(value(RN(r, c))));
+      key = key.join(""); if (seen[key]) { gone++; continue; } seen[key] = 1;
+      var row = []; for (c = g.c1; c <= g.c2; c++) row.push(clone(sh.cells[RN(r, c)])); keepRows.push(row);
+    }
+    if (!gone) { Office.toast("No duplicate rows found."); return; }
+    var ch = {};
+    for (r = start; r <= g.r2; r++) for (c = g.c1; c <= g.c2; c++) ch[RN(r, c)] = keepRows[r - start] ? keepRows[r - start][c - g.c1] : undefined;
+    apply(ch); Office.toast("Removed " + gone + (gone === 1 ? " duplicate row." : " duplicate rows."));
+  };
+  /* Filter: show only the rows you want (like AutoFilter) */
+  var filt = null;
+  function clearFilter() { tds.forEach(function (row) { row[0].parentNode.style.display = ""; }); filt = null; $("filterBtn").setAttribute("aria-pressed", "false"); place(); }
+  $("filterBtn").onclick = function () {
+    if (filt) { clearFilter(); Office.toast("Filter off - every row shows again."); return; }
+    var g = region(); if (g.r2 <= g.r1) { Office.toast("Click inside a table of data first."); return; }
+    var col = sel.c, vals = {}, start = g.r1 + 1;
+    for (var r = start; r <= g.r2; r++) { var v = show(value(RN(r, col))); vals[v] = (vals[v] || 0) + 1; }
+    var d = document.createElement("dialog"); d.className = "of-dialog";
+    d.innerHTML = '<div class="of-dhead"><h2>Filter column ' + CN(col) + '</h2><button type="button" class="of-x" aria-label="Close">✕</button></div><p class="of-where">Tick the values to show. Row ' + (g.r1 + 1) + ' is treated as the headings.</p>' +
+      '<div style="max-height:46vh;overflow:auto;display:grid;gap:4px">' + Object.keys(vals).sort().map(function (v, i) { return '<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" checked data-v="' + i + '"> ' + Office.esc(v || "(blank)") + ' <small style="color:var(--soft)">(' + vals[v] + ")</small></label>"; }).join("") + "</div>" +
+      '<div class="of-new" style="margin-top:12px"><button type="button" class="of-btn" id="fOk">Filter</button></div>';
+    var keys = Object.keys(vals).sort();
+    document.body.appendChild(d); d.showModal();
+    d.querySelector(".of-x").onclick = function () { d.close(); d.remove(); };
+    d.querySelector("#fOk").onclick = function () {
+      var keep = {}; d.querySelectorAll("[data-v]").forEach(function (c) { if (c.checked) keep[keys[+c.dataset.v]] = 1; });
+      d.close(); d.remove(); var hidden = 0;
+      for (var r = start; r <= g.r2; r++) { var show_ = keep[show(value(RN(r, col)))]; tds[r][0].parentNode.style.display = show_ ? "" : "none"; if (!show_) hidden++; }
+      filt = { col: col }; $("filterBtn").setAttribute("aria-pressed", "true"); place();
+      Office.toast(hidden ? "Hiding " + hidden + (hidden === 1 ? " row" : " rows") + ". Press Filter again to show them." : "Every row matches.");
+    };
+  };
+  $("freezeBtn").onclick = function () { var on = table.classList.toggle("frow"); this.setAttribute("aria-pressed", String(on)); };
+  $("freezeCol").onclick = function () { var on = table.classList.toggle("fcol"); this.setAttribute("aria-pressed", String(on)); };
+  $("gridBtn").onclick = function () { var off = table.classList.toggle("nogrid"); this.setAttribute("aria-pressed", String(!off)); };
+  $("headBtn").onclick = function () { var off = wrap.classList.toggle("nohead"); this.setAttribute("aria-pressed", String(!off)); place(); };
+  var zoomLvl = 1;
+  function zoom(z) { zoomLvl = Math.max(0.5, Math.min(2, z)); table.style.zoom = zoomLvl; place(); }
+  $("zIn").onclick = function () { zoom(zoomLvl + 0.1); }; $("zOut").onclick = function () { zoom(zoomLvl - 0.1); }; $("z100").onclick = function () { zoom(1); };
+  /* Find and replace in this sheet */
+  var fAt = -1;
+  function findNext() {
+    var q = $("findIn").value.toLowerCase(); if (!q) return;
+    var keys = Object.keys(sh.cells).map(function (k) { var p = F.parseRef(k); return { k: k, r: p.r, c: p.c }; }).sort(function (a, b) { return a.r - b.r || a.c - b.c; })
+      .filter(function (o) { var c = sh.cells[o.k]; return String(c.v == null ? "" : c.v).toLowerCase().indexOf(q) >= 0 || show(value(o.k)).toLowerCase().indexOf(q) >= 0; });
+    if (!keys.length) { $("findN").textContent = "Not found"; return; }
+    fAt = (fAt + 1) % keys.length; go(keys[fAt].r, keys[fAt].c); $("findN").textContent = (fAt + 1) + " of " + keys.length;
+  }
+  $("findBtn").onclick = function () { $("findbar").hidden = false; $("findIn").focus(); };
+  $("findNext").onclick = findNext;
+  $("findIn").onkeydown = function (e) { if (e.key === "Enter") { e.preventDefault(); findNext(); } if (e.key === "Escape") $("findClose").click(); };
+  $("findIn").oninput = function () { fAt = -1; $("findN").textContent = ""; };
+  $("findClose").onclick = function () { $("findbar").hidden = true; wrap.focus(); };
+  $("replAll").onclick = function () {
+    var q = $("findIn").value; if (!q) return; var re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), ch = {}, n = 0;
+    Object.keys(sh.cells).forEach(function (k) { var c = sh.cells[k]; if (typeof c.v === "string" && c.v[0] !== "=" && re.test(c.v)) { var nc = clone(c); nc.v = c.v.replace(re, $("replIn").value); ch[k] = nc; n++; } re.lastIndex = 0; });
+    apply(ch); Office.toast("Replaced in " + n + (n === 1 ? " cell." : " cells."));
+  };
+  document.addEventListener("keydown", function (e) { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") { e.preventDefault(); $("findBtn").click(); } });
   window.addEventListener("beforeunload", function () { if (editing) stopEdit(true); saver.now(); });
   window.addEventListener("resize", place);
 })();

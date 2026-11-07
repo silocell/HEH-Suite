@@ -127,11 +127,11 @@
               '<p:spPr><a:xfrm><a:off x="' + e(bx) + '" y="' + e(by) + '"/><a:ext cx="' + e(bw) + '" cy="' + e(bh) + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>';
           }
         });
-        var bg = t.bg.length > 1 ?
+        var bg = s.bg && hex(s.bg) ? '<a:solidFill><a:srgbClr val="' + hex(s.bg) + '"/></a:solidFill>' : t.bg.length > 1 ?
           '<a:gradFill rotWithShape="1"><a:gsLst><a:gs pos="0"><a:srgbClr val="' + hex(t.bg[0]) + '"/></a:gs><a:gs pos="100000"><a:srgbClr val="' + hex(t.bg[1]) + '"/></a:gs></a:gsLst><a:lin ang="2700000" scaled="0"/></a:gradFill>' :
           '<a:solidFill><a:srgbClr val="' + hex(t.bg[0]) + '"/></a:solidFill>';
         var tr = { fade: "<p:fade/>", push: '<p:push dir="l"/>', zoom: "<p:zoom/>" }[s.trans];
-        z.file("ppt/slides/slide" + (si + 1) + ".xml", HEAD + '<p:sld ' + XMLNS + '><p:cSld><p:bg><p:bgPr>' + bg + '<a:effectLst/></p:bgPr></p:bg><p:spTree>' + GRP + tree + '</p:spTree></p:cSld>' +
+        z.file("ppt/slides/slide" + (si + 1) + ".xml", HEAD + '<p:sld ' + XMLNS + (s.hidden ? ' show="0"' : "") + '><p:cSld><p:bg><p:bgPr>' + bg + '<a:effectLst/></p:bgPr></p:bg><p:spTree>' + GRP + tree + '</p:spTree></p:cSld>' +
           '<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>' + (tr ? '<p:transition spd="med">' + tr + "</p:transition>" : "") + "</p:sld>");
         z.file("ppt/slides/_rels/slide" + (si + 1) + ".xml.rels", HEAD + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rels.join("") + "</Relationships>");
         ctOver += '<Override PartName="/ppt/slides/slide' + (si + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>';

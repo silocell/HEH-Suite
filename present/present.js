@@ -90,7 +90,7 @@
     stage.innerHTML = "";
     slideEl = renderSlide(S(), true); slideEl.classList.add("edit");
     stage.appendChild(slideEl);
-    $("notes").value = S().notes || ""; $("trans").value = S().trans || "fade";
+    $("notes").value = S().notes || ""; syncRibbon();
     fit(); thumbs();
   }
   function thumbs() {
@@ -98,7 +98,7 @@
     deck.slides.forEach(function (s, i) {
       var b = document.createElement("button"); b.type = "button"; b.className = "thumb"; b.dataset.i = i;
       b.setAttribute("aria-label", "Slide " + (i + 1)); if (i === cur) b.setAttribute("aria-current", "true");
-      b.innerHTML = '<span class="no">' + (i + 1) + '</span><span class="mini"></span>';
+      b.innerHTML = '<span class="no">' + (i + 1) + '</span><span class="mini"></span>'; if (s.hidden) b.classList.add("hid");
       b.querySelector(".mini").appendChild(renderSlide(s, false));
       box.appendChild(b);
     });
@@ -229,11 +229,13 @@
     finishEdit(); mark(); deck.slides.splice(cur + 1, 0, layout(b.dataset.lay)); cur++; selId = null; draw(); changed();
   };
   menu("shapeBtn", "shapeMenu").onclick = function (ev) {
-    var b = ev.target.closest("[data-shape]"); if (!b) return; this.hidden = true;
-    var sh = b.dataset.shape, e = { id: uid(), type: "shape", shape: sh, x: 380, y: 190, w: 200, h: sh === "line" ? 6 : sh === "arrow" ? 110 : 160 };
+    var b = ev.target.closest("[data-shape]"); if (!b) return; this.hidden = true; addShape(b.dataset.shape);
+  };
+  function addShape(sh) {
+    var e = { id: uid(), type: "shape", shape: sh, x: 380, y: 190, w: 200, h: sh === "line" ? 6 : sh === "arrow" ? 110 : 160 };
     if (sh === "line") e.y = 268;
     add(e);
-  };
+  }
   function add(e) { finishEdit(); mark(); S().els.push(e); selId = e.id; draw(); changed(); }
   $("addText").onclick = function () { var e = tx(330, 220, 300, 80, 28, "body", "", { ph: "Type here" }); add(e); startEdit(e.id); };
   $("imgIn").onchange = function () {
@@ -276,7 +278,43 @@
   function dup() { var e = selId && find(selId); if (!e) return; var c = JSON.parse(JSON.stringify(e)); c.id = uid(); c.x += 20; c.y += 20; add(c); }
   function del() { var s = S(), e = selId && find(selId); if (!e) return; finishEdit(); mark(); s.els.splice(s.els.indexOf(e), 1); selId = null; draw(); changed(); }
   $("dupBtn").onclick = dup; $("delBtn").onclick = del;
-  $("trans").onchange = function () { mark(); S().trans = this.value; changed(); };
+  function syncRibbon() {
+    document.querySelectorAll("[data-trans]").forEach(function (b) { b.setAttribute("aria-pressed", String((S().trans || "fade") === b.dataset.trans)); });
+    document.querySelectorAll("[data-theme]").forEach(function (b) { b.setAttribute("aria-pressed", String(deck.theme === b.dataset.theme)); });
+    $("hideSlide").setAttribute("aria-pressed", String(!!S().hidden));
+  }
+  document.querySelectorAll("[data-trans]").forEach(function (b) { b.onclick = function () { mark(); S().trans = b.dataset.trans; syncRibbon(); changed(); }; });
+  $("transAll").onclick = function () { mark(); var t = S().trans || "fade"; deck.slides.forEach(function (x) { x.trans = t; }); changed(); Office.toast("Every slide now uses " + t + "."); };
+  $("transPrev").onclick = function () { play(cur); };
+  document.querySelectorAll("[data-theme]").forEach(function (b) { b.onclick = function () { mark(); deck.theme = b.dataset.theme; draw(); changed(); }; });
+  $("bgIn").addEventListener("change", function () { mark(); S().bg = this.value; draw(); changed(); });
+  $("bgReset").onclick = function () { mark(); delete S().bg; draw(); changed(); };
+  $("hideSlide").onclick = function () { mark(); S().hidden = !S().hidden; syncRibbon(); thumbs(); changed(); Office.toast(S().hidden ? "This slide won't show in the slide show." : "This slide will show again."); };
+  $("newBtn2").onclick = function () { finishEdit(); mark(); deck.slides.splice(cur + 1, 0, layout(cur === 0 && deck.slides.length === 1 ? "content" : "content")); goSlide(cur + 1); changed(); };
+  $("sDel2").onclick = function () { $("sDel").onclick.call($("sDel")); if ($("sDel").dataset.armed) Office.toast("Tap Delete slide again to delete it."); };
+  $("shapeRow").addEventListener("click", function (ev) { var b = ev.target.closest("[data-shape]"); if (b) addShape(b.dataset.shape); });
+  $("insDate").onclick = function () { var e = tx(560, 470, 360, 50, 20, "body", Office.esc(new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })), { align: "right" }); add(e); };
+  $("playFirst").onclick = function () { play(0); };
+  $("playCur").onclick = function () { play(cur); };
+  $("notesBtn").onclick = function () { var n = document.querySelector(".notes"), h = !n.hidden; n.hidden = h; this.setAttribute("aria-pressed", String(!h)); fit(); };
+  /* Slide sorter: every slide at once */
+  $("viewSorter").onclick = function () {
+    finishEdit(); var main = document.querySelector(".work"); if (document.getElementById("sorter")) return;
+    main.hidden = true; this.setAttribute("aria-pressed", "true"); $("viewNormal").setAttribute("aria-pressed", "false");
+    var so = document.createElement("div"); so.id = "sorter"; so.className = "sorter";
+    deck.slides.forEach(function (sl, i) {
+      var c = document.createElement("button"); c.type = "button"; c.className = "scard" + (sl.hidden ? " hid" : ""); if (i === cur) c.setAttribute("aria-current", "true");
+      var r = renderSlide(sl, false); c.appendChild(r); c.insertAdjacentHTML("beforeend", "<span>" + (i + 1) + (sl.hidden ? " · hidden" : "") + "</span>");
+      c.onclick = function () { cur = i; $("viewNormal").click(); };
+      so.appendChild(c);
+    });
+    main.after(so);
+    requestAnimationFrame(function () { so.querySelectorAll(".scard").forEach(function (c) { c.firstChild.style.transform = "scale(" + (c.clientWidth / SW) + ")"; }); });
+  };
+  $("viewNormal").onclick = function () {
+    var so = document.getElementById("sorter"); if (so) so.remove();
+    document.querySelector(".work").hidden = false; this.setAttribute("aria-pressed", "true"); $("viewSorter").setAttribute("aria-pressed", "false"); selId = null; draw();
+  };
   $("notes").addEventListener("input", function () { S().notes = this.value.slice(0, 5000); saver.poke(); });
 
   $("sDup").onclick = function () { finishEdit(); mark(); var c = JSON.parse(JSON.stringify(S())); c.id = uid(); c.els.forEach(function (e) { e.id = uid(); }); deck.slides.splice(cur + 1, 0, c); goSlide(cur + 1); changed(); };
@@ -338,6 +376,10 @@
     var i = from, holder = null, mouseT = null;
     function showAt(n, back) {
       if (n < 0) return; if (n >= deck.slides.length) { end(); return; }
+      if (deck.slides[n].hidden && deck.slides.some(function (x) { return !x.hidden; })) { // skip hidden slides
+        var step = back ? -1 : 1, m = n; while (m >= 0 && m < deck.slides.length && deck.slides[m].hidden) m += step;
+        if (m < 0) return; if (m >= deck.slides.length) { end(); return; } n = m;
+      }
       i = n; var s = deck.slides[i], sl = renderSlide(s, false);
       var k = Math.min(innerWidth / SW, innerHeight / SH);
       var w = document.createElement("div"); w.style.width = SW * k + "px"; w.style.height = SH * k + "px"; w.style.overflow = "hidden";
@@ -376,9 +418,8 @@
   }
 
   /* ---------- export ---------- */
-  var exM = menu("exportBtn", "exportMenu");
-  exM.onclick = function (ev) {
-    var b = ev.target.closest("[data-ex]"); if (!b) return; this.hidden = true; finishEdit();
+  function exportAs(kind) {
+    var b = { dataset: { ex: kind } }; finishEdit();
     var t = $("title").value.trim() || "Untitled presentation";
     if (b.dataset.ex === "pdf") {
       var pa = $("printArea"); pa.innerHTML = "";
@@ -388,13 +429,55 @@
     Office.toast("Making your PowerPoint…");
     Pptx.build(deck, THEMES, t).then(function (blob) { Office.download(blob, Office.safeName(t, ".pptx")); })
       .catch(function (e) { Office.toast("Couldn't make the PowerPoint: " + (e.message || e), true); });
+  }
+  Office.ribbon();
+  $("fileTab").onclick = function () {
+    finishEdit(); saver.now();
+    Office.backstage({
+      print: function () { exportAs("pdf"); },
+      pages: {
+        home: { label: "Home", title: $("title").value, items: [
+          { a: "new", icon: "📄", title: "Blank presentation", sub: "Start fresh" },
+          { a: "tpl-project", icon: "🔬", title: "Project presentation", sub: "Title, aims, what I found, conclusion" },
+          { a: "tpl-book", icon: "📚", title: "Book review", sub: "The story, characters, my rating" },
+          { a: "tpl-me", icon: "🙋", title: "All about me", sub: "A quick introduction" },
+          { a: "open", icon: "📂", title: "Open", sub: "Your presentations, or a .pptx from this device" }] },
+        save: { label: "Save a copy", title: "Save a copy", items: [
+          { a: "ex-pptx", icon: "📙", title: "PowerPoint", sub: ".pptx - PowerPoint, Keynote, Google Slides" },
+          { a: "ex-pdf", icon: "📄", title: "PDF", sub: "One slide per page - print, then “Save as PDF”" }] },
+        info: { label: "Info", html: function () { return '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + Office.esc($("title").value) + "</dd><dt>Saved</dt><dd>" + (Office.isCloud() ? "In your Launchpad account" : "In this browser") + "</dd><dt>Slides</dt><dd>" + deck.slides.length + "</dd><dt>Theme</dt><dd>" + Office.esc(T().name) + "</dd></dl>"; } }
+      },
+      onPick: function (a) {
+        if (a === "new") fresh(); else if (a === "open") $("filesBtn").click();
+        else if (a.indexOf("ex-") === 0) exportAs(a.slice(3)); else template(a);
+      }
+    });
   };
+  function template(t) {
+    var P = function (h) { return "<ul>" + h.map(function (x) { return "<li>" + Office.esc(x) + "</li>"; }).join("") + "</ul>"; };
+    var defs = {
+      "tpl-project": ["Project presentation", "aurora", [["title", "My project", "Your name · Class"], ["content", "What I wanted to find out", P(["My question", "Why it matters"])], ["two", "What I did", P(["Step one", "Step two"]), P(["What I used", "How I kept it fair"])], ["content", "What I found", P(["Result one", "Result two"])], ["content", "Conclusion", P(["What it means", "What I'd do next time"])]]],
+      "tpl-book": ["Book review", "paper", [["title", "Book title", "by the author"], ["content", "The story", P(["Where it happens", "What happens"])], ["two", "Characters", P(["Main character"]), P(["Other characters"])], ["content", "My rating ★★★★☆", P(["What I liked", "What I didn't"])]]],
+      "tpl-me": ["All about me", "glass", [["title", "All about me", "Your name"], ["content", "Things I like", P(["Hobby", "Food", "Favourite subject"])], ["content", "My goals", P(["This year", "When I'm older"])]]]
+    }[t];
+    if (!defs) return;
+    fresh(); $("title").value = defs[0]; deck.theme = defs[1];
+    deck.slides = defs[2].map(function (d) {
+      var sl = layout(d[0]), texts = d.slice(1);
+      sl.els.filter(function (e) { return e.type === "text"; }).forEach(function (e, i) {
+        if (texts[i] === undefined) return; e.html = /^</.test(texts[i]) ? texts[i] : Office.esc(texts[i]);
+      });
+      return sl;
+    });
+    cur = 0; draw(); saver.now();
+  }
 
   /* ---------- files ---------- */
   function clean(d) {
     d = d && d.slides && d.slides.length ? d : { theme: "aurora", slides: [layout("title")] };
     d.theme = THEMES[d.theme] ? d.theme : "classic";
     d.slides = d.slides.slice(0, 200).map(function (s) {
+      if (s.bg && !/^#[0-9a-f]{6}$/i.test(s.bg)) delete s.bg; s.hidden = !!s.hidden;
       s.id = s.id || uid(); s.els = (s.els || []).slice(0, 80).filter(function (e) { return e && /^(text|img|shape)$/.test(e.type); });
       s.els.forEach(function (e) {
         e.id = e.id || uid(); ["x", "y", "w", "h", "size"].forEach(function (k) { e[k] = +e[k] || 0; });

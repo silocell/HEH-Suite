@@ -86,3 +86,55 @@ button{cursor:pointer}
 .foot{flex:none;display:flex;align-items:center;gap:16px;padding:5px 14px;font-size:.8rem;color:var(--soft);background:var(--tool);border-top:1px solid var(--rule)}
 .foot .sp{flex:1}
 .foot input[type=range]{width:110px;accent-color:var(--a1)}
+
+/* ===== Office-style tabs, ribbon and File screen (shared by the Suite apps) ===== */
+/* ---- tabs and ribbon, like Word ---- */
+.tabsbar{flex:none;display:flex;gap:2px;padding:4px 10px 0;background:var(--tool);overflow-x:auto;scrollbar-width:none}
+.tabsbar button{border:0;background:transparent;padding:7px 14px 8px;border-radius:10px 10px 0 0;font-weight:600;font-size:.9rem;color:var(--soft);white-space:nowrap}
+.tabsbar button:hover{color:var(--ink);background:var(--hover)}
+.tabsbar button[aria-selected="true"]{color:var(--a1);background:var(--card);box-shadow:inset 0 -3px 0 var(--a1)}
+.tabsbar button.file{color:#fff;background:var(--a1);margin-right:6px}
+.tabsbar button.ctx{color:#b45309}
+.tabsbar button.ctx[aria-selected="true"]{color:#b45309;box-shadow:inset 0 -3px 0 #f59e0b}
+.ribbon[data-panel]{align-items:stretch;padding:6px 8px 4px;min-height:96px;background:var(--card)}
+.ribbon[hidden]{display:none!important}
+.rg{display:flex;flex-direction:column;justify-content:space-between;padding:0 8px;border-right:1px solid var(--rule);gap:3px}
+.rg:last-child{border-right:0}
+.rg .row{display:flex;gap:2px;align-items:center;flex-wrap:wrap}
+.rg .gl{font-size:.7rem;color:var(--soft);text-align:center;padding-top:2px;white-space:nowrap}
+.big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;height:62px;border:1px solid transparent;background:transparent;border-radius:10px;font-size:.74rem;font-weight:600;color:var(--ink);padding:2px 6px;line-height:1.1;text-align:center}
+.big i{font-style:normal;font-size:1.5rem;line-height:1}
+.big:hover{background:var(--hover)}
+.big[aria-pressed="true"]{background:var(--on)}
+label.big{cursor:pointer}
+.gallery{display:flex;gap:4px;overflow-x:auto;max-width:300px;padding:2px;flex-wrap:nowrap!important}
+@media (min-width:1400px){ .gallery{max-width:560px} }
+.gallery button{flex:none;width:86px;height:56px;border:1px solid var(--rule);border-radius:9px;background:#fff;color:#1b1b1b;text-align:left;padding:4px 8px;overflow:hidden;white-space:nowrap}
+.gallery button small{display:block;font:500 9px var(--ui);color:#6b7280;margin-top:2px}
+.gallery button[aria-pressed="true"]{border-color:var(--a1);box-shadow:0 0 0 2px color-mix(in srgb,var(--a1) 30%,transparent)}
+.ddwrap{position:relative}
+.dd{position:absolute;top:calc(100% + 4px);left:0;z-index:40;background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:8px;box-shadow:0 14px 34px -10px rgba(0,0,0,.35);min-width:170px}
+.dd button.opt{display:flex;width:100%;gap:8px;align-items:center;border:0;background:transparent;padding:8px 10px;border-radius:8px;text-align:left;white-space:nowrap}
+.dd button.opt:hover{background:var(--hover)}
+.dd button.opt[aria-pressed="true"]{background:var(--on)}
+.tgrid{display:grid;grid-template-columns:repeat(10,18px);gap:3px}
+.tgrid span{width:18px;height:18px;border:1px solid var(--rule);border-radius:3px;background:var(--tool)}
+.tgrid span.on{background:color-mix(in srgb,var(--a1) 35%,transparent);border-color:var(--a1)}
+.tgrid-lbl{font-size:.8rem;color:var(--soft);margin:6px 0 2px;text-align:center}
+.symgrid{display:grid;grid-template-columns:repeat(10,34px);gap:4px}
+.symgrid button{height:34px;border:1px solid var(--rule);border-radius:8px;background:var(--tool);font-size:1.05rem}
+.symgrid button:hover{background:var(--hover)}
+/* backstage (File) */
+#backstage{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex}
+#backstage nav{width:230px;background:var(--a1);color:#fff;padding:16px 10px;display:flex;flex-direction:column;gap:4px}
+#backstage nav button{border:0;background:transparent;color:#fff;text-align:left;padding:10px 14px;border-radius:10px;font-weight:600;font-size:.95rem}
+#backstage nav button:hover,#backstage nav button[aria-selected="true"]{background:rgba(255,255,255,.18)}
+#backstage section{flex:1;overflow:auto;padding:28px 34px}
+#backstage h2{margin:0 0 16px}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;max-width:900px}
+.bgrid button{display:flex;gap:12px;align-items:center;text-align:left;padding:14px;border-radius:16px;border:1px solid var(--rule);background:var(--card)}
+.bgrid button:hover{background:var(--hover)}
+.bgrid i{font-style:normal;font-size:1.8rem}
+.bgrid small{display:block;color:var(--soft);font-size:.8rem}
+.info dt{color:var(--soft);font-size:.85rem}.info dd{margin:0 0 12px;font-weight:600}
+@media (max-width:700px){ #backstage{flex-direction:column} #backstage nav{width:auto;flex-direction:row;overflow-x:auto} }
