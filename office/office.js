@@ -149,6 +149,21 @@
     return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
   }
 
+  /* ---- shared storage: 10 GB for everyone, shown as a bar ---- */
+  function size(n) { return n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB" : n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+  function storage() {
+    if (!cloud || !sb) return Promise.resolve(null);
+    return sb.rpc("storage_info").then(function (r) { return r.error ? null : r.data; }, function () { return null; });
+  }
+  function storageBar(el) {
+    storage().then(function (s) {
+      if (!s || !el) return;
+      var pct = Math.min(100, s.used / s.limit * 100), col = pct > 90 ? "#dc2626" : pct > 70 ? "#f59e0b" : "var(--a1)";
+      el.innerHTML = '<div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--soft);margin-bottom:4px"><span>☁️ Suite storage: <b style="color:var(--ink)">' + size(s.used) + "</b> of " + size(s.limit) + " shared by everyone</span><span>Yours: " + size(s.mine) + "</span></div>" +
+        '<div style="height:8px;border-radius:999px;background:var(--tool);overflow:hidden"><div style="height:100%;width:' + pct.toFixed(1) + "%;background:" + col + ';border-radius:999px"></div></div>';
+    });
+  }
+
   /* ---- the Files window ---- */
   function filesDialog(opts) {
     var dlg = document.getElementById("ofFiles");
@@ -163,7 +178,8 @@
         : (user ? "Saved in this browser for now." : "Saved in this browser. Sign in on the Launchpad to keep them in your account.")) + '</p>' +
       '<div class="of-new"><button type="button" class="of-btn" data-act="new">＋ New ' + esc(opts.noun) + '</button>' +
       '<label class="of-btn ghost">Open a file from your device<input type="file" hidden></label></div>' +
-      '<ul class="of-list"><li class="of-empty">Loading…</li></ul>';
+      '<ul class="of-list"><li class="of-empty">Loading…</li></ul><div class="of-store" style="margin-top:12px"></div>';
+    storageBar(dlg.querySelector(".of-store"));
     var ul = dlg.querySelector(".of-list");
     function draw() {
       list().then(function (rows) {
@@ -430,6 +446,7 @@
 
   window.Office = {
     ribbon: ribbon, backstage: backstage,
+    storage: storage, storageBar: storageBar, size: size,
     install: install, canInstall: canInstall, isApp: isApp, setImporter: setImporter, sb: function () { return sb; },
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,

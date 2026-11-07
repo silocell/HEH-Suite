@@ -85,6 +85,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
   <h2>Recent files</h2>
   <ul class="recent" id="recent"><li class="empty">Loading…</li></ul>
   <p class="where" id="where"></p>
+  <div id="store" style="max-width:520px;margin-top:10px"></div>
   <section class="get" aria-labelledby="getH">
     <h2 id="getH">Get the app</h2>
     <p>Install the Suite so it has its own icon and works without the internet. It's free and open source.</p>
@@ -98,7 +99,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
-<script src="/office/office.js?b=20261107a"></script>
+<script src="/office/office.js?b=20261107b"></script>
 <script>
 (function(){
   Office.themeToggle(document.getElementById("themeBtn"));
@@ -119,6 +120,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
       return '<li><a href="/' + o.a[1] + '/?id=' + encodeURIComponent(o.r.id) + '"><span class="ic">' + o.a[2] + '</span><span><strong>' +
         Office.esc(o.r.title || "Untitled") + '</strong><small>' + Office.esc(o.a[1][0].toUpperCase() + o.a[1].slice(1)) + (d ? " · " + d : "") + "</small></span></a></li>";
     }).join("") || '<li class="empty">Nothing yet - pick an app above to start.</li>';
+    Office.storageBar(document.getElementById("store"));
     document.getElementById("where").textContent = cloud ? "Your files are saved to your Launchpad account, so they follow you to any device."
       : user ? "Your files are saved in this browser for now." : "You're not signed in, so files are saved in this browser. Sign in on the Launchpad to keep them in your account.";
   });
