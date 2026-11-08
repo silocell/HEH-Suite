@@ -73,9 +73,11 @@
 
   function list() {
     if (cloud) {
-      return sb.from("office_files").select("id,title,updated_at").eq("kind", kind)
+      // files shared with you come too (user_id isn't yours)
+      return sb.from("office_files").select("id,title,updated_at,user_id").eq("kind", kind)
         .order("updated_at", { ascending: false }).limit(300).then(function (r) {
-          if (r.error) throw r.error; return r.data || [];
+          if (r.error) throw r.error;
+          return (r.data || []).map(function (x) { x.shared = !!(user && x.user_id && x.user_id !== user.id); return x; });
         });
     }
     var all = lall();
@@ -186,8 +188,8 @@
         if (!rows.length) { ul.innerHTML = '<li class="of-empty">Nothing here yet.</li>'; return; }
         ul.innerHTML = rows.map(function (r) {
           return '<li' + (r.id === opts.current ? ' class="cur"' : '') + '><button type="button" class="of-open" data-id="' + esc(r.id) + '">' +
-            '<span class="of-ic">' + opts.icon + '</span><span><strong>' + esc(r.title || "Untitled") + '</strong><small>' + esc(when(r.updated_at)) + '</small></span></button>' +
-            '<button type="button" class="of-del" data-del="' + esc(r.id) + '" aria-label="Delete ' + esc(r.title || "Untitled") + '">🗑</button></li>';
+            '<span class="of-ic">' + opts.icon + '</span><span><strong>' + esc(r.title || "Untitled") + '</strong><small>' + (r.shared ? "👥 Shared with you · " : "") + esc(when(r.updated_at)) + '</small></span></button>' +
+            (r.shared ? "" : '<button type="button" class="of-del" data-del="' + esc(r.id) + '" aria-label="Delete ' + esc(r.title || "Untitled") + '">🗑</button>') + '</li>';
         }).join("");
       }).catch(function (e) { ul.innerHTML = '<li class="of-empty">Couldn\'t load your files: ' + esc(e.message || e) + '</li>'; });
     }
@@ -242,20 +244,22 @@
   }
 
   /* ---- a debounced autosaver with a status line ---- */
-  function autosaver(statusEl, getFile) {
+  function autosaver(statusEl, getFile, o) {
     var t = null, busy = false, again = false;
+    o = o || {};
     function label(s) { statusEl.textContent = s; }
     function run() {
       if (busy) { again = true; return; }
+      if (o.skip && o.skip()) { if (o.done) o.done(); return; }   // view only: nothing to save
       busy = true; label("Saving…");
-      save(getFile()).then(function () {
+      (o.save || save)(getFile()).then(function () {
         label(cloud ? "✓ Saved to your account" : "✓ Saved on this device");
       }).catch(function (e) {
         label("⚠ Not saved"); toast("Couldn't save: " + (e.message || e), true);
-      }).then(function () { busy = false; if (again) { again = false; run(); } });
+      }).then(function () { busy = false; if (again) { again = false; run(); } else if (o.done) o.done(); });
     }
     return {
-      poke: function () { label("Editing…"); clearTimeout(t); t = setTimeout(run, 1200); },
+      poke: function () { if (o.skip && o.skip()) return; label("Editing…"); clearTimeout(t); t = setTimeout(run, 1200); },
       now: function () { clearTimeout(t); run(); }
     };
   }
@@ -327,6 +331,7 @@
         var CLS = /\b(doc-title|doc-subtitle|todo|done|cmt|pb|toc|toch)\b/g;
         if (n.className && typeof n.className === "string" && n.className.match(CLS)) el.className = n.className.match(CLS).join(" ");
         var dc = n.getAttribute("data-c"); if (dc && /^[a-z0-9]{1,16}$/.test(dc)) el.setAttribute("data-c", dc);
+        var db = n.getAttribute("data-b"); if (db && /^[a-z0-9]{1,16}$/.test(db)) el.setAttribute("data-b", db);   // paragraph ids, for working together
         if (name !== "BR" && name !== "HR" && name !== "IMG" && name !== "INPUT") walk(n, el);
         dst.appendChild(el);
       }

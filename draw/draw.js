@@ -12,7 +12,31 @@
   var saver = Office.autosaver($("status"), function () {
     file.title = $("title").value.trim() || "Untitled board";
     return { id: file.id, title: file.title, body: { items: items, bg: bg, view: view } };
+  }, {
+    /* working together: someone else's change came in (each shape is its own part) */
+    local: ["view"], surface: board, ring: "shadow",
+    where: function () { return sel ? '#world [data-i="' + sel + '"]' : ""; },
+    apply: function (b, title) {
+      if (document.activeElement !== $("title")) $("title").value = title || "Untitled board";
+      var keepView = view; clean(b); view = keepView;
+      if (sel && !find(sel)) sel = null;
+      draw(); $("hint").hidden = items.length > 0;
+      if (edState) {
+        var n = find(edState.it.id), ta = edState.ta;
+        if (!n) { edState = null; ta.remove(); return; }
+        edState.it = n;
+        if (ta.value !== n.text) {
+          // keep the cursor in the same place in the words
+          var o = ta.value, nt = n.text, at = ta.selectionStart, p = 0, q = 0, mn = Math.min(o.length, nt.length);
+          while (p < mn && o.charCodeAt(p) === nt.charCodeAt(p)) p++;
+          while (q < mn - p && o.charCodeAt(o.length - 1 - q) === nt.charCodeAt(nt.length - 1 - q)) q++;
+          ta.value = nt; at = at <= p ? at : at >= o.length - q ? at + nt.length - o.length : nt.length - q;
+          ta.selectionStart = ta.selectionEnd = at;
+        }
+      }
+    }
   });
+  var edState = null;
   function uid() { return Math.random().toString(36).slice(2, 10); }
   function esc(s) { return Office.esc(s); }
 
@@ -245,13 +269,16 @@
     // after the tap that made it has finished, or the board takes the focus back
     ta.focus(); setTimeout(function () { ta.focus(); }, 0);
     if (!isNew) mark();
+    edState = { it: it, ta: ta };
     ta.addEventListener("input", function () {
+      it = edState && edState.ta === ta ? edState.it : it;
       it.text = ta.value.slice(0, 4000);
       if (it.t === "text") { var lines = wrap(it.text, it.w - 16, it.fs).length; it.h = Math.max(40, lines * it.fs * 1.25 + 16); ta.style.height = it.h * view.z + "px"; }
-      drawOne(it);
+      drawOne(it); saver.poke();
     });
     ta.addEventListener("keydown", function (e) { if (e.key === "Escape" || (e.key === "Enter" && (e.ctrlKey || e.metaKey))) ta.blur(); e.stopPropagation(); });
     ta.addEventListener("blur", function () {
+      if (edState && edState.ta === ta) { it = edState.it; edState = null; }
       ta.remove();
       if (it.t === "text" && !it.text.trim()) { items = items.filter(function (i) { return i !== it; }); sel = null; }
       draw(); changed();
@@ -390,13 +417,14 @@
     history.replaceState(null, "", "?id=" + encodeURIComponent(f.id));
     try { localStorage.setItem("hl.draw.last", f.id); } catch (e) {}
     $("status").textContent = Office.isCloud() ? "Saved to your account" : "Saved on this device";
+    saver.opened();
   }
   function fresh() {
     file = { id: Office.uuid(), title: "Untitled board" }; $("title").value = file.title;
     clean(null); undo = []; redo = []; sel = null; draw(); applyView(); $("hint").hidden = false;
     history.replaceState(null, "", "?id=" + encodeURIComponent(file.id));
     try { localStorage.setItem("hl.draw.last", file.id); } catch (e) {}
-    saver.now();
+    saver.now(); saver.opened();
   }
   function openId(id) {
     $("status").textContent = "Opening…";

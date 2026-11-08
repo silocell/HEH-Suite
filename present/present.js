@@ -22,6 +22,41 @@
   var saver = Office.autosaver($("status"), function () {
     file.title = $("title").value.trim() || "Untitled presentation";
     return { id: file.id, title: file.title, body: deck };
+  }, {
+    /* working together: someone else's change came in (each box on each slide is its own part) */
+    surface: $("stage"),
+    where: function () { return '.thumb[data-i="' + cur + '"]' + (selId ? ', .slide.edit .el[data-id="' + selId + '"]' : ""); },
+    apply: function (b, title) {
+      if (document.activeElement !== $("title")) $("title").value = title || "Untitled presentation";
+      var sid = S() && S().id, ed = editingId, off = null, d0 = ed && domOf(ed);
+      var oldText = d0 ? d0.textContent : "";
+      if (d0) { var sl = getSelection(); if (sl.rangeCount && d0.contains(sl.anchorNode)) { var r = document.createRange(); r.setStart(d0, 0); r.setEnd(sl.anchorNode, sl.anchorOffset); off = r.toString().length; } }
+      var notesOn = document.activeElement === $("notes"), nPos = notesOn ? $("notes").selectionStart : 0;
+      deck = clean(b);
+      var i = deck.slides.map(function (x) { return x.id; }).indexOf(sid);
+      cur = i >= 0 ? i : Math.max(0, Math.min(cur, deck.slides.length - 1));
+      if (selId && !find(selId)) selId = null;
+      editingId = null; draw(); if (selId) drawSel();
+      if (notesOn) { $("notes").focus(); $("notes").selectionStart = $("notes").selectionEnd = nPos; }
+      if (ed && find(ed)) {
+        // carry on typing in the box you were in
+        var e = find(ed), d = domOf(ed); if (!d) return;
+        editingId = ed; d.contentEditable = "true"; d.focus();
+        d.oninput = function () { e.html = Office.cleanHTML(d.innerHTML); changed(); };
+        d.onpaste = function (ev) { ev.preventDefault(); document.execCommand("insertText", false, (ev.clipboardData || window.clipboardData).getData("text/plain")); };
+        // move the cursor along with words someone added or took away before it
+        if (off != null) {
+          var nt = d.textContent, p = 0, q = 0, mn = Math.min(oldText.length, nt.length);
+          while (p < mn && oldText.charCodeAt(p) === nt.charCodeAt(p)) p++;
+          while (q < mn - p && oldText.charCodeAt(oldText.length - 1 - q) === nt.charCodeAt(nt.length - 1 - q)) q++;
+          off = off <= p ? off : off >= oldText.length - q ? off + nt.length - oldText.length : nt.length - q;
+        }
+        var w = document.createTreeWalker(d, NodeFilter.SHOW_TEXT), left = off == null ? 1e9 : off, tn, last = null, sel = getSelection(), rr = document.createRange();
+        while ((tn = w.nextNode())) { last = tn; if (left <= tn.nodeValue.length) { rr.setStart(tn, left); break; } left -= tn.nodeValue.length; }
+        if (!tn) { rr.selectNodeContents(d); rr.collapse(false); } else rr.collapse(true);
+        sel.removeAllRanges(); sel.addRange(rr);
+      }
+    }
   });
   function uid() { return Math.random().toString(36).slice(2, 10); }
   function T() { return THEMES[deck.theme] || THEMES.classic; }
@@ -496,13 +531,14 @@
     history.replaceState(null, "", "?id=" + encodeURIComponent(f.id));
     try { localStorage.setItem("hl.present.last", f.id); } catch (e) {}
     $("status").textContent = Office.isCloud() ? "Saved to your account" : "Saved on this device";
+    saver.opened();
   }
   function fresh() {
     file = { id: Office.uuid(), title: "Untitled presentation" }; $("title").value = file.title;
     deck = clean(null); cur = 0; selId = null; undo = []; redo = []; draw();
     history.replaceState(null, "", "?id=" + encodeURIComponent(file.id));
     try { localStorage.setItem("hl.present.last", file.id); } catch (e) {}
-    saver.now();
+    saver.now(); saver.opened();
   }
   function openId(id) {
     $("status").textContent = "Opening…";

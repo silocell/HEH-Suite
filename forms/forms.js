@@ -11,6 +11,49 @@
   function status(t) { $("status").textContent = t || ""; }
   var SITE = "https://suite.civilinitiatives.org/forms/";
 
+  /* Saving, and working on a form together with other teachers live. */
+  var saver = Office.autosaver($("status"), function () {
+    return form ? { id: form.id, title: form.title, body: { body: form.body, key: key, settings: form.settings, open: form.open } } : { id: null, title: "", body: {} };
+  }, {
+    shareLabel: "Editors", editOnly: true, surface: main,
+    save: function (f) {
+      if (!form || f.id !== form.id) return Promise.resolve(f);
+      return sb.from("forms").update({ title: form.title, body: form.body, answer_key: key, settings: form.settings, open: form.open }).eq("id", form.id)
+        .then(function (r) { if (r.error) throw r.error; return f; });
+    },
+    where: function () { return selQ ? '.q[data-q="' + selQ + '"]' : ""; },
+    apply: function (b, title) {
+      if (!form) return;
+      var nb = b.body && typeof b.body === "object" ? b.body : {}; nb.questions = Array.isArray(nb.questions) ? nb.questions : [];
+      nb.questions.forEach(function (q) { q.options = Array.isArray(q.options) ? q.options : []; });
+      form.title = String(title || "Untitled").slice(0, 150); form.body = nb; key = b.key && typeof b.key === "object" ? b.key : {};
+      form.settings = b.settings && typeof b.settings === "object" ? b.settings : {}; form.open = b.open !== false;
+      if (tab === "r") return;
+      var fs = focusNow(); render(); focusBack(fs);
+    }
+  });
+  /* where the cursor was, so a change from someone else doesn't move it */
+  function focusNow() {
+    var a = document.activeElement; if (!a || !main.contains(a) || !/INPUT|TEXTAREA/.test(a.tagName)) return null;
+    var card = a.closest("[data-q]"), what = a.id ? "#" + a.id : a.matches("input.qt") ? "input.qt" : a.matches("input[data-key]") ? "input[data-key]" : a.matches("input[data-pts]") ? "input[data-pts]" : a.matches("input.ot") ? "input.ot" : null;
+    if (!what) return null;
+    var idx = what === "input.ot" ? Array.prototype.indexOf.call(card.querySelectorAll("input.ot"), a) : 0;
+    var st = null; try { st = a.selectionStart; } catch (e) {}
+    return { q: card && card.dataset.q, what: what, idx: idx, at: st, val: a.value };
+  }
+  function focusBack(f) {
+    if (!f) return;
+    var root = f.q ? main.querySelector('[data-q="' + f.q + '"]') : main; if (!root) return;
+    var el = f.what === "input.ot" ? root.querySelectorAll("input.ot")[f.idx] : root.querySelector(f.what); if (!el) return;
+    el.focus();
+    if (f.at == null) return;
+    var o = f.val, nt = el.value, at = f.at, p = 0, q = 0, mn = Math.min(o.length, nt.length);
+    while (p < mn && o.charCodeAt(p) === nt.charCodeAt(p)) p++;
+    while (q < mn - p && o.charCodeAt(o.length - 1 - q) === nt.charCodeAt(nt.length - 1 - q)) q++;
+    at = at <= p ? at : at >= o.length - q ? at + nt.length - o.length : nt.length - q;
+    try { el.selectionStart = el.selectionEnd = at; } catch (e) {}
+  }
+
   /* ---------- start ---------- */
   Office.init("form").then(function (st) {
     sb = Office.sb(); user = st.user;
@@ -32,14 +75,14 @@
 
   /* ---------- my forms ---------- */
   function myForms() {
-    form = null; status("");
-    sb.from("forms").select("id,title,updated_at,open,settings").order("updated_at", { ascending: false }).limit(200).then(function (r) {
+    form = null; status(""); saver.opened();
+    sb.from("forms").select("id,title,updated_at,open,settings,owner").order("updated_at", { ascending: false }).limit(200).then(function (r) {
       if (r.error) { serverMissing(); return; }
       var rows = r.data || [];
       main.innerHTML = '<div class="card headcard"><h1 style="margin:0 0 6px">Forms &amp; Quizzes</h1><p style="margin:0;color:var(--soft)">Make a survey or a quiz, share the link with your class, and see the answers come in.</p>' +
         '<div class="of-new" style="margin-top:14px"><button type="button" class="of-btn" data-new="form">＋ New form</button><button type="button" class="of-btn" data-new="quiz" style="background:#0d9488">＋ New quiz</button></div></div>' +
         (rows.length ? '<h2 style="font-size:1.05rem">Your forms</h2><div class="mylist">' + rows.map(function (f) {
-          return '<a href="?edit=' + f.id + '"><span><b>' + esc(f.title) + "</b><br><small>" + ((f.settings || {}).quiz ? "Quiz" : "Form") + " · " + (f.open ? "open" : "closed") + "</small></span><small>" + new Date(f.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + "</small></a>";
+          return '<a href="?edit=' + f.id + '"><span><b>' + esc(f.title) + "</b><br><small>" + (user && f.owner && f.owner !== user.id ? "👥 Shared with you · " : "") + ((f.settings || {}).quiz ? "Quiz" : "Form") + " · " + (f.open ? "open" : "closed") + "</small></span><small>" + new Date(f.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + "</small></a>";
         }).join("") + "</div>" : '<p style="color:var(--soft);text-align:center">You haven\'t made any yet.</p>');
       main.querySelectorAll("[data-new]").forEach(function (b) { b.onclick = function () { newForm(b.dataset.new === "quiz"); }; });
       main.querySelectorAll(".mylist a").forEach(function (a) { a.onclick = function (e) { e.preventDefault(); var id = a.getAttribute("href").split("=")[1]; history.pushState(null, "", "?edit=" + id); openForm(id); }; });
@@ -59,17 +102,10 @@
     sb.from("forms").select("*").eq("id", id).maybeSingle().then(function (r) {
       if (r.error || !r.data) { Office.toast("Couldn't open that form.", true); myForms(); return; }
       form = r.data; form.body = form.body || {}; form.body.questions = form.body.questions || []; form.settings = form.settings || {};
-      key = form.answer_key || {}; tab = "q"; render();
+      key = form.answer_key || {}; tab = "q"; render(); saver.opened();
     });
   }
-  function save() {
-    clearTimeout(saveT); status("Saving…");
-    saveT = setTimeout(function () {
-      sb.from("forms").update({ title: form.title, body: form.body, answer_key: key, settings: form.settings, open: form.open }).eq("id", form.id).then(function (r) {
-        status(r.error ? "⚠ Not saved" : "✓ Saved"); if (r.error) Office.toast(r.error.message, true);
-      });
-    }, 700);
-  }
+  function save() { saver.poke(); }
   function render() {
     var s = form.settings;
     main.innerHTML = '<nav class="tabs2" role="tablist"><button type="button" data-tab="q" aria-selected="' + (tab === "q") + '">Questions</button><button type="button" data-tab="r" aria-selected="' + (tab === "r") + '">Answers</button><button type="button" data-tab="s" aria-selected="' + (tab === "s") + '">Share</button><button type="button" data-tab="p" aria-selected="' + (tab === "p") + '">Preview</button></nav><div id="pane"></div>';
@@ -222,6 +258,7 @@
 
   /* ---------- answering ---------- */
   function answer(fid) {
+    form = null; saver.opened();
     sb.rpc("get_form", { fid: fid }).then(function (r) {
       if (r.error) { if (/function|schema cache/i.test(r.error.message)) serverMissing(); else main.innerHTML = '<p class="center bad">' + esc(r.error.message) + "</p>"; return; }
       var f = r.data;

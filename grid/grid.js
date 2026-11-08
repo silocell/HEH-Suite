@@ -15,6 +15,20 @@
   var saver = Office.autosaver(statusEl, function () {
     file.title = titleIn.value.trim() || "Untitled spreadsheet";
     return { id: file.id, title: file.title, body: { sheets: book.sheets, active: book.active } };
+  }, {
+    /* working together: someone else's change came in (each cell is its own part) */
+    local: ["active"], surface: wrap,
+    where: function () { return 'table[data-s="' + book.active + '"] tbody tr:nth-child(' + (sel.r + 1) + ") td:nth-child(" + (sel.c + 2) + ")"; },
+    apply: function (b, title) {
+      if (document.activeElement !== titleIn) titleIn.value = title || "Untitled spreadsheet";
+      var sheets = tidySheets(b), old = book.sheets;
+      var big = sheets.length !== old.length || sheets.some(function (s, i) {
+        return s.rows !== old[i].rows || s.cols !== old[i].cols || s.name !== old[i].name || JSON.stringify(s.w) !== JSON.stringify(old[i].w);
+      });
+      if (big && editing) stopEdit(true);
+      book.sheets = sheets; book.active = Math.min(book.active, sheets.length - 1); sh = book.sheets[book.active];
+      if (big) { build(); tabs(); } else { paintAll(); place(); }
+    }
   });
 
   /* ================= values ================= */
@@ -75,7 +89,7 @@
       for (c = 0; c < sh.cols; c++) h += "<td></td>";
       h += "</tr>";
     }
-    table.innerHTML = h + "</tbody>";
+    table.innerHTML = h + "</tbody>"; table.setAttribute("data-s", book.active);
     tds = []; rowHeads = []; drawn = {};
     var trs = table.tBodies[0].rows;
     for (r = 0; r < trs.length; r++) { rowHeads.push(trs[r].cells[0]); tds.push(Array.prototype.slice.call(trs[r].cells, 1)); }
@@ -755,11 +769,14 @@
   });
 
   /* ================= files ================= */
-  function useBook(b) {
-    var sheets = (b && b.sheets && b.sheets.length ? b.sheets : [blankSheet(1)]).slice(0, 20).map(function (s, i) {
+  function tidySheets(b) {
+    return (b && b.sheets && b.sheets.length ? b.sheets : [blankSheet(1)]).slice(0, 20).map(function (s, i) {
       return { name: String(s.name || "Sheet" + (i + 1)).slice(0, 31), cells: s.cells && typeof s.cells === "object" ? s.cells : {}, w: s.w || {},
         rows: Math.max(100, Math.min(MAXR, +s.rows || 100)), cols: Math.max(26, Math.min(MAXC, +s.cols || 26)) };
     });
+  }
+  function useBook(b) {
+    var sheets = tidySheets(b);
     book = { sheets: sheets, active: Math.min(sheets.length - 1, Math.max(0, +b.active || 0)) };
     undo = []; redo = []; switchSheet(book.active);
   }
@@ -769,13 +786,14 @@
     history.replaceState(null, "", "?id=" + encodeURIComponent(f.id));
     try { localStorage.setItem("hl.grid.last", f.id); } catch (e) {}
     statusEl.textContent = Office.isCloud() ? "Saved to your account" : "Saved on this device";
+    saver.opened();
   }
   function fresh(title, b) {
     file = { id: Office.uuid(), title: title || "Untitled spreadsheet" }; titleIn.value = file.title;
     useBook(b || {});
     history.replaceState(null, "", "?id=" + encodeURIComponent(file.id));
     try { localStorage.setItem("hl.grid.last", file.id); } catch (e) {}
-    saver.now(); wrap.focus();
+    saver.now(); saver.opened(); wrap.focus();
   }
   function openId(id) {
     statusEl.textContent = "Opening…";

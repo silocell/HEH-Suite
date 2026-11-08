@@ -8,6 +8,23 @@
     flush();
     file.title = titleIn.value.trim() || "My Notebook";
     return { id: file.id, title: file.title, body: nb };
+  }, {
+    /* working together: someone else's change came in */
+    html: true, surface: note,
+    apply: function (b, title) {
+      if (document.activeElement !== titleIn) titleIn.value = title || "My Notebook";
+      var sid = sec && sec.id, pid = page && page.id;
+      nb = clean(b);
+      sec = nb.sections.filter(function (s) { return s.id === sid; })[0] || nb.sections[0];
+      var p = sec.pages.filter(function (x) { return x.id === pid; })[0];
+      if (p && pid) {
+        page = p;
+        Office.patchBlocks(note, p.html);
+        if (document.activeElement !== ptitle) ptitle.value = p.title;
+        sizeInk(); redrawInk();
+      } else openPage(sec.pages[0] || null);
+      drawSecs(); drawPages(); pageLook();
+    }
   });
   function uid() { return Math.random().toString(36).slice(2, 10); }
   function now() { return new Date().toISOString(); }
@@ -24,7 +41,7 @@
     b.sections = b.sections.slice(0, 60).map(function (s, i) {
       return { id: s.id || uid(), name: String(s.name || "Section").slice(0, 60), color: /^#[0-9a-f]{6}$/i.test(s.color) ? s.color : COLS[i % COLS.length],
         pages: (s.pages || []).slice(0, 300).map(function (p) {
-          return { id: p.id || uid(), title: String(p.title || "").slice(0, 120), html: Office.cleanHTML(p.html || ""), ink: Array.isArray(p.ink) ? p.ink.slice(0, 3000) : [],
+          return { id: p.id || uid(), title: String(p.title || "").slice(0, 120), html: Office.cleanHTML(p.html || ""), ink: Array.isArray(p.ink) ? p.ink.slice(0, 3000).filter(function (k) { return k && Array.isArray(k.p); }).map(function (k, j) { if (typeof k.id !== "string") k.id = "k" + j; return k; }) : [],
             created: p.created || now(), updated: p.updated || now() };
         }) };
     });
@@ -130,6 +147,7 @@
   }
   function flush() {
     if (!page) return;
+    Office.blockIds(note);
     var c = note.cloneNode(true); c.querySelectorAll("mark.hit").forEach(function (m) { m.replaceWith(document.createTextNode(m.textContent)); });
     var h = c.innerHTML, t = ptitle.value.slice(0, 120);
     if (h !== page.html || t !== page.title) { page.html = h; page.title = t; page.updated = now(); }
@@ -245,7 +263,7 @@
     var p = at(e);
     if (erasing) { stroke = { erase: true }; eraseAt(p); return; }
     var w = +$("penSize").value; if (e.pointerType === "pen" && e.pressure) w = Math.max(1, w * (0.5 + e.pressure));
-    stroke = { c: pen === "hl" ? "#facc15" : pen, w: Math.round(w * 10) / 10, hl: pen === "hl", p: p.slice() };
+    stroke = { id: uid(), c: pen === "hl" ? "#facc15" : pen, w: Math.round(w * 10) / 10, hl: pen === "hl", p: p.slice() };
   });
   cv.addEventListener("pointermove", function (e) {
     if (!stroke) return; var p = at(e);
@@ -396,12 +414,13 @@
     history.replaceState(null, "", "?id=" + encodeURIComponent(f.id));
     try { localStorage.setItem("hl.nb.last", f.id); } catch (e) {}
     $("status").textContent = Office.isCloud() ? "Saved to your account" : "Saved on this device";
+    saver.opened();
   }
   function fresh() {
     file = { id: Office.uuid(), title: "My Notebook" }; titleIn.value = file.title; use(null);
     history.replaceState(null, "", "?id=" + encodeURIComponent(file.id));
     try { localStorage.setItem("hl.nb.last", file.id); } catch (e) {}
-    saver.now();
+    saver.now(); saver.opened();
   }
   function openId(id) {
     $("status").textContent = "Opening…";

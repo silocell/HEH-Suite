@@ -138,3 +138,20 @@ label.big{cursor:pointer}
 .bgrid small{display:block;color:var(--soft);font-size:.8rem}
 .info dt{color:var(--soft);font-size:.85rem}.info dd{margin:0 0 12px;font-weight:600}
 @media (max-width:700px){ #backstage{flex-direction:column} #backstage nav{width:auto;flex-direction:row;overflow-x:auto} }
+/* working together */
+.of-peers{display:inline-flex;align-items:center;margin-right:2px}
+.of-av{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font:700 12px var(--ui);border:2px solid var(--card);margin-left:-6px;flex:none}
+.of-peers .of-av:first-child{margin-left:0}
+.of-av.more{background:var(--soft)}
+.of-share .of-addp{display:flex;gap:6px;flex-wrap:wrap}
+.of-share .of-addp input{flex:1 1 200px;min-width:0;height:40px;border:1px solid var(--rule);border-radius:10px;padding:0 12px;background:var(--tool);color:var(--ink);font:inherit}
+.of-share select{height:40px;border:1px solid var(--rule);border-radius:10px;background:var(--card);color:var(--ink);padding:0 6px}
+.of-share .of-err{color:#dc2626;font-size:.86rem;margin:6px 0 0;min-height:1em}
+.of-plist{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:8px;max-height:40vh;overflow:auto}
+.of-plist li{display:flex;align-items:center;gap:10px}
+.of-plist li .of-av{margin:0}
+.of-plist li > span:nth-child(2){flex:1;min-width:0}
+.of-plist b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.of-plist small{color:var(--soft)}
+.of-plist .of-del{height:36px}
+.of-viewonly .ribbon[data-panel],.of-viewonly .ribbon[role=toolbar],.of-viewonly #ofFiles .of-new{opacity:.45;pointer-events:none}

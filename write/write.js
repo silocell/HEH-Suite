@@ -23,6 +23,16 @@
     Object.keys(comments).forEach(function (k) { if (!live[k]) delete comments[k]; });
     file.body = { html: cleanDoc().innerHTML, zoom: +$("zoom").value, layout: layout, comments: comments };
     return file;
+  }, {
+    /* working together: someone else's change came in */
+    html: true, surface: page, local: ["zoom"],
+    apply: function (b, title) {
+      if (document.activeElement !== titleIn) titleIn.value = title || "Untitled document";
+      Office.patchBlocks(page, Office.cleanHTML(b.html || "") || "<p><br></p>");
+      if (JSON.stringify(b.layout || {}) !== JSON.stringify(layout)) useLayout(b.layout);
+      if (JSON.stringify(b.comments || {}) !== JSON.stringify(comments)) useComments(b.comments);
+      fixToc(); count(); navSoon(); pages();
+    }
   });
 
   try { document.execCommand("styleWithCSS", false, true); } catch (e) {}
@@ -96,6 +106,7 @@
     try { localStorage.setItem("hl.write.last", f.id); } catch (e) {}
     history.replaceState(null, "", "?id=" + encodeURIComponent(f.id));
     fixToc(); count(); navList(); statusEl.textContent = Office.isCloud() ? "Saved to your account" : "Saved on this device";
+    saver.opened();
   }
   function fresh(title, html, lay) {
     file = { id: Office.uuid(), title: title || "Untitled document", body: { html: html || "" } };
@@ -103,7 +114,7 @@
     useLayout(lay); useComments(null); count(); navList();
     history.replaceState(null, "", "?id=" + encodeURIComponent(file.id));
     try { localStorage.setItem("hl.write.last", file.id); } catch (e) {}
-    saver.now(); page.focus();
+    saver.now(); saver.opened(); page.focus();
   }
   function openId(id) {
     statusEl.textContent = "Opening…";

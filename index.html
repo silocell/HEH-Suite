@@ -15,7 +15,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261107a">
+<link rel="stylesheet" href="/office/office.css?b=20261108a">
 <style>
 :root{--a1:#4f46e5}
 body{overflow:auto;display:block}
@@ -99,7 +99,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
-<script src="/office/office.js?b=20261107b"></script>
+<script src="/office/office.js?b=20261108a"></script>
 <script>
 (function(){
   Office.themeToggle(document.getElementById("themeBtn"));
@@ -118,7 +118,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
     ul.innerHTML = all.slice(0, 12).map(function(o){
       var d = o.r.updated_at ? new Date(o.r.updated_at).toLocaleDateString("en-GB", { day:"numeric", month:"short" }) : "";
       return '<li><a href="/' + o.a[1] + '/?id=' + encodeURIComponent(o.r.id) + '"><span class="ic">' + o.a[2] + '</span><span><strong>' +
-        Office.esc(o.r.title || "Untitled") + '</strong><small>' + Office.esc(o.a[1][0].toUpperCase() + o.a[1].slice(1)) + (d ? " · " + d : "") + "</small></span></a></li>";
+        Office.esc(o.r.title || "Untitled") + '</strong><small>' + (o.r.shared ? "👥 Shared with you · " : "") + Office.esc(o.a[1][0].toUpperCase() + o.a[1].slice(1)) + (d ? " · " + d : "") + "</small></span></a></li>";
     }).join("") || '<li class="empty">Nothing yet - pick an app above to start.</li>';
     Office.storageBar(document.getElementById("store"));
     document.getElementById("where").textContent = cloud ? "Your files are saved to your Launchpad account, so they follow you to any device."
