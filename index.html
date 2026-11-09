@@ -38,6 +38,8 @@ main{max-width:1040px;margin:0 auto;padding:34px 18px 60px}
 .b{background:linear-gradient(140deg,#115e59,#14b8a6);box-shadow:0 14px 34px -16px #0d9488}
 .f{background:linear-gradient(140deg,#6b21a8,#d946ef);box-shadow:0 14px 34px -16px #c026d3}
 .i{background:linear-gradient(140deg,#1e293b,#475569);box-shadow:0 14px 34px -16px #334155}
+.c{background:linear-gradient(140deg,#0891b2,#7c3aed);box-shadow:0 14px 34px -16px #7c3aed}
+.v{background:linear-gradient(140deg,#be123c,#f97316);box-shadow:0 14px 34px -16px #e11d48}
 h2{font-size:1.15rem;margin:0 0 12px}
 .recent{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
 .recent a{display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:16px;background:var(--card);border:1px solid var(--rule);text-decoration:none;color:var(--ink);min-width:0}
@@ -70,7 +72,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
 <main>
   <section class="hero">
     <h1>Write it. Work it out. Show it.</h1>
-    <p>Seven apps for homework, made for the Launchpad. They open and save Word, Excel, PowerPoint and PDF files, and everything saves by itself.</p>
+    <p>Nine apps for homework, made for the Launchpad. They open and save Word, Excel, PowerPoint and PDF files, and everything saves by itself.</p>
   </section>
   <nav class="apps" aria-label="Apps">
     <a class="app w" href="/write/"><i aria-hidden="true">✍️</i><b>Write</b><span>Essays and documents, with spell check, tables and pictures.</span><small>.docx · .odt · .rtf · .md →</small></a>
@@ -80,6 +82,8 @@ h2{font-size:1.15rem;margin:0 0 12px}
     <a class="app d" href="/pdf/"><i aria-hidden="true">📕</i><b>PDF</b><span>Write on PDFs, sign, fill in forms, merge, split, rotate.</span><small>Pictures to PDF too →</small></a>
     <a class="app b" href="/draw/"><i aria-hidden="true">🎨</i><b>Draw</b><span>A whiteboard for mind maps, flowcharts and sticky notes.</span><small>Saves .png and .svg →</small></a>
     <a class="app f" href="/forms/"><i aria-hidden="true">📋</i><b>Forms</b><span>Surveys and quizzes that mark themselves. Share a link.</span><small>See every answer →</small></a>
+    <a class="app c" href="/design/"><i aria-hidden="true">🖌</i><b>Design</b><span>Posters, social posts, thumbnails and certificates, from templates.</span><small>PNG · JPG · PDF →</small></a>
+    <a class="app v" href="/vids/"><i aria-hidden="true">🎬</i><b>Vids</b><span>Make a video from scenes, with music, animations and your voice.</span><small>Stays on your device →</small></a>
     <a class="app i" href="#getH" id="getTile"><i aria-hidden="true">⬇️</i><b>Get the app</b><span>Install the Suite on iPad, PC, Mac, Chromebook or Android.</span><small>Works offline →</small></a>
   </nav>
   <h2>Recent files</h2>
@@ -106,7 +110,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
   var ib = document.getElementById("installBtn");
   if (Office.isApp()) ib.closest("section").hidden = true;
   ib.onclick = function () { Office.install(); };
-  var APPS = [["doc","write","📘"],["sheet","grid","📗"],["deck","present","📙"],["note","notebook","📓"],["draw","draw","🎨"]], all = [], cloud = false, user = null;
+  var APPS = [["doc","write","📘"],["sheet","grid","📗"],["deck","present","📙"],["note","notebook","📓"],["draw","draw","🎨"],["design","design","🖌"]], all = [], cloud = false, user = null;
   APPS.reduce(function(p, a){
     return p.then(function(){ return Office.init(a[0]); }).then(function(st){
       cloud = st.cloud; user = st.user;

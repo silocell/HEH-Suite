@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Vids - Launchpad Suite</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#4f46e5">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261109a">
+<style>
+:root{--a1:#e11d48;--a2:#f97316;--desk:#e9ecf2}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --desk:#0d1117 } }
+:root[data-theme="dark"]{ --desk:#0d1117 }
+.top .brand i{background:linear-gradient(135deg,#e11d48,#f97316)}
+.vz{flex:1;display:flex;min-height:0}
+.rail{width:74px;flex:none;background:var(--tool);border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow:auto}
+.rail button{border:0;background:transparent;border-radius:12px;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.7rem;font-weight:600;color:var(--soft)}
+.rail button i{font-style:normal;font-size:1.35rem;line-height:1}
+.rail button:hover{background:var(--hover);color:var(--ink)}
+.rail button[aria-pressed="true"]{background:var(--on);color:var(--ink)}
+.panel{width:300px;flex:none;background:var(--card);border-right:1px solid var(--rule);overflow:auto;padding:14px 14px 40px}
+.panel h3{margin:4px 0 10px;font-size:1rem}
+.panel h4{margin:16px 0 8px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+.panel p.s{color:var(--soft);font-size:.85rem;margin:0 0 10px}
+.panel .x{float:right;border:0;background:transparent;font-size:1.1rem;border-radius:8px;padding:2px 8px;color:var(--soft)}
+.gridp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gridp.two{grid-template-columns:repeat(2,1fr)}
+.gridp.four{grid-template-columns:repeat(4,1fr)}
+.gridp.six{grid-template-columns:repeat(6,1fr);gap:4px}
+.tile{border:1px solid var(--rule);background:var(--tool);border-radius:12px;padding:0;cursor:pointer;overflow:hidden;display:block;width:100%;aspect-ratio:1;position:relative;color:var(--ink)}
+.tile:hover{border-color:var(--a1)}
+.tile canvas,.tile img,.tile video{width:100%;height:100%;display:block;object-fit:cover}
+.tile .cap{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.7));color:#fff;font-size:.72rem;font-weight:700;padding:14px 6px 5px;text-align:left}
+.tile .badge{position:absolute;right:5px;top:5px;background:rgba(0,0,0,.6);color:#fff;font-size:.68rem;font-weight:700;border-radius:999px;padding:1px 6px}
+.emo{border:0;background:transparent;font-size:1.55rem;border-radius:10px;padding:4px 0;cursor:pointer}
+.emo:hover{background:var(--hover)}
+.pbtn{display:flex;width:100%;justify-content:center;gap:8px;align-items:center;border:0;border-radius:12px;padding:11px;font-weight:700;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;cursor:pointer;margin:4px 0 10px;text-align:center}
+.pbtn.ghost{background:var(--tool);color:var(--ink);border:1px solid var(--rule)}
+.pbtn[disabled]{opacity:.5;cursor:default}
+.addtext{display:block;width:100%;text-align:left;border:1px solid var(--rule);background:var(--tool);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;color:var(--ink)}
+.addtext:hover{border-color:var(--a1)}
+.sw{width:100%;aspect-ratio:1;border-radius:10px;border:1px solid var(--rule);cursor:pointer;padding:0}
+.sw:hover{outline:2px solid var(--a1);outline-offset:1px}
+.mlist{display:grid;gap:6px}
+.mrow{display:flex;align-items:center;gap:10px;border:1px solid var(--rule);background:var(--tool);border-radius:10px;padding:8px 10px}
+.mrow span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.88rem}
+.mrow button{border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:4px 9px;font-size:.82rem}
+.mrow button.on{background:var(--a1);border-color:var(--a1);color:#fff}
+.rng{display:grid;grid-template-columns:74px 1fr 40px;gap:8px;align-items:center;font-size:.86rem;margin:8px 0}
+.rng input{accent-color:var(--a1)}
+.rng output{color:var(--soft);text-align:right;font-variant-numeric:tabular-nums}
+.recbox{border:2px dashed var(--rule);border-radius:14px;padding:12px;text-align:center;margin-bottom:10px}
+.recbox video{width:100%;border-radius:10px;background:#000;max-height:180px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;animation:blink 1s infinite;vertical-align:middle;margin-right:6px}
+@keyframes blink{50%{opacity:.2}}
+/* middle */
+.mid{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--desk)}
+.ctx{min-height:52px;flex:none;display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:7px 12px;background:var(--card);border-bottom:1px solid var(--rule);position:relative;z-index:4}
+.ctx .sep{width:1px;height:24px;background:var(--rule);margin:0 4px}
+.ctx select,.ctx input[type=number]{height:34px;border:1px solid var(--rule);border-radius:9px;background:var(--card);padding:0 6px}
+.ctx input[type=number]{width:64px}
+.ctx .hint{color:var(--soft);font-size:.86rem;padding:0 6px}
+.cb{height:34px;min-width:34px;border:1px solid transparent;border-radius:9px;background:transparent;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:0 8px;font-size:.92rem;color:var(--ink);position:relative}
+.cb:hover{background:var(--hover)}
+.cb[aria-pressed="true"]{background:var(--on);border-color:color-mix(in srgb,var(--a1) 45%,transparent)}
+.cb .chip{width:20px;height:20px;border-radius:6px;border:1px solid var(--rule);display:inline-block}
+.cb input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;cursor:pointer}
+.stage{flex:1;position:relative;display:grid;place-items:center;padding:24px;min-height:0;touch-action:none;overflow:hidden}
+.screen{position:relative;box-shadow:0 6px 30px -8px rgba(0,0,0,.4);background:#000;flex:none}
+.screen canvas{display:block}
+#ov{position:absolute;inset:0;touch-action:none}
+#selbox{position:absolute;border:2px solid var(--a1);pointer-events:none;transform-origin:center}
+#selbox .hd{position:absolute;width:14px;height:14px;background:#fff;border:2px solid var(--a1);border-radius:50%;pointer-events:auto;margin:-7px 0 0 -7px;touch-action:none}
+#ted{position:absolute;border:0;outline:2px dashed var(--a1);background:transparent;resize:none;overflow:hidden;padding:0;margin:0;transform-origin:center;white-space:pre-wrap;word-break:break-word;z-index:3}
+.player{flex:none;display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--card);border-top:1px solid var(--rule)}
+.player .play{width:42px;height:42px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:1.1rem;display:grid;place-items:center}
+.player .tm{font-variant-numeric:tabular-nums;font-size:.88rem;color:var(--soft);min-width:96px}
+.player input[type=range]{flex:1;accent-color:var(--a1)}
+/* the timeline */
+.tl{flex:none;background:var(--card);border-top:1px solid var(--rule);overflow-x:auto;overflow-y:hidden;position:relative;padding:8px 12px 10px;user-select:none}
+.tl-in{position:relative;min-width:100%}
+.lane{display:flex;align-items:stretch;gap:0;height:74px;position:relative}
+.scn{flex:none;position:relative;border:2px solid var(--rule);border-radius:10px;overflow:hidden;background:#000;cursor:pointer;margin-right:6px;padding:0}
+.scn[aria-current="true"]{border-color:var(--a1);box-shadow:0 0 0 2px color-mix(in srgb,var(--a1) 30%,transparent)}
+.scn canvas{height:100%;width:100%;display:block;object-fit:cover}
+.scn .d{position:absolute;left:4px;bottom:3px;background:rgba(0,0,0,.65);color:#fff;font:700 10px var(--ui);padding:1px 5px;border-radius:999px}
+.scn .n{position:absolute;left:4px;top:3px;background:rgba(0,0,0,.65);color:#fff;font:700 10px var(--ui);padding:1px 5px;border-radius:999px}
+.scn .mic{position:absolute;right:4px;top:3px;font-size:11px}
+.scn .grab{position:absolute;right:0;top:0;bottom:0;width:12px;cursor:ew-resize;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35));touch-action:none}
+.addscn{flex:none;width:74px;border:2px dashed var(--rule);border-radius:10px;background:transparent;font-size:1.5rem;color:var(--soft);cursor:pointer}
+.addscn:hover{border-color:var(--a1);color:var(--a1)}
+.mlane{height:22px;margin-top:6px;border-radius:8px;background:color-mix(in srgb,var(--a2) 18%,transparent);border:1px solid color-mix(in srgb,var(--a2) 40%,transparent);font-size:.75rem;font-weight:700;display:flex;align-items:center;padding:0 8px;color:var(--ink);white-space:nowrap;overflow:hidden;cursor:pointer}
+.mlane.none{background:transparent;border-style:dashed;color:var(--soft);font-weight:600}
+.phead{position:absolute;top:0;bottom:0;width:2px;background:var(--a1);pointer-events:none;z-index:3}
+.phead::before{content:"";position:absolute;top:-4px;left:-5px;border:6px solid transparent;border-top-color:var(--a1)}
+/* start dialog */
+dialog.ofwide{max-width:860px;width:calc(100vw - 32px)}
+dialog.ofwide[open]{display:block;overflow:auto}
+.ratios{display:flex;gap:12px;flex-wrap:wrap;margin:6px 0 16px}
+.ratios button{border:1px solid var(--rule);background:var(--tool);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;color:var(--ink)}
+.ratios button[aria-pressed="true"]{border-color:var(--a1);box-shadow:0 0 0 2px color-mix(in srgb,var(--a1) 30%,transparent)}
+.ratios .shp{background:linear-gradient(135deg,var(--a1),var(--a2));border-radius:4px}
+.tpls{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.tpls button{border:1px solid var(--rule);background:var(--tool);border-radius:14px;padding:0;overflow:hidden;cursor:pointer;text-align:left;color:var(--ink)}
+.tpls button:hover{border-color:var(--a1)}
+.tpls canvas{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#000}
+.tpls b{display:block;padding:8px 10px 2px;font-size:.9rem}
+.tpls small{display:block;padding:0 10px 10px;color:var(--soft);font-size:.76rem}
+.plist{display:grid;gap:8px;max-height:50vh;overflow:auto}
+.plist .row{display:flex;gap:10px;align-items:center}
+.plist button.op{flex:1;display:flex;gap:12px;align-items:center;border:1px solid var(--rule);background:var(--tool);border-radius:12px;padding:6px;text-align:left;cursor:pointer;color:var(--ink);min-width:0}
+.plist button.op:hover{border-color:var(--a1)}
+.plist img{width:96px;height:54px;object-fit:cover;border-radius:8px;background:#000;flex:none}
+.plist span{min-width:0}
+.plist strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plist small{color:var(--soft)}
+.prog{height:12px;background:var(--tool);border-radius:999px;overflow:hidden;margin:14px 0}
+.prog div{height:100%;width:0;background:linear-gradient(90deg,var(--a1),var(--a2));transition:width .2s}
+@media (max-width:860px){ .panel{position:fixed;left:74px;top:52px;bottom:0;z-index:20;box-shadow:12px 0 30px -10px rgba(0,0,0,.35);width:min(300px,calc(100vw - 74px))} }
+@media (max-width:560px){
+  .vz{flex-direction:column-reverse}
+  .rail{width:auto;flex-direction:row;border-right:0;border-top:1px solid var(--rule);padding:4px;justify-content:space-around}
+  .rail button{flex:1;padding:6px 0 4px}
+  .panel{left:0;right:0;top:auto;bottom:62px;width:auto;max-height:55vh;border-right:0;border-top:1px solid var(--rule);border-radius:18px 18px 0 0}
+  .stage{padding:12px} .lane{height:56px}
+}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">🎬</i><span>Vids</span></a>
+  <input class="title-in" id="title" value="Untitled video" aria-label="Video name" maxlength="120">
+  <span class="status" id="status" aria-live="polite">Saved on this device</span>
+  <span class="sp"></span>
+  <button class="tbtn" id="projBtn" type="button">📁<span class="lbl"> My videos</span></button>
+  <button class="tbtn" id="exportBtn" type="button" style="background:linear-gradient(135deg,#e11d48,#f97316)">⬇<span class="lbl"> Make the video</span></button>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+<div class="vz">
+  <nav class="rail" aria-label="Add things">
+    <button type="button" data-p="scene" aria-pressed="true"><i>🎞</i>Scene</button>
+    <button type="button" data-p="text"><i>🅣</i>Text</button>
+    <button type="button" data-p="el"><i>🔷</i>Elements</button>
+    <button type="button" data-p="media"><i>🖼</i>Media</button>
+    <button type="button" data-p="rec"><i>🎙</i>Record</button>
+    <button type="button" data-p="music"><i>🎵</i>Music</button>
+  </nav>
+  <aside class="panel" id="panel" aria-label="Panel"></aside>
+  <div class="mid">
+    <div class="ctx" id="ctx" role="toolbar" aria-label="Edit what's picked"></div>
+    <main class="stage" id="stage">
+      <div class="screen" id="screen">
+        <canvas id="cv"></canvas>
+        <div id="ov" tabindex="0" aria-label="Video scene"></div>
+      </div>
+    </main>
+    <div class="player">
+      <button type="button" class="cb" id="toStart" aria-label="Back to the start">⏮</button>
+      <button type="button" class="play" id="playBtn" aria-label="Play">▶</button>
+      <span class="tm" id="tm">0:00 / 0:00</span>
+      <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Where in the video">
+    </div>
+    <div class="tl" id="tl"><div class="tl-in" id="tlin"></div></div>
+  </div>
+</div>
+<input type="file" id="mediaIn" accept="image/*,video/*" multiple hidden>
+<input type="file" id="audioIn" accept="audio/*" hidden>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/office.js?b=20261109a"></script>
+<script src="/office/scene.js?b=20261109a"></script>
+<script src="/vids/vids.js?b=20261109a"></script>
+</body>
+</html>

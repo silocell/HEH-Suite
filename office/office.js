@@ -151,7 +151,7 @@
     return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: d.getFullYear() === now.getFullYear() ? undefined : "numeric" });
   }
 
-  /* ---- shared storage: 10 GB for everyone, shown as a bar ---- */
+  /* ---- shared storage: 20 GB for everyone, shown as a bar ---- */
   function size(n) { return n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB" : n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
   function storage() {
     if (!cloud || !sb) return Promise.resolve(null);

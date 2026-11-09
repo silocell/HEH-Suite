@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Design - Launchpad Suite</title>
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#4f46e5">
+<script>
+try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
+     if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
+</script>
+<link rel="stylesheet" href="/office/office.css?b=20261109a">
+<style>
+:root{--a1:#06b6d4;--a2:#7c3aed;--desk:#e9ecf2}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --desk:#0d1117 } }
+:root[data-theme="dark"]{ --desk:#0d1117 }
+.top .brand i{background:linear-gradient(135deg,#06b6d4,#7c3aed)}
+.dz{flex:1;display:flex;min-height:0}
+/* the icons down the left, and the panel they open */
+.rail{width:74px;flex:none;background:var(--tool);border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow:auto}
+.rail button{border:0;background:transparent;border-radius:12px;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.7rem;font-weight:600;color:var(--soft)}
+.rail button i{font-style:normal;font-size:1.35rem;line-height:1}
+.rail button:hover{background:var(--hover);color:var(--ink)}
+.rail button[aria-pressed="true"]{background:var(--on);color:var(--ink)}
+.panel{width:300px;flex:none;background:var(--card);border-right:1px solid var(--rule);overflow:auto;padding:14px 14px 40px}
+.panel h3{margin:4px 0 10px;font-size:1rem}
+.panel h4{margin:16px 0 8px;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--soft)}
+.panel .x{float:right;border:0;background:transparent;font-size:1.1rem;border-radius:8px;padding:2px 8px;color:var(--soft)}
+.gridp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.gridp.two{grid-template-columns:repeat(2,1fr)}
+.gridp.four{grid-template-columns:repeat(4,1fr)}
+.gridp.six{grid-template-columns:repeat(6,1fr);gap:4px}
+.tile{border:1px solid var(--rule);background:var(--tool);border-radius:12px;padding:0;cursor:pointer;overflow:hidden;display:block;width:100%;aspect-ratio:1;position:relative}
+.tile:hover{border-color:var(--a1);box-shadow:0 0 0 2px color-mix(in srgb,var(--a1) 35%,transparent)}
+.tile canvas,.tile img{width:100%;height:100%;display:block;object-fit:cover}
+.tile.tpl{aspect-ratio:auto}
+.tile .cap{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.65));color:#fff;font-size:.72rem;font-weight:700;padding:14px 6px 5px;text-align:left}
+.emo{border:0;background:transparent;font-size:1.55rem;border-radius:10px;padding:4px 0;cursor:pointer}
+.emo:hover{background:var(--hover)}
+.addtext{display:block;width:100%;text-align:left;border:1px solid var(--rule);background:var(--tool);border-radius:12px;padding:10px 14px;margin-bottom:8px;cursor:pointer;color:var(--ink)}
+.addtext:hover{border-color:var(--a1)}
+.sw{width:100%;aspect-ratio:1;border-radius:10px;border:1px solid var(--rule);cursor:pointer;padding:0}
+.sw:hover{outline:2px solid var(--a1);outline-offset:1px}
+.pbtn{display:flex;width:100%;justify-content:center;gap:8px;align-items:center;border:0;border-radius:12px;padding:11px;font-weight:700;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;cursor:pointer;margin:4px 0 10px}
+.pbtn.ghost{background:var(--tool);color:var(--ink);border:1px solid var(--rule)}
+.layers{display:grid;gap:6px}
+.layers button.ly{display:flex;align-items:center;gap:10px;border:1px solid var(--rule);background:var(--tool);border-radius:10px;padding:6px 8px;text-align:left;cursor:pointer;width:100%}
+.layers button.ly[aria-current="true"]{border-color:var(--a1);background:var(--on)}
+.layers canvas{width:44px;height:44px;border-radius:6px;background:repeating-conic-gradient(#ddd 0 25%,#fff 0 50%) 0 0/12px 12px;flex:none}
+.layers span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.86rem}
+/* the middle: the bar for what's picked, the page, the pages */
+.mid{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--desk)}
+.ctx{min-height:52px;flex:none;display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:7px 12px;background:var(--card);border-bottom:1px solid var(--rule);position:relative;z-index:4}
+.ctx .sep{width:1px;height:24px;background:var(--rule);margin:0 4px}
+.ctx select,.ctx input[type=number]{height:34px;border:1px solid var(--rule);border-radius:9px;background:var(--card);padding:0 6px}
+.ctx input[type=number]{width:64px}
+.ctx .hint{color:var(--soft);font-size:.86rem;padding:0 6px}
+.cb{height:34px;min-width:34px;border:1px solid transparent;border-radius:9px;background:transparent;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:0 8px;font-size:.92rem;color:var(--ink);position:relative}
+.cb:hover{background:var(--hover)}
+.cb[aria-pressed="true"]{background:var(--on);border-color:color-mix(in srgb,var(--a1) 45%,transparent)}
+.cb .chip{width:20px;height:20px;border-radius:6px;border:1px solid var(--rule);display:inline-block}
+.cb input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;border:0;padding:0;cursor:pointer}
+.pop{position:absolute;top:calc(100% + 6px);z-index:40;background:var(--card);border:1px solid var(--rule);border-radius:14px;box-shadow:0 18px 40px -12px rgba(0,0,0,.35);padding:12px 14px;min-width:240px}
+.pop label{display:grid;grid-template-columns:96px 1fr 38px;align-items:center;gap:8px;font-size:.84rem;margin:6px 0}
+.pop label output{font-variant-numeric:tabular-nums;color:var(--soft);text-align:right}
+.pop input[type=range]{width:100%;accent-color:var(--a1)}
+.pop .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pop .row button{border:1px solid var(--rule);background:var(--tool);border-radius:9px;padding:6px 10px;font-size:.84rem}
+.pop .row button:hover{border-color:var(--a1)}
+.stage{flex:1;overflow:auto;position:relative;display:grid;place-items:center;padding:40px;min-height:0;touch-action:none}
+.pagebox{position:relative;box-shadow:0 6px 30px -8px rgba(0,0,0,.35);flex:none}
+.pagebox canvas{display:block}
+#ov{position:absolute;inset:0;touch-action:none}
+#selbox{position:absolute;border:2px solid var(--a1);pointer-events:none;transform-origin:center;box-sizing:border-box}
+#selbox .hd{position:absolute;width:14px;height:14px;background:#fff;border:2px solid var(--a1);border-radius:50%;pointer-events:auto;touch-action:none;margin:-7px 0 0 -7px}
+#selbox .hd.side{width:10px;height:20px;border-radius:6px;margin:-10px 0 0 -5px}
+#selbox .hd.side.h{width:20px;height:10px;margin:-5px 0 0 -10px}
+#selbox .rot{position:absolute;left:50%;top:-44px;width:28px;height:28px;margin-left:-14px;border-radius:50%;background:#fff;border:2px solid var(--rule);pointer-events:auto;display:grid;place-items:center;font-size:14px;color:#111;cursor:grab;touch-action:none}
+#selbox.locked{border-style:dashed}
+#selbox.locked .hd,#selbox.locked .rot{display:none}
+.guide{position:absolute;background:#ec4899;pointer-events:none}
+#ted{position:absolute;border:0;outline:2px dashed var(--a1);background:transparent;resize:none;overflow:hidden;padding:0;margin:0;transform-origin:center;white-space:pre-wrap;word-break:break-word;z-index:3}
+.pages{flex:none;display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card);border-top:1px solid var(--rule);overflow-x:auto}
+.pth{flex:none;border:2px solid var(--rule);border-radius:8px;padding:0;background:#fff;cursor:pointer;position:relative;height:64px}
+.pth canvas{height:100%;display:block;border-radius:6px}
+.pth[aria-current="true"]{border-color:var(--a1)}
+.pth .n{position:absolute;left:4px;bottom:3px;background:rgba(0,0,0,.6);color:#fff;font:700 10px var(--ui);padding:0 5px;border-radius:999px}
+.pages .cb{flex:none}
+.pages .sp{flex:1}
+#zoomN{min-width:52px;font-variant-numeric:tabular-nums}
+/* picking a size */
+.sizes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sizes button{border:1px solid var(--rule);background:var(--tool);border-radius:14px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;color:var(--ink);text-align:center}
+.sizes button:hover{border-color:var(--a1);box-shadow:0 0 0 2px color-mix(in srgb,var(--a1) 30%,transparent)}
+.sizes .shp{background:linear-gradient(135deg,var(--a1),var(--a2));border-radius:6px;opacity:.85}
+.sizes b{font-size:.9rem}.sizes small{color:var(--soft);font-size:.75rem}
+.custom{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.custom input{width:90px;height:38px;border:1px solid var(--rule);border-radius:10px;padding:0 8px;background:var(--tool)}
+dialog.ofwide{max-width:860px;width:calc(100vw - 32px)}
+dialog.ofwide[open]{display:block;overflow:auto}
+@media (max-width:860px){
+  .panel{position:fixed;left:74px;top:52px;bottom:0;z-index:20;box-shadow:12px 0 30px -10px rgba(0,0,0,.35);width:min(300px,calc(100vw - 74px))}
+}
+@media (max-width:560px){
+  .dz{flex-direction:column-reverse}
+  .rail{width:auto;flex-direction:row;border-right:0;border-top:1px solid var(--rule);padding:4px;justify-content:space-around}
+  .rail button{flex:1;padding:6px 0 4px}
+  .panel{left:0;right:0;top:auto;bottom:62px;width:auto;max-height:55vh;border-right:0;border-top:1px solid var(--rule);border-radius:18px 18px 0 0}
+  .stage{padding:20px}
+}
+</style>
+<link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/" title="All the Suite apps"><i aria-hidden="true">🖌</i><span>Design</span></a>
+  <input class="title-in" id="title" value="Untitled design" aria-label="Design name" maxlength="120">
+  <span class="status" id="status" aria-live="polite"></span>
+  <span class="sp"></span>
+  <button class="tbtn" id="filesBtn" type="button">📁<span class="lbl"> Files</span></button>
+  <button class="tbtn" id="resizeBtn" type="button">📐<span class="lbl"> Resize</span></button>
+  <div class="menuwrap">
+    <button class="tbtn" id="exportBtn" type="button" aria-haspopup="true" style="background:linear-gradient(135deg,#06b6d4,#7c3aed)">⬇<span class="lbl"> Download</span></button>
+    <div class="menu" id="exportMenu" hidden>
+      <button type="button" data-ex="png">🖼<span>PNG<small>Best for sharing online - this page</small></span></button>
+      <button type="button" data-ex="jpg">📷<span>JPG<small>Smaller file - this page</small></span></button>
+      <button type="button" data-ex="pdf">📄<span>PDF<small>Every page - best for printing</small></span></button>
+      <button type="button" data-ex="zip">🗂<span>All pages as pictures<small>A .zip of PNGs</small></span></button>
+      <button type="button" data-ex="print">🖨<span>Print</span></button>
+    </div>
+  </div>
+  <button class="tbtn" id="themeBtn" type="button"></button>
+  <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
+</header>
+<div class="dz">
+  <nav class="rail" aria-label="Add things">
+    <button type="button" data-p="tpl" aria-pressed="true"><i>✨</i>Templates</button>
+    <button type="button" data-p="el"><i>🔷</i>Elements</button>
+    <button type="button" data-p="text"><i>🅣</i>Text</button>
+    <button type="button" data-p="up"><i>⬆️</i>Uploads</button>
+    <button type="button" data-p="bg"><i>🎨</i>Background</button>
+    <button type="button" data-p="layers"><i>🗂</i>Layers</button>
+  </nav>
+  <aside class="panel" id="panel" aria-label="Panel"></aside>
+  <div class="mid">
+    <div class="ctx" id="ctx" role="toolbar" aria-label="Edit what's picked"></div>
+    <main class="stage" id="stage">
+      <div class="pagebox" id="pagebox">
+        <canvas id="cv"></canvas>
+        <div id="ov" aria-label="Design page" tabindex="0"></div>
+      </div>
+    </main>
+    <div class="pages" id="pages"></div>
+  </div>
+</div>
+<input type="file" id="imgIn" accept="image/*" multiple hidden>
+<input type="file" id="bgIn" accept="image/*" hidden>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<script src="/auth-store.js?b=20261026a"></script>
+<script src="/office/office.js?b=20261109a"></script>
+<script src="/office/live.js?b=20261109a"></script>
+<script src="/office/scene.js?b=20261109a"></script>
+<script src="/office/jszip.min.js"></script>
+<script src="/pdf/lib/pdf-lib.min.js"></script>
+<script src="/design/design.js?b=20261109a"></script>
+</body>
+</html>
