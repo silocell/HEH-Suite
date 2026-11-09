@@ -53,7 +53,7 @@
       if (!user) return { user: null, cloud: false };
       return sb.from("office_files").select("id").limit(1).then(function (q) {
         cloud = !q.error;
-        if (cloud) return moveLocalUp().then(function () { return { user: user, cloud: true }; });
+        if (cloud) return moveLocalUp().then(function () { billNow(); return { user: user, cloud: true }; });
         return { user: user, cloud: false };
       });
     }).catch(function () { return { user: null, cloud: false }; });
@@ -77,7 +77,7 @@
       return sb.from("office_files").select("id,title,updated_at,user_id").eq("kind", kind)
         .order("updated_at", { ascending: false }).limit(300).then(function (r) {
           if (r.error) throw r.error;
-          return (r.data || []).map(function (x) { x.shared = !!(user && x.user_id && x.user_id !== user.id); return x; });
+          return (r.data || []).map(function (x) { x.shared = !!(user && x.user_id && x.user_id !== user.id); x.bill = billing && billing.byId[x.id]; return x; });
         });
     }
     var all = lall();
@@ -88,8 +88,15 @@
 
   function get(id) {
     if (cloud) {
-      return sb.from("office_files").select("id,title,body,updated_at").eq("id", id).maybeSingle()
-        .then(function (r) { if (r.error) throw r.error; return r.data; });
+      return sb.from("office_files").select("*").eq("id", id).maybeSingle()
+        .then(function (r) {
+          if (r.error) throw r.error;
+          var f = r.data;
+          if (!f || !f.locked_at) return f;
+          // locked (its storage isn't paid for): open the copy kept on this device, if there is one
+          f.locked = true;
+          return kept(f.id).then(function (k) { if (k && k.body) { f.body = k.body; f.keptCopy = k.at; } return f; });
+        });
     }
     return Promise.resolve(lall()[id] || null);
   }
@@ -161,9 +168,97 @@
     storage().then(function (s) {
       if (!s || !el) return;
       var pct = Math.min(100, s.used / s.limit * 100), col = pct > 90 ? "#dc2626" : pct > 70 ? "#f59e0b" : "var(--a1)";
-      el.innerHTML = '<div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--soft);margin-bottom:4px"><span>☁️ Suite storage: <b style="color:var(--ink)">' + size(s.used) + "</b> of " + size(s.limit) + " shared by everyone</span><span>Yours: " + size(s.mine) + "</span></div>" +
-        '<div style="height:8px;border-radius:999px;background:var(--tool);overflow:hidden"><div style="height:100%;width:' + pct.toFixed(1) + "%;background:" + col + ';border-radius:999px"></div></div>';
+      el.innerHTML = '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;font-size:.82rem;color:var(--soft);margin-bottom:4px"><span>☁️ Suite storage: <b style="color:var(--ink)">' + size(s.used) + "</b> of " + size(s.limit) +
+        (s.people ? " - 1 GB for each of the " + s.people + " people on the Launchpad" : " shared by everyone") + "</span><span>Yours: " + size(s.mine) + "</span></div>" +
+        '<div style="height:8px;border-radius:999px;background:var(--tool);overflow:hidden"><div style="height:100%;width:' + pct.toFixed(1) + "%;background:" + col + ';border-radius:999px"></div></div><p class="of-pay" style="font-size:.8rem;color:var(--soft);margin:6px 0 0"></p>';
+      bill().then(function (b) {
+        var pe = el.querySelector(".of-pay"); if (!b || !pe) return;
+        if (b.exempt) { pe.textContent = "Pay as you go: your files are free (you're a Launchpad admin)."; return; }
+        var paying = b.files.filter(function (f) { return f.state === "paying"; }).length, lk = b.files.filter(function (f) { return f.state === "locked"; }).length;
+        pe.innerHTML = "💰 Pay as you go: files are free for 48 hours, then " + b.cost + "p a day each (free in the school holidays" + (b["break"] ? " - it's " + esc(b["break"]) + " now" : "") + "). " +
+          "Yours cost <b>" + paying * b.cost + "p a day</b> · you have <b>" + b.pence + "p</b>" + (lk ? " · " + lk + " locked" : "") + ". Delete files you don't need to stop paying for them.";
+      });
     });
+  }
+
+  /* ---- pay as you go ----
+     A file is free for 48 hours, then has a grace period (a day and a
+     half, or 2 days at the weekend), then costs 10p a day from your
+     Launchpad pence. School holidays are free. A file that can't be paid
+     for is locked, not deleted. While a file is in its grace period, any
+     of your devices with the Suite open keeps a copy of it, so you still
+     have it there if it gets locked. */
+  var billing = null, billWait = [];
+  function billNow() {
+    if (!cloud || !sb) return Promise.resolve(null);
+    var p; try { p = sb.rpc("suite_bill_me"); } catch (e) { return Promise.resolve(null); }
+    if (!p || !p.then) return Promise.resolve(null);
+    return p.then(function (r) {
+      if (r.error || !r.data) return null;
+      billing = r.data; billing.byId = {};
+      (billing.files || []).forEach(function (f) { billing.byId[f.id] = f; });
+      billWait.splice(0).forEach(function (fn) { fn(billing); });
+      keepCopies(); billNote();
+      return billing;
+    }, function () { return null; });
+  }
+  function bill() { return billing ? Promise.resolve(billing) : new Promise(function (ok) { billWait.push(ok); setTimeout(function () { ok(billing); }, 6000); }); }
+  function billLabel(b) {
+    if (!b) return "";
+    var c = billing ? billing.cost : 10, d = function (x) { return new Date(x).toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" }); };
+    if (billing && billing.exempt) return "";
+    if (b.state === "locked") return "🔒 Locked - " + b.owed + "p to unlock";
+    if (b.state === "free") return "Free until " + d(b.free_until);
+    if (b.state === "grace") return "⏳ " + c + "p a day from " + d(b.charge_from);
+    return c + "p a day";
+  }
+  var KDB = null;
+  function kdb() {
+    if (KDB) return KDB;
+    KDB = new Promise(function (ok) {
+      try { var r = indexedDB.open("hl-suite-kept", 1); r.onupgradeneeded = function () { r.result.createObjectStore("files", { keyPath: "id" }); };
+        r.onsuccess = function () { ok(r.result); }; r.onerror = r.onblocked = function () { ok(null); }; } catch (e) { ok(null); }
+    });
+    return KDB;
+  }
+  function kept(id) {
+    return kdb().then(function (d) {
+      if (!d) return null;
+      return new Promise(function (ok) { try { var q = d.transaction("files").objectStore("files").get(id); q.onsuccess = function () { ok(q.result || null); }; q.onerror = function () { ok(null); }; } catch (e) { ok(null); } });
+    });
+  }
+  function keep(rec) {
+    return kdb().then(function (d) {
+      if (!d) return;
+      return new Promise(function (ok) { try { var x = d.transaction("files", "readwrite"); x.objectStore("files").put(rec); x.oncomplete = x.onerror = function () { ok(); }; } catch (e) { ok(); } });
+    });
+  }
+  function keepCopies() {
+    if (!billing || billing.exempt) return;
+    var due = (billing.files || []).filter(function (f) { return f.state === "grace" || (f.state === "paying" && billing.pence < billing.cost * 3); }).slice(0, 25);
+    due.reduce(function (pr, f) {
+      return pr.then(function () {
+        return sb.from("office_files").select("id,kind,title,body,updated_at").eq("id", f.id).maybeSingle().then(function (r) {
+          if (r.data && r.data.body && Object.keys(r.data.body).length) return keep({ id: r.data.id, kind: r.data.kind, title: r.data.title, body: r.data.body, at: new Date().toISOString() });
+        });
+      });
+    }, Promise.resolve()).catch(function () {});
+  }
+  function billNote() {
+    if (!billing || billing.exempt) return;
+    var day = new Date().toDateString(), seen = null;
+    try { seen = sessionStorage.getItem("hl.billnote"); } catch (e) {}
+    if (seen === day) return;
+    var lk = billing.files.filter(function (f) { return f.state === "locked"; }).length, gr = billing.files.filter(function (f) { return f.state === "grace"; }).length;
+    var pay = billing.files.filter(function (f) { return f.state === "paying"; }).length;
+    var msg = lk ? "🔒 " + lk + " of your Suite files " + (lk > 1 ? "are" : "is") + " locked - open " + (lk > 1 ? "one" : "it") + " to unlock it." :
+      gr ? "⏳ " + gr + " file" + (gr > 1 ? "s start" : " starts") + " costing " + billing.cost + "p a day soon. A copy is kept on this device." :
+      pay && billing.pence < pay * billing.cost * 2 ? "💰 Your files cost " + pay * billing.cost + "p a day and you have " + billing.pence + "p." : "";
+    if (billing.break) msg = msg ? msg + " (" + billing["break"] + ": storage is free today.)" : "";
+    if (msg) { toast(msg); try { sessionStorage.setItem("hl.billnote", day); } catch (e) {} }
+  }
+  function unlock(id) {
+    return sb.rpc("suite_unlock", { fid: id }).then(function (r) { if (r.error) throw r.error; return r.data; });
   }
 
   /* ---- the Files window ---- */
@@ -188,7 +283,7 @@
         if (!rows.length) { ul.innerHTML = '<li class="of-empty">Nothing here yet.</li>'; return; }
         ul.innerHTML = rows.map(function (r) {
           return '<li' + (r.id === opts.current ? ' class="cur"' : '') + '><button type="button" class="of-open" data-id="' + esc(r.id) + '">' +
-            '<span class="of-ic">' + opts.icon + '</span><span><strong>' + esc(r.title || "Untitled") + '</strong><small>' + (r.shared ? "👥 Shared with you · " : "") + esc(when(r.updated_at)) + '</small></span></button>' +
+            '<span class="of-ic">' + opts.icon + '</span><span><strong>' + esc(r.title || "Untitled") + '</strong><small>' + (r.shared ? "👥 Shared with you · " : "") + esc(when(r.updated_at)) + (r.bill && billLabel(r.bill) ? " · " + esc(billLabel(r.bill)) : "") + '</small></span></button>' +
             (r.shared ? "" : '<button type="button" class="of-del" data-del="' + esc(r.id) + '" aria-label="Delete ' + esc(r.title || "Untitled") + '">🗑</button>') + '</li>';
         }).join("");
       }).catch(function (e) { ul.innerHTML = '<li class="of-empty">Couldn\'t load your files: ' + esc(e.message || e) + '</li>'; });
@@ -456,6 +551,7 @@
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
+    bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, kept: kept,
     autosaver: autosaver, themeToggle: themeToggle,
     isCloud: function () { return cloud; }, user: function () { return user; }
   };
