@@ -9,7 +9,7 @@
   Office.themeToggle($("themeBtn"));
   function uid() { return Math.random().toString(36).slice(2, 10); }
   function status(t) { $("status").textContent = t || ""; }
-  var SITE = "https://suite.civilinitiatives.org/forms/";
+  var SITE = "https://hosting.civilinitiatives.org/f/";
 
   /* Saving, and working on a form together with other teachers live. */
   var saver = Office.autosaver($("status"), function () {
@@ -186,7 +186,7 @@
 
   /* ---------- sharing ---------- */
   function sharePane(pane) {
-    var s = form.settings, link = SITE + "?f=" + form.id;
+    var s = form.settings, link = SITE + "?id=" + form.id;
     pane.innerHTML = '<div class="card"><h2 style="margin-top:0">Share the link</h2><p style="color:var(--soft)">Anyone with a Launchpad account can answer. Post it in the year chat or send it to your class.</p>' +
       '<div class="sharebox"><input id="lnk" readonly value="' + esc(link) + '" aria-label="Link"><button type="button" class="of-btn" id="cp">Copy link</button>' +
       (navigator.share ? '<button type="button" class="of-btn ghost" id="sh">Share…</button>' : "") + "</div></div>" +

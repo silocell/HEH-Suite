@@ -906,7 +906,7 @@
       audioOn(); speaker.gain.value = 0; // quiet while it's being made
       var vs = c.captureStream(30), tracks = vs.getVideoTracks().slice();
       if (dest) dest.stream.getAudioTracks().forEach(function (tr) { tracks.push(tr); });
-      var r = new MediaRecorder(new MediaStream(tracks), Object.assign(type ? { mimeType: type } : {}, { videoBitsPerSecond: q > 1 ? 8e6 : 5e6, audioBitsPerSecond: 128000 }));
+      var r = new MediaRecorder(new MediaStream(tracks), Object.assign(type ? { mimeType: type } : {}, { videoBitsPerSecond: q > 1 ? 4.5e6 : 2.5e6, audioBitsPerSecond: 128000 }));
       var chunks = []; r.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
       var T = total(), started = 0;
       r.onstop = function () {
@@ -916,6 +916,23 @@
         fill.style.width = "100%"; msg.innerHTML = "Done! " + Office.size(blob.size) + " · " + (ext === ".webm" ? "WebM video - plays in any browser, YouTube and most apps." : "MP4 video.");
         var v = document.createElement("video"); v.controls = true; v.playsInline = true; v.src = URL.createObjectURL(blob); v.style.cssText = "width:100%;border-radius:12px;margin-top:10px;background:#000"; d.appendChild(v);
         Office.download(blob, Office.safeName($("title").value.trim() || "My video", ext));
+        // post it on the Launchpad, or keep it in My Files (in the cloud)
+        var pb = document.createElement("div"); pb.className = "of-new"; pb.style.marginTop = "12px";
+        pb.innerHTML = '<button type="button" class="of-btn" data-post="1">🎬 Post it on the Launchpad</button><button type="button" class="of-btn ghost" data-post="0">☁️ Save to My Files (just me)</button>';
+        d.appendChild(pb);
+        var pm = document.createElement("p"); pm.className = "of-where"; d.appendChild(pm);
+        pb.onclick = function (ev) {
+          var bt = ev.target.closest("[data-post]"); if (!bt) return;
+          var show = bt.dataset.post === "1";
+          pb.querySelectorAll("button").forEach(function (x) { x.disabled = true; }); pm.textContent = "Uploading " + Office.size(blob.size) + "…";
+          Office.init("doc").then(function (st) {
+            if (!st.user) throw new Error("Sign in on the Launchpad first.");
+            return Office.postVideo(blob, $("title").value.trim() || "My video", "", total(), show);
+          }).then(function (r) {
+            pm.innerHTML = (show ? "Posted! " : "Saved! ") + '<a href="https://hosting.civilinitiatives.org/watch/?v=' + encodeURIComponent(r.id) + '" target="_blank" rel="noopener">Watch it →</a>' +
+              (show ? " Only people signed in to the Launchpad can see it." : " Only you can see it - find it in My Files.");
+          }).catch(function (e2) { pm.textContent = e2.message || String(e2); pb.querySelectorAll("button").forEach(function (x) { x.disabled = false; }); });
+        };
         t = 0; mode = "edit"; draw(); progress();
       };
       sync(0, true); t = 0;

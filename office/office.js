@@ -232,6 +232,23 @@
     return sb.rpc("suite_unlock", { fid: id }).then(function (r) { if (r.error) throw r.error; return r.data; });
   }
 
+  /* ---- videos: post one for everyone on the Launchpad (or keep it just for you) ---- */
+  function postVideo(blob, title, about, secs, show) {
+    if (!sb || !user) return Promise.reject(new Error("Sign in on the Launchpad first."));
+    var ext = /mp4/.test(blob.type) ? ".mp4" : /quicktime/.test(blob.type) ? ".mov" : ".webm", path = user.id + "/" + uuid() + ext;
+    return sb.rpc("video_room", { n: blob.size }).then(function (r) {
+      if (r.error) throw new Error(/function|schema cache/i.test(r.error.message) ? "Posting videos needs the latest Launchpad update on the server." : r.error.message);
+      if (!r.data || !r.data.ok) throw new Error((r.data && r.data.why) || "There isn't room for that video.");
+      return sb.storage.from("videos").upload(path, blob, { contentType: blob.type.split(";")[0] || "video/webm", upsert: false });
+    }).then(function (u) {
+      if (u.error) throw new Error(/bucket/i.test(u.error.message || "") ? "This server can't keep videos yet." : u.error.message);
+      return sb.rpc("post_video", { p: path, t: title, a: about || "", secs: secs || 0, show: show !== false });
+    }).then(function (r) {
+      if (r.error) { sb.storage.from("videos").remove([path]); throw new Error(r.error.message); }
+      return r.data;
+    });
+  }
+
   /* ---- the Files window ---- */
   function filesDialog(opts) {
     var dlg = document.getElementById("ofFiles");
@@ -522,7 +539,7 @@
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
-    bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock,
+    bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, postVideo: postVideo,
     autosaver: autosaver, themeToggle: themeToggle,
     isCloud: function () { return cloud; }, user: function () { return user; }
   };
