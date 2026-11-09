@@ -232,19 +232,108 @@
     return sb.rpc("suite_unlock", { fid: id }).then(function (r) { if (r.error) throw r.error; return r.data; });
   }
 
-  /* ---- videos: post one for everyone on the Launchpad (or keep it just for you) ---- */
-  function postVideo(blob, title, about, secs, show) {
+  /* ---- videos ----
+     Up to 30 minutes, 720p. A video that's bigger than that (most phone
+     videos) is made smaller in the browser first - it plays through once
+     while that happens. Big files go up in 6 MB pieces, so a slow
+     connection or a dropped Wi-Fi doesn't mean starting again. */
+  function videoInfo(file) {
+    return new Promise(function (ok) {
+      var v = document.createElement("video"), u = URL.createObjectURL(file), done = false;
+      v.preload = "metadata"; v.muted = true; v.playsInline = true;
+      function fin() { if (done) return; done = true; var r = { secs: isFinite(v.duration) ? v.duration : 0, w: v.videoWidth || 0, h: v.videoHeight || 0 }; URL.revokeObjectURL(u); ok(r); }
+      v.onloadedmetadata = function () {
+        if (!isFinite(v.duration)) { v.currentTime = 1e7; v.ontimeupdate = function () { v.ontimeupdate = null; fin(); }; } else fin();
+      };
+      v.onerror = fin; setTimeout(fin, 8000); v.src = u;
+    });
+  }
+  function needsShrink(info, size) {
+    var big = Math.max(info.w, info.h) > 1290 || Math.min(info.w, info.h) > 730;
+    var rate = info.secs ? size * 8 / info.secs : 0;
+    return big || rate > 3.2e6;
+  }
+  function shrinkVideo(file, info, onprog) {
+    return new Promise(function (ok, no) {
+      var types = ["video/mp4;codecs=avc1,mp4a.40.2", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"], type = "";
+      if (!window.MediaRecorder) { no(new Error("This browser can't make the video smaller - try Chrome or Edge.")); return; }
+      for (var i = 0; i < types.length; i++) if (MediaRecorder.isTypeSupported(types[i])) { type = types[i]; break; }
+      var k = Math.min(1, 1280 / Math.max(info.w, info.h), 720 / Math.min(info.w, info.h));
+      var W = Math.round(info.w * k / 2) * 2, H = Math.round(info.h * k / 2) * 2;
+      var c = document.createElement("canvas"); c.width = W; c.height = H; var g = c.getContext("2d");
+      var v = document.createElement("video"), u = URL.createObjectURL(file); v.src = u; v.playsInline = true;
+      var A = window.AudioContext || window.webkitAudioContext, ac = A ? new A() : null, tracks = c.captureStream(30).getVideoTracks().slice();
+      if (ac) { try { var src = ac.createMediaElementSource(v), dst = ac.createMediaStreamDestination(); src.connect(dst); dst.stream.getAudioTracks().forEach(function (t) { tracks.push(t); }); } catch (e) {} }
+      var r = new MediaRecorder(new MediaStream(tracks), Object.assign(type ? { mimeType: type } : {}, { videoBitsPerSecond: 1.5e6, audioBitsPerSecond: 96000 })), chunks = [];
+      r.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
+      r.onstop = function () { URL.revokeObjectURL(u); if (ac) ac.close(); ok({ blob: new Blob(chunks, { type: (r.mimeType || type || "video/webm").split(";")[0] }), w: W, h: H, secs: info.secs }); };
+      v.onended = function () { setTimeout(function () { if (r.state !== "inactive") r.stop(); }, 200); };
+      v.onerror = function () { no(new Error("Couldn't read that video.")); };
+      function draw() {
+        if (r.state === "inactive") return;
+        g.drawImage(v, 0, 0, W, H);
+        if (onprog && info.secs) onprog(Math.min(1, v.currentTime / info.secs));
+        requestAnimationFrame(draw);
+      }
+      v.oncanplay = function () { v.oncanplay = null; if (ac && ac.state === "suspended") ac.resume(); r.start(1000); draw(); var p = v.play(); if (p && p.catch) p.catch(function (e) { no(e); }); };
+    });
+  }
+  var tusLoad = null;
+  function tus() {
+    if (window.tus) return Promise.resolve(window.tus);
+    if (!tusLoad) tusLoad = new Promise(function (ok, no) {
+      var sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/tus-js-client@4.1.0/dist/tus.min.js";
+      sc.onload = function () { ok(window.tus); }; sc.onerror = function () { tusLoad = null; no(new Error("Couldn't load the uploader.")); }; document.head.appendChild(sc);
+    });
+    return tusLoad;
+  }
+  function upload(path, blob, onprog) {
+    var ct = (blob.type || "video/webm").split(";")[0];
+    if (blob.size < 6 * 1024 * 1024) {
+      return sb.storage.from("videos").upload(path, blob, { contentType: ct, upsert: false }).then(function (u) { if (u.error) throw u.error; });
+    }
+    return Promise.all([tus(), sb.auth.getSession()]).then(function (x) {
+      var T = x[0], tok = x[1].data.session.access_token;
+      return new Promise(function (ok, no) {
+        var up = new T.Upload(blob, {
+          endpoint: URL_ + "/storage/v1/upload/resumable", retryDelays: [0, 2000, 5000, 10000, 20000],
+          headers: { authorization: "Bearer " + tok, apikey: KEY_, "x-upsert": "false" },
+          uploadDataDuringCreation: true, removeFingerprintOnSuccess: true, chunkSize: 6 * 1024 * 1024,
+          metadata: { bucketName: "videos", objectName: path, contentType: ct, cacheControl: "3600" },
+          onError: function (e) { no(e); },
+          onProgress: function (a, b) { if (onprog) onprog(a / b); },
+          onSuccess: function () { ok(); }
+        });
+        up.findPreviousUploads().then(function (prev) { if (prev.length) up.resumeFromPreviousUpload(prev[0]); up.start(); });
+      });
+    });
+  }
+  /* post a video: o = { title, about, show, secs, w, h, onstep(text), onprog(0..1) } */
+  function postVideo(blob, title, about, secs, show, o) {
+    o = o || {};
     if (!sb || !user) return Promise.reject(new Error("Sign in on the Launchpad first."));
-    var ext = /mp4/.test(blob.type) ? ".mp4" : /quicktime/.test(blob.type) ? ".mov" : ".webm", path = user.id + "/" + uuid() + ext;
-    return sb.rpc("video_room", { n: blob.size }).then(function (r) {
+    var step = o.onstep || function () {}, prog = o.onprog || function () {};
+    var info = { secs: secs || 0, w: o.w || 0, h: o.h || 0 };
+    return (info.w ? Promise.resolve(info) : videoInfo(blob).then(function (i) { if (!info.secs) info.secs = i.secs; info.w = i.w; info.h = i.h; return info; })).then(function () {
+      if (info.secs > 1805) throw new Error("Videos can be up to 30 minutes long - this one is " + Math.round(info.secs / 60) + " minutes.");
+      if (!o.noShrink && needsShrink(info, blob.size)) {
+        step("Making it 720p so it's quicker to watch (this plays through once - " + Math.ceil(info.secs / 60) + " min)…");
+        return shrinkVideo(blob, info, prog).then(function (r) { blob = r.blob; info.w = r.w; info.h = r.h; });
+      }
+    }).then(function () {
+      return sb.rpc("video_room", { n: blob.size, secs: info.secs });
+    }).then(function (r) {
       if (r.error) throw new Error(/function|schema cache/i.test(r.error.message) ? "Posting videos needs the latest Launchpad update on the server." : r.error.message);
       if (!r.data || !r.data.ok) throw new Error((r.data && r.data.why) || "There isn't room for that video.");
-      return sb.storage.from("videos").upload(path, blob, { contentType: blob.type.split(";")[0] || "video/webm", upsert: false });
-    }).then(function (u) {
-      if (u.error) throw new Error(/bucket/i.test(u.error.message || "") ? "This server can't keep videos yet." : u.error.message);
-      return sb.rpc("post_video", { p: path, t: title, a: about || "", secs: secs || 0, show: show !== false });
+      var ext = /mp4/.test(blob.type) ? ".mp4" : /quicktime/.test(blob.type) ? ".mov" : ".webm";
+      o.path = user.id + "/" + uuid() + ext;
+      step("Uploading " + size(blob.size) + "…"); prog(0);
+      return upload(o.path, blob, prog).catch(function (e) { throw new Error(/bucket/i.test((e && e.message) || "") ? "This server can't keep videos yet." : "The upload didn't work: " + ((e && e.message) || e)); });
+    }).then(function () {
+      step("Nearly there…");
+      return sb.rpc("post_video", { p: o.path, t: title, a: about || "", secs: info.secs || 0, show: show !== false, w: info.w || null, h: info.h || null });
     }).then(function (r) {
-      if (r.error) { sb.storage.from("videos").remove([path]); throw new Error(r.error.message); }
+      if (r.error) { sb.storage.from("videos").remove([o.path]); throw new Error(r.error.message); }
       return r.data;
     });
   }
@@ -539,7 +628,7 @@
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
-    bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, postVideo: postVideo,
+    bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, postVideo: postVideo, videoInfo: videoInfo,
     autosaver: autosaver, themeToggle: themeToggle,
     isCloud: function () { return cloud; }, user: function () { return user; }
   };

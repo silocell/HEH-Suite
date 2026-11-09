@@ -883,18 +883,20 @@
       var hd = proj.ratio === "1:1" ? [1080, 1080] : null;
       d.innerHTML = '<div class="of-dhead"><h2>🎬 Make the video</h2><button type="button" class="of-x" data-x aria-label="Close">✕</button></div>' +
         '<p class="of-where">It plays through once while it\'s being made (' + fmt(total()) + "), so keep this tab open and on screen.</p>" +
-        '<div class="ratios"><button type="button" data-q="1" aria-pressed="true"><b>Standard</b> <small>' + proj.W + " × " + proj.H + '</small></button><button type="button" data-q="1.5" aria-pressed="false"><b>HD</b> <small>' + Math.round(proj.W * 1.5) + " × " + Math.round(proj.H * 1.5) + "</small></button></div>" +
+        '<p class="of-where">It\'s made in 720p (' + Math.round(proj.W * vq()) + " × " + Math.round(proj.H * vq()) + "), up to 30 minutes long" + (total() > 1800 ? ' - <b style="color:#dc2626">this one is ' + fmt(total()) + ", so make it shorter first</b>" : "") + ".</p>" +
         '<div class="of-new"><button type="button" class="of-btn" data-go>⬇ Make it</button></div><div class="prog" hidden><div></div></div><p class="of-where" id="exMsg"></p>';
     }
     document.body.appendChild(d); d.showModal();
-    var q = 1, busy = null;
+    var q = vq(), busy = null;
     d.addEventListener("click", function (ev) {
       var b = ev.target.closest("button"); if (ev.target === d && !busy) { d.close(); d.remove(); return; } if (!b) return;
       if (b.dataset.x != null) { if (busy) busy.cancel(); d.close(); d.remove(); return; }
       if (b.dataset.q) { q = +b.dataset.q; d.querySelectorAll("[data-q]").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); }); return; }
-      if (b.dataset.go != null && !busy) { b.disabled = true; busy = makeVideo(q, type, d); }
+      if (b.dataset.go != null && !busy) { if (total() > 1800) { Office.toast("Videos can be up to 30 minutes - make it shorter first.", true); return; } b.disabled = true; busy = makeVideo(q, type, d); }
     });
   };
+  /* how much to scale the screen by for a 720p video */
+  function vq() { return Math.min(1, 1280 / Math.max(proj.W, proj.H), 720 / Math.min(proj.W, proj.H)); }
   function makeVideo(q, type, d) {
     var W = Math.round(proj.W * q / 2) * 2, H = Math.round(proj.H * q / 2) * 2, c = document.createElement("canvas"); c.width = W; c.height = H;
     c.style.cssText = "position:fixed;left:-99999px;top:0"; document.body.appendChild(c);
@@ -906,7 +908,7 @@
       audioOn(); speaker.gain.value = 0; // quiet while it's being made
       var vs = c.captureStream(30), tracks = vs.getVideoTracks().slice();
       if (dest) dest.stream.getAudioTracks().forEach(function (tr) { tracks.push(tr); });
-      var r = new MediaRecorder(new MediaStream(tracks), Object.assign(type ? { mimeType: type } : {}, { videoBitsPerSecond: q > 1 ? 4.5e6 : 2.5e6, audioBitsPerSecond: 128000 }));
+      var r = new MediaRecorder(new MediaStream(tracks), Object.assign(type ? { mimeType: type } : {}, { videoBitsPerSecond: 1.5e6, audioBitsPerSecond: 96000 }));
       var chunks = []; r.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
       var T = total(), started = 0;
       r.onstop = function () {
@@ -927,9 +929,11 @@
           pb.querySelectorAll("button").forEach(function (x) { x.disabled = true; }); pm.textContent = "Uploading " + Office.size(blob.size) + "…";
           Office.init("doc").then(function (st) {
             if (!st.user) throw new Error("Sign in on the Launchpad first.");
-            return Office.postVideo(blob, $("title").value.trim() || "My video", "", total(), show);
+            return Office.postVideo(blob, $("title").value.trim() || "My video", "", total(), show, {
+              w: W, h: H, noShrink: true, onstep: function (t) { pm.textContent = t; },
+              onprog: function (f) { pm.textContent = pm.textContent.replace(/ \d+%$/, "") + " " + Math.round(f * 100) + "%"; } });
           }).then(function (r) {
-            pm.innerHTML = (show ? "Posted! " : "Saved! ") + '<a href="https://hosting.civilinitiatives.org/watch/?v=' + encodeURIComponent(r.id) + '" target="_blank" rel="noopener">Watch it →</a>' +
+            pm.innerHTML = (show ? (proj.ratio === "9:16" && total() <= 100 ? "Posted as a Short! " : "Posted! ") : "Saved! ") + '<a href="https://hosting.civilinitiatives.org/watch/?v=' + encodeURIComponent(r.id) + '" target="_blank" rel="noopener">Watch it →</a>' +
               (show ? " Only people signed in to the Launchpad can see it." : " Only you can see it - find it in My Files.");
           }).catch(function (e2) { pm.textContent = e2.message || String(e2); pb.querySelectorAll("button").forEach(function (x) { x.disabled = false; }); });
         };
