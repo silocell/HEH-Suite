@@ -544,35 +544,34 @@
         S = session(f.id, mt, out, getF, opts);
       }).catch(function () {});
     }
-    /* pay as you go: a file whose storage isn't paid for is locked - you can
-       look at the copy kept on this device, or pay what's owed to unlock it */
+    /* pay as you go: a file whose storage isn't paid for is locked - it
+       can't be read or downloaded until what's owed is paid */
     function lockedFile(f, mt) {
       role = "view"; setBadge(); viewOnly(true, opts.surface);
+      document.body.classList.add("of-locked");
       var own = mt.role === "owner";
-      statusEl.textContent = "🔒 Locked" + (own ? "" : " - shared by " + mt.owner);
+      statusEl.textContent = "🔒 Locked";
       O.bill().then(function (b) {
         var info = b && b.byId[f.id], owed = info ? info.owed : null, have = b ? b.pence : null;
-        O.get(f.id).then(function (g) {
-          var d = document.createElement("dialog"); d.className = "of-dialog";
-          d.innerHTML = '<div class="of-dhead"><h2>🔒 This file is locked</h2><button type="button" class="of-x" data-a="x" aria-label="Close">✕</button></div>' +
-            (own ? "<p>Its storage hasn't been paid for, so it's locked. Nothing has been deleted.</p>" +
-              (owed != null ? "<p>Unlocking it costs <b>" + owed + "p</b>" + (have != null ? " - you have <b>" + have + "p</b>" : "") + ". After that it's " + (b ? b.cost : 10) + "p a day (free in the school holidays).</p>" : "")
-              : "<p>" + esc(mt.owner) + " hasn't paid for this file's storage, so it's locked. Ask them to open it and unlock it.</p>") +
-            '<p class="of-where">' + (g && g.keptCopy ? "You're looking at the copy kept on this device (from " + new Date(g.keptCopy).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + "). You can read it and download it, but not change it."
-              : "There's no copy of it on this device.") + "</p>" + '<p class="of-err" role="alert" style="color:#dc2626"></p>' +
-            '<div class="of-new">' + (own ? '<button type="button" class="of-btn" data-a="pay">🔓 Unlock' + (owed != null ? " for " + owed + "p" : "") + "</button>" : "") +
-            '<button type="button" class="of-btn ghost" data-a="x">' + (g && g.keptCopy ? "Look at my copy" : "Close") + "</button></div>";
-          document.body.appendChild(d); d.showModal();
-          d.onclick = function (e) {
-            var bt = e.target.closest("[data-a]"); if (e.target === d) { d.close(); d.remove(); return; } if (!bt) return;
-            if (bt.dataset.a === "x") { d.close(); d.remove(); return; }
-            if (bt.dataset.a === "pay") {
-              bt.disabled = true;
-              O.unlock(f.id).then(function () { O.toast("Unlocked."); location.reload(); })
-                .catch(function (er) { bt.disabled = false; d.querySelector(".of-err").textContent = (er.message || String(er)).replace(/^.*?: /, ""); });
-            }
-          };
-        });
+        var d = document.createElement("dialog"); d.className = "of-dialog";
+        d.innerHTML = '<div class="of-dhead"><h2>🔒 This file is locked</h2></div>' +
+          (own ? "<p>Its storage hasn't been paid for, so it can't be opened, read or downloaded. Nothing has been deleted - unlock it to get it back.</p>" +
+            (owed != null ? "<p>Unlocking it costs <b>" + owed + "p</b>" + (have != null ? " - you have <b>" + have + "p</b>" : "") + ". After that it's " + (b ? b.cost : 10) + "p a day (free in the school holidays).</p>" : "")
+            : "<p>" + esc(mt.owner) + " hasn't paid for this file's storage, so it's locked. Ask them to unlock it.</p>") +
+          '<p class="of-err" role="alert" style="color:#dc2626"></p>' +
+          '<div class="of-new">' + (own ? '<button type="button" class="of-btn" data-a="pay">🔓 Unlock' + (owed != null ? " for " + owed + "p" : "") + "</button>" : "") +
+          '<a class="of-btn ghost" href="' + location.pathname + '?id=' + O.uuid() + '" data-a="new">Start a new file</a><a class="of-btn ghost" href="/">All the Suite apps</a></div>';
+        document.body.appendChild(d); d.showModal();
+        d.addEventListener("cancel", function (e) { e.preventDefault(); });   // it stays until you unlock or leave
+        d.onclick = function (e) {
+          var bt = e.target.closest("[data-a]"); if (!bt) return;
+          if (bt.dataset.a === "new") { try { localStorage.removeItem("hl." + location.pathname.replace(/\//g, "") + ".last"); } catch (er) {} return; }
+          if (bt.dataset.a === "pay") {
+            bt.disabled = true;
+            O.unlock(f.id).then(function () { O.toast("Unlocked."); location.reload(); })
+              .catch(function (er) { bt.disabled = false; d.querySelector(".of-err").textContent = (er.message || String(er)).replace(/^.*?: /, ""); });
+          }
+        };
       });
     }
     var out = {

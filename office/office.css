@@ -155,3 +155,7 @@ label.big{cursor:pointer}
 .of-plist small{color:var(--soft)}
 .of-plist .of-del{height:36px}
 .of-viewonly .ribbon[data-panel],.of-viewonly .ribbon[role=toolbar],.of-viewonly #ofFiles .of-new{opacity:.45;pointer-events:none}
+
+/* a locked file: nothing of it shows */
+body.of-locked > :not(dialog):not(header.top):not(.of-toast){visibility:hidden}
+body.of-locked header.top .tbtn:not(.of-sharebtn){visibility:hidden}

@@ -13,7 +13,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261108a">
+<link rel="stylesheet" href="/office/office.css?b=20261109c">
 <style>
 :root{--a1:#0d9488;--board:#ffffff;--dot:#d4d9e1}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --board:#151b23;--dot:#2c3644 } }
@@ -114,8 +114,8 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
-<script src="/office/office.js?b=20261109b"></script>
-<script src="/office/live.js?b=20261109b"></script>
+<script src="/office/office.js?b=20261109c"></script>
+<script src="/office/live.js?b=20261109c"></script>
 <script src="/draw/draw.js?b=20261103e"></script>
 </body>
 </html>

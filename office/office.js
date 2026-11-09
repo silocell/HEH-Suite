@@ -93,9 +93,9 @@
           if (r.error) throw r.error;
           var f = r.data;
           if (!f || !f.locked_at) return f;
-          // locked (its storage isn't paid for): open the copy kept on this device, if there is one
-          f.locked = true;
-          return kept(f.id).then(function (k) { if (k && k.body) { f.body = k.body; f.keptCopy = k.at; } return f; });
+          // locked (its storage isn't paid for): nothing of it can be read until it's unlocked
+          f.locked = true; f.body = {};
+          return f;
         });
     }
     return Promise.resolve(lall()[id] || null);
@@ -185,9 +185,8 @@
      A file is free for 48 hours, then has a grace period (a day and a
      half, or 2 days at the weekend), then costs 10p a day from your
      Launchpad pence. School holidays are free. A file that can't be paid
-     for is locked, not deleted. While a file is in its grace period, any
-     of your devices with the Suite open keeps a copy of it, so you still
-     have it there if it gets locked. */
+     for is locked, not deleted - and while it's locked it can't be opened,
+     read or downloaded until it's paid for. */
   var billing = null, billWait = [];
   function billNow() {
     if (!cloud || !sb) return Promise.resolve(null);
@@ -198,7 +197,7 @@
       billing = r.data; billing.byId = {};
       (billing.files || []).forEach(function (f) { billing.byId[f.id] = f; });
       billWait.splice(0).forEach(function (fn) { fn(billing); });
-      keepCopies(); billNote();
+      forgetCopies(); billNote();
       return billing;
     }, function () { return null; });
   }
@@ -212,37 +211,9 @@
     if (b.state === "grace") return "⏳ " + c + "p a day from " + d(b.charge_from);
     return c + "p a day";
   }
-  var KDB = null;
-  function kdb() {
-    if (KDB) return KDB;
-    KDB = new Promise(function (ok) {
-      try { var r = indexedDB.open("hl-suite-kept", 1); r.onupgradeneeded = function () { r.result.createObjectStore("files", { keyPath: "id" }); };
-        r.onsuccess = function () { ok(r.result); }; r.onerror = r.onblocked = function () { ok(null); }; } catch (e) { ok(null); }
-    });
-    return KDB;
-  }
-  function kept(id) {
-    return kdb().then(function (d) {
-      if (!d) return null;
-      return new Promise(function (ok) { try { var q = d.transaction("files").objectStore("files").get(id); q.onsuccess = function () { ok(q.result || null); }; q.onerror = function () { ok(null); }; } catch (e) { ok(null); } });
-    });
-  }
-  function keep(rec) {
-    return kdb().then(function (d) {
-      if (!d) return;
-      return new Promise(function (ok) { try { var x = d.transaction("files", "readwrite"); x.objectStore("files").put(rec); x.oncomplete = x.onerror = function () { ok(); }; } catch (e) { ok(); } });
-    });
-  }
-  function keepCopies() {
-    if (!billing || billing.exempt) return;
-    var due = (billing.files || []).filter(function (f) { return f.state === "grace" || (f.state === "paying" && billing.pence < billing.cost * 3); }).slice(0, 25);
-    due.reduce(function (pr, f) {
-      return pr.then(function () {
-        return sb.from("office_files").select("id,kind,title,body,updated_at").eq("id", f.id).maybeSingle().then(function (r) {
-          if (r.data && r.data.body && Object.keys(r.data.body).length) return keep({ id: r.data.id, kind: r.data.kind, title: r.data.title, body: r.data.body, at: new Date().toISOString() });
-        });
-      });
-    }, Promise.resolve()).catch(function () {});
+  /* an earlier version kept copies of files on the device: not any more */
+  function forgetCopies() {
+    try { indexedDB.deleteDatabase("hl-suite-kept"); } catch (e) {}
   }
   function billNote() {
     if (!billing || billing.exempt) return;
@@ -252,7 +223,7 @@
     var lk = billing.files.filter(function (f) { return f.state === "locked"; }).length, gr = billing.files.filter(function (f) { return f.state === "grace"; }).length;
     var pay = billing.files.filter(function (f) { return f.state === "paying"; }).length;
     var msg = lk ? "🔒 " + lk + " of your Suite files " + (lk > 1 ? "are" : "is") + " locked - open " + (lk > 1 ? "one" : "it") + " to unlock it." :
-      gr ? "⏳ " + gr + " file" + (gr > 1 ? "s start" : " starts") + " costing " + billing.cost + "p a day soon. A copy is kept on this device." :
+      gr ? "⏳ " + gr + " file" + (gr > 1 ? "s start" : " starts") + " costing " + billing.cost + "p a day soon. If there aren't enough pence, " + (gr > 1 ? "they get" : "it gets") + " locked - delete what you don't need." :
       pay && billing.pence < pay * billing.cost * 2 ? "💰 Your files cost " + pay * billing.cost + "p a day and you have " + billing.pence + "p." : "";
     if (billing.break) msg = msg ? msg + " (" + billing["break"] + ": storage is free today.)" : "";
     if (msg) { toast(msg); try { sessionStorage.setItem("hl.billnote", day); } catch (e) {} }
@@ -551,7 +522,7 @@
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
     init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
-    bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, kept: kept,
+    bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock,
     autosaver: autosaver, themeToggle: themeToggle,
     isCloud: function () { return cloud; }, user: function () { return user; }
   };
