@@ -99,7 +99,7 @@
   }
   function load(f) {
     file = { id: f.id, title: f.title || "Untitled document", body: f.body || {} };
-    titleIn.value = file.title;
+    titleIn.value = file.title; titleIn.dataset.auto = "";
     page.innerHTML = Office.cleanHTML(file.body.html || "");
     useLayout(file.body.layout); useComments(file.body.comments);
     setZoom(file.body.zoom || 100);
@@ -110,7 +110,7 @@
   }
   function fresh(title, html, lay) {
     file = { id: Office.uuid(), title: title || "Untitled document", body: { html: html || "" } };
-    titleIn.value = file.title; page.innerHTML = html || "<p><br></p>";
+    titleIn.value = file.title; titleIn.dataset.auto = ""; page.innerHTML = html || "<p><br></p>";
     useLayout(lay); useComments(null); count(); navList();
     history.replaceState(null, "", "?id=" + encodeURIComponent(file.id));
     try { localStorage.setItem("hl.write.last", file.id); } catch (e) {}
@@ -118,7 +118,7 @@
   }
   function openId(id) {
     statusEl.textContent = "Opening…";
-    return Office.get(id).then(function (f) { if (f) load(f); else fresh(); })
+    return Office.get(id).then(function (f) { if (f) load(f); else { Office.toast("That document has been deleted, or it isn't shared with you. Here's a new one.", true); fresh(); } })
       .catch(function (e) { Office.toast("Couldn't open it: " + (e.message || e), true); fresh(); });
   }
   applyLayout();
@@ -145,7 +145,43 @@
   titleIn.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); page.focus(); } });
 
   /* ================= typing ================= */
-  page.addEventListener("input", function () { tidy(); count(); saver.poke(); navSoon(); });
+  /* Like Word: a document nobody has named takes its name from the first line. */
+  var DEFAULT_T = "Untitled document";
+  function autoName() {
+    if (titleIn.value.trim() && titleIn.value !== DEFAULT_T && titleIn.dataset.auto !== "1") return;
+    var first = ""; for (var n = page.firstElementChild; n && !first; n = n.nextElementSibling) first = (n.textContent || "").replace(/\s+/g, " ").trim();
+    var name = first.slice(0, 60).replace(/[.,;:!?\s]+$/, "");
+    if (name.length < 2) { if (titleIn.dataset.auto === "1") { titleIn.value = DEFAULT_T; } return; }
+    if (titleIn.value !== name) { titleIn.value = name; titleIn.dataset.auto = "1"; }
+  }
+  titleIn.addEventListener("input", function () { titleIn.dataset.auto = ""; });
+  /* AutoCorrect: the usual slips put right as you type, and a lone "i" made "I".
+     Ctrl+Z straight after puts your spelling back. */
+  var FIX = { teh:"the", hte:"the", adn:"and", nad:"and", taht:"that", thier:"their", recieve:"receive", recieved:"received", beleive:"believe",
+    becuase:"because", becasue:"because", wiht:"with", whcih:"which", alot:"a lot", definately:"definitely", seperate:"separate", untill:"until",
+    wich:"which", freind:"friend", freinds:"friends", goverment:"government", enviroment:"environment", tommorow:"tomorrow", tomorow:"tomorrow",
+    occured:"occurred", begining:"beginning", wierd:"weird", truely:"truly", basicly:"basically", finaly:"finally", realy:"really",
+    dont:"don't", doesnt:"doesn't", didnt:"didn't", cant:"can't", wont:"won't", isnt:"isn't", wasnt:"wasn't", im:"I'm", ive:"I've", youre:"you're", i:"I" };
+  function autoCorrect(e) {
+    if (!e || e.inputType !== "insertText" || !/^[ .,;:!?]$/.test(e.data || "")) return;
+    var sel = getSelection(); if (!sel.rangeCount || !sel.isCollapsed) return;
+    var node = sel.anchorNode, off = sel.anchorOffset; if (!node || node.nodeType !== 3) return;
+    var before = node.data.slice(0, off - 1), m = before.match(/(^|[^A-Za-z'])([A-Za-z']+)$/); if (!m) return;
+    var word = m[2], fix = FIX[word.toLowerCase()] || word;
+    // the start of a sentence gets a capital letter, as in Word
+    var lead = before.slice(0, before.length - word.length), blk = node.parentElement && node.parentElement.closest("p,li,h1,h2,h3,blockquote,td,th,div");
+    var startOfBlock = !lead.trim() && (!blk || blk.textContent.replace(/\u00a0/g, " ").trimStart().indexOf(word) === 0);
+    var sentence = /[.!?]\s+$/.test(lead) || startOfBlock;
+    if (sentence && /^[a-z][a-z']*$/.test(fix)) fix = fix[0].toUpperCase() + fix.slice(1);
+    else if (/^[A-Z]/.test(word) && fix !== "I") fix = fix[0].toUpperCase() + fix.slice(1);
+    if (fix === word) return;
+    var start = off - 1 - word.length, r = document.createRange();
+    r.setStart(node, start); r.setEnd(node, off - 1); sel.removeAllRanges(); sel.addRange(r);
+    document.execCommand("insertText", false, fix);
+    var after = document.createRange(); after.setStart(sel.anchorNode, Math.min(sel.anchorOffset + 1, sel.anchorNode.length || 0)); after.collapse(true);
+    sel.removeAllRanges(); sel.addRange(after);
+  }
+  page.addEventListener("input", function (e) { autoCorrect(e); tidy(); count(); autoName(); saver.poke(); navSoon(); });
   document.addEventListener("selectionchange", function () { syncTools(); context(); pageOfCaret(); });
 
   page.addEventListener("paste", function (e) {

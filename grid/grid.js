@@ -258,6 +258,7 @@
   fbar.addEventListener("input", function () { if (editing && editFrom === "cell") ed.value = fbar.value; hint(); });
   function keyIn(e, box) {
     if (e.key === "Enter") { e.preventDefault(); stopEdit(true, [e.shiftKey ? -1 : 1, 0]); }
+    else if (e.key === "Tab" && !e.shiftKey && sugs.length && !$("hint").hidden && useSug(sugs[0])) { e.preventDefault(); }
     else if (e.key === "Tab") { e.preventDefault(); stopEdit(true, [0, e.shiftKey ? -1 : 1]); }
     else if (e.key === "Escape") { e.preventDefault(); stopEdit(false); }
     else if (box === ed && /^Arrow/.test(e.key) && !pointing() && ed.dataset.typed === "1") {
@@ -294,15 +295,26 @@
     TRIM: "TRIM(text) - removes extra spaces", LEFT: "LEFT(text, how many)", RIGHT: "RIGHT(text, how many)", MID: "MID(text, start, how many)",
     TODAY: "TODAY() - today's date", NOW: "NOW() - the date and time", RANK: "RANK(number, cells) - its place, 1 = biggest"
   };
+  var sugs = [], sugWord = "";
+  /* like Excel: Tab (or a click) finishes the function name and opens its bracket */
+  function useSug(n) {
+    var box = editFrom === "bar" ? fbar : ed, v = box.value;
+    if (!sugWord || v.slice(-sugWord.length).toUpperCase() !== sugWord.toUpperCase()) return false;
+    box.value = v.slice(0, v.length - sugWord.length) + n + "(";
+    if (box === ed) fbar.value = ed.value; else if (editing && editFrom === "cell") ed.value = fbar.value;
+    box.focus(); box.setSelectionRange(box.value.length, box.value.length); sugs = []; hint(); return true;
+  }
+  $("hint").addEventListener("pointerdown", function (e) { var b = e.target.closest(".sug"); if (b) { e.preventDefault(); useSug(b.dataset.fn); } });
   function hint() {
     var t = curText(), h = $("hint");
     var m = /([A-Z]+)\((?:[^()]*)$/i.exec(t.slice(0)), w = /=?([A-Z]{2,})$/i.exec(t);
     if (t[0] !== "=") { h.hidden = true; return; }
-    var name = m ? m[1].toUpperCase() : null, html = "";
+    var name = m ? m[1].toUpperCase() : null, html = ""; sugs = [];
     if (name && DESC[name]) html = "<b>" + Office.esc(DESC[name].split(" - ")[0]) + "</b>" + (DESC[name].indexOf(" - ") > 0 ? " - " + Office.esc(DESC[name].split(" - ")[1]) : "");
     else if (w && !m) {
       var hits = F.names.filter(function (n) { return n.indexOf(w[1].toUpperCase()) === 0; }).slice(0, 5);
-      if (hits.length) html = hits.map(function (n) { return "<b>" + n + "</b>"; }).join(" · ");
+      sugs = hits; sugWord = w[1];
+      if (hits.length) html = hits.map(function (n, i) { return '<button type="button" class="sug" data-fn="' + n + '"><b>' + n + "</b>" + (DESC[n] ? " <small>" + Office.esc(DESC[n].split(" - ").slice(1).join(" - ") || "") + "</small>" : "") + "</button>"; }).join("") + '<small class="tabk">Tab puts in ' + hits[0] + "(</small>";
     }
     if (pointing()) html += (html ? "<br>" : "") + "Tap a cell to put it in the formula";
     if (!html) { h.hidden = true; return; }

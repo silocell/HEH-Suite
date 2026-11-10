@@ -645,6 +645,84 @@
     return { close: close };
   }
 
+
+  /* ---------- Search for tools (Alt+Q), like Word's box at the top ----------
+     Finds any button in the app by what it's called, opens the tab or menu it
+     lives in, and presses it. The text selection is kept, so "bold" bolds what
+     you had selected. */
+  function toolSearch() {
+    var top = document.querySelector("header.top"), sp = top && top.querySelector(".sp");
+    if (!top || !sp || document.getElementById("ofTools")) return;
+    var wrap = document.createElement("div"); wrap.className = "of-tools"; wrap.id = "ofTools";
+    wrap.innerHTML = '<span class="of-tools-ic" aria-hidden="true">🔍</span><input type="search" id="ofToolsIn" placeholder="Search for tools (Alt+Q)" aria-label="Search for tools" autocomplete="off" spellcheck="false">' +
+      '<ul class="of-tools-list" id="ofToolsList" role="listbox" hidden></ul>';
+    top.insertBefore(wrap, sp);
+    var inp = wrap.querySelector("input"), ul = wrap.querySelector("ul"), saved = null, hits = [], at = 0;
+    function labelOf(b) {
+      var t = b.getAttribute("title") || b.getAttribute("aria-label");
+      if (!t) { var c = b.cloneNode(true); c.querySelectorAll("i,svg,img,.ic,[aria-hidden=true]").forEach(function (x) { x.remove(); }); t = c.textContent; }
+      t = (t || "").replace(/\s+/g, " ").trim().replace(/^[^A-Za-z0-9]+(?=[A-Za-z])/, "");
+      var key = (t.match(/\(([^)]*(Ctrl|Alt|Shift)[^)]*)\)/) || [])[1] || "";
+      t = t.replace(/\s*\([^)]*\)\s*$/, "").replace(/[▾▼]/g, "").trim();
+      return { name: t, key: key };
+    }
+    function index() {
+      var seen = {}, out = [];
+      document.querySelectorAll("button, [role=button]").forEach(function (b) {
+        if (b.closest("header.top,.tabsbar,.of-tools,dialog,#backstage") || b.disabled) return;
+        var l = labelOf(b); if (!l.name || l.name.length < 2 || l.name.length > 48 || /^[^a-z]+$/i.test(l.name)) return;
+        var panel = b.closest("[data-panel]"), where = panel ? panel.getAttribute("data-panel") : "";
+        var id = l.name.toLowerCase() + "|" + where; if (seen[id]) return; seen[id] = 1;
+        out.push({ b: b, name: l.name, key: l.key, where: where });
+      });
+      return out;
+    }
+    function score(item, words) {
+      var n = item.name.toLowerCase(), s = 0;
+      for (var i = 0; i < words.length; i++) { var k = n.indexOf(words[i]); if (k < 0) return -1; s += k === 0 ? 3 : (n[k - 1] === " " ? 2 : 1); }
+      return s - n.length / 100;
+    }
+    function draw() {
+      var q = inp.value.trim().toLowerCase();
+      if (!q) { ul.hidden = true; return; }
+      var words = q.split(/\s+/);
+      hits = index().map(function (it) { return { it: it, s: score(it, words) }; }).filter(function (x) { return x.s >= 0; })
+        .sort(function (a, b) { return b.s - a.s; }).slice(0, 8).map(function (x) { return x.it; });
+      at = 0;
+      ul.innerHTML = hits.length ? hits.map(function (h, i) {
+        return '<li role="option" data-i="' + i + '"' + (i === 0 ? ' aria-selected="true"' : "") + '><span>' + esc(h.name) + "</span>" +
+          (h.where ? '<small>' + esc(h.where[0].toUpperCase() + h.where.slice(1)) + "</small>" : "") + (h.key ? "<kbd>" + esc(h.key) + "</kbd>" : "") + "</li>";
+      }).join("") : '<li class="of-tools-none">No tool called that</li>';
+      ul.hidden = false;
+    }
+    function mark() { ul.querySelectorAll("li[data-i]").forEach(function (li) { li.setAttribute("aria-selected", +li.dataset.i === at ? "true" : "false"); }); }
+    function run(h) {
+      ul.hidden = true; inp.value = ""; inp.blur();
+      if (h.where) { var tab = document.querySelector('[data-tab="' + h.where + '"]'); if (tab && tab.getAttribute("aria-selected") !== "true") tab.click(); }
+      // a button inside a closed menu: open the menu first
+      var dd = h.b.closest(".dd,[class*=menu]"); if (dd && dd.hidden) { var wrapEl = dd.parentElement, trig = wrapEl && wrapEl.querySelector("button"); if (trig && trig !== h.b) trig.click(); }
+      if (saved) {
+        var ed = saved.startContainer.parentElement && saved.startContainer.parentElement.closest("[contenteditable=true]");
+        if (ed) { ed.focus(); var sel = getSelection(); sel.removeAllRanges(); sel.addRange(saved); }
+      }
+      setTimeout(function () { h.b.scrollIntoView({ block: "nearest", inline: "nearest" }); h.b.click(); h.b.classList.add("of-flash"); setTimeout(function () { h.b.classList.remove("of-flash"); }, 900); }, 30);
+    }
+    inp.addEventListener("focus", function () {
+      var sel = getSelection(); saved = null;
+      if (sel && sel.rangeCount) { var r = sel.getRangeAt(0), n = r.startContainer; n = n.nodeType === 1 ? n : n.parentElement; if (n && n.closest("[contenteditable=true]")) saved = r.cloneRange(); }
+    });
+    inp.addEventListener("input", draw);
+    inp.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (hits.length) { at = (at + (e.key === "ArrowDown" ? 1 : hits.length - 1)) % hits.length; mark(); } }
+      else if (e.key === "Enter") { e.preventDefault(); if (hits[at]) run(hits[at]); }
+      else if (e.key === "Escape") { inp.value = ""; ul.hidden = true; inp.blur(); }
+    });
+    ul.addEventListener("mousedown", function (e) { e.preventDefault(); var li = e.target.closest("li[data-i]"); if (li) run(hits[+li.dataset.i]); });
+    inp.addEventListener("blur", function () { setTimeout(function () { ul.hidden = true; }, 150); });
+    document.addEventListener("keydown", function (e) { if (e.altKey && !e.ctrlKey && (e.key === "q" || e.key === "Q")) { e.preventDefault(); inp.focus(); inp.select(); } });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", toolSearch); else setTimeout(toolSearch, 0);
+
   window.Office = {
     ribbon: ribbon, backstage: backstage,
     storage: storage, storageBar: storageBar, size: size,
@@ -653,7 +731,7 @@
     init: init, list: list, listAll: listAll, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
     bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, postVideo: postVideo, videoInfo: videoInfo,
-    autosaver: autosaver, themeToggle: themeToggle,
+    autosaver: autosaver, themeToggle: themeToggle, toolSearch: toolSearch,
     isCloud: function () { return cloud; }, user: function () { return user; }
   };
 })();

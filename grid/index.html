@@ -15,7 +15,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261109c">
+<link rel="stylesheet" href="/office/office.css?b=20261110b">
 <style>
 :root{--a1:#16a34a;--cell:#ffffff;--cellink:#1b1b1b;--grid:#e1e5eb;--head:#f3f5f8;--headon:#dcefe2;--sel:rgba(22,163,74,.12)}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --cell:#151b23;--cellink:#e6ebf2;--grid:#2a333f;--head:#1c232d;--headon:#1f3b2a;--sel:rgba(74,222,128,.14) } }
@@ -49,7 +49,11 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
 #fillH{position:absolute;width:9px;height:9px;background:var(--a1);border:2px solid var(--cell);z-index:2;cursor:crosshair;touch-action:none;margin:-5px 0 0 -5px}
 #copyBox{border:2px dashed var(--a1)}
 #ed{position:absolute;z-index:5;border:2px solid var(--a1);outline:none;padding:0 4px;font:13px/1.2 Calibri,Carlito,"Segoe UI",system-ui,sans-serif;background:var(--cell);color:var(--cellink);box-shadow:0 4px 14px -4px rgba(0,0,0,.35)}
-#hint{position:absolute;z-index:6;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:6px 10px;font-size:.8rem;box-shadow:0 8px 20px -8px rgba(0,0,0,.4);max-width:340px;pointer-events:none}
+#hint{position:absolute;z-index:6;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:6px 10px;font-size:.8rem;box-shadow:0 8px 20px -8px rgba(0,0,0,.4);max-width:360px}
+#hint .sug{display:block;width:100%;text-align:left;background:none;border:0;border-radius:7px;padding:4px 6px;color:inherit;font:inherit;cursor:pointer}
+#hint .sug:first-child,#hint .sug:hover{background:var(--on)}
+#hint .sug small,#hint .tabk{color:var(--soft)}
+#hint .tabk{display:block;padding:4px 6px 0;font-size:.72rem}
 #hint b{font-family:ui-monospace,Menlo,monospace}
 
 .tabs{flex:none;display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--tool);border-top:1px solid var(--rule);overflow-x:auto}
@@ -243,11 +247,11 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/jszip.min.js"></script>
-<script src="/office/office.js?b=20261110a"></script>
+<script src="/office/office.js?b=20261110b"></script>
 <script src="/office/live.js?b=20261109c"></script>
 <script src="/grid/formula.js?b=20261103a"></script>
 <script src="/grid/xlsx.js?b=20261103a"></script>
 <script src="/office/odf.js?b=20261103g"></script>
-<script src="/grid/grid.js?b=20261107a"></script>
+<script src="/grid/grid.js?b=20261110b"></script>
 </body>
 </html>

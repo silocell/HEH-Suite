@@ -159,3 +159,20 @@ label.big{cursor:pointer}
 /* a locked file: nothing of it shows */
 body.of-locked > :not(dialog):not(header.top):not(.of-toast){visibility:hidden}
 body.of-locked header.top .tbtn:not(.of-sharebtn){visibility:hidden}
+
+/* Search for tools (Alt+Q) */
+.of-tools{position:relative;flex:0 1 300px;min-width:0;display:flex;align-items:center}
+.of-tools-ic{position:absolute;left:10px;font-size:.8rem;opacity:.75;pointer-events:none}
+.of-tools input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-radius:999px;color:#fff;padding:6px 12px 6px 30px;font:inherit;font-size:.86rem}
+.of-tools input::placeholder{color:rgba(255,255,255,.65)}
+.of-tools input:focus{outline:none;background:rgba(255,255,255,.18);border-color:var(--a1)}
+.of-tools-list{position:absolute;top:calc(100% + 6px);left:0;right:0;min-width:260px;margin:0;padding:6px;list-style:none;background:var(--card,#fff);color:var(--ink,#111);border:1px solid var(--rule,#ddd);border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.28);z-index:50}
+.of-tools-list li{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:.9rem}
+.of-tools-list li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.of-tools-list li small{color:var(--soft,#667);font-size:.75rem}
+.of-tools-list li kbd{font:600 .72rem ui-monospace,monospace;border:1px solid var(--rule,#ddd);border-radius:5px;padding:1px 5px;color:var(--soft,#667)}
+.of-tools-list li[aria-selected="true"],.of-tools-list li:hover{background:var(--hover,rgba(79,70,229,.12))}
+.of-tools-list .of-tools-none{cursor:default;color:var(--soft,#667)}
+.of-flash{outline:2px solid var(--a1)!important;outline-offset:2px;transition:outline-color .3s}
+@media (max-width:760px){ .of-tools{flex:0 0 36px} .of-tools input{padding:6px 0 6px 28px;color:transparent} .of-tools input::placeholder{color:transparent}
+  .of-tools input:focus{position:absolute;right:-120px;width:240px;color:#fff;padding-right:12px;z-index:51} .of-tools-list{left:auto;right:-120px;width:260px} }
