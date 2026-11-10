@@ -420,3 +420,29 @@ document.addEventListener("click", (e) => { if (!mm.hidden && !mm.contains(e.tar
 mm.onclick = (e) => { const b = e.target.closest("[data-ex]"); if (!b) return; mm.hidden = true; save(b.dataset.ex); };
 window.addEventListener("beforeunload", (e) => { if (pages.some((p) => p.ann.length) || Object.keys(formVals).length) { e.preventDefault(); e.returnValue = ""; } });
 draw();
+
+/* the ribbon tabs and the File screen, as in Write */
+Office.ribbon();
+$("fileTab").onclick = () => {
+  const ex = (k) => { const b = document.querySelector('#moreMenu [data-ex="' + k + '"]'); if (b) b.click(); };
+  Office.backstage({
+    print: () => ex("pdf"),
+    pages: {
+      home: { label: "Home", title: $("title").value, items: [
+        { a: "open", icon: "📂", title: "Open a PDF", sub: "From this device - nothing is uploaded" },
+        { a: "merge", icon: "➕", title: "Merge", sub: "Add another PDF's pages at the end" },
+        { a: "pics", icon: "🖼", title: "Pictures to PDF", sub: "Turn photos into PDF pages" }] },
+      save: { label: "Save a copy", title: "Save a copy", items: [
+        { a: "ex-pdf", icon: "📕", title: "Save the whole PDF", sub: "With your marks, in this page order" },
+        { a: "ex-ticked", icon: "✂️", title: "Save ticked pages only", sub: "Split out the pages you ticked" },
+        { a: "ex-png", icon: "🖼", title: "This page as a picture", sub: ".png" },
+        { a: "ex-text", icon: "📝", title: "Copy out the words", sub: ".txt of all the text" },
+        { a: "ex-write", icon: "✍️", title: "Open the words in Write", sub: "Edit the text as a document" }] },
+      info: { label: "Info", html: () => '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + Office.esc($("title").value) + "</dd><dt>Pages</dt><dd>" + pages.length + "</dd><dt>Saved</dt><dd>On this device only - nothing is uploaded</dd></dl>" }
+    },
+    onPick: (a) => {
+      if (a === "open") $("openIn").click(); else if (a === "merge") $("mergeIn").click(); else if (a === "pics") $("imgIn").click();
+      else if (a.indexOf("ex-") === 0) ex(a.slice(3));
+    }
+  });
+};

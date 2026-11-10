@@ -74,8 +74,40 @@
   }
 
   /* ---------- my forms ---------- */
+  /* the File button, tabs and ribbon, as in Write */
+  var ICON = { short: "✏️", long: "📝", choice: "🔘", checks: "☑️", dropdown: "🔽", scale: "⭐", date: "📅" };
+  function drawBar(mode) {
+    var fb = $("fbar"); if (!fb) return;
+    var tabs = mode === "edit" ? [["q", "Questions"], ["r", "Answers"], ["s", "Share"], ["p", "Preview"]] : [["home", "Home"]];
+    var on = mode === "edit" ? tab : "home";
+    var h = '<nav class="tabsbar" role="tablist" aria-label="Ribbon"><button type="button" class="file" id="fileTab">File</button>' +
+      tabs.map(function (t) { return '<button type="button" role="tab" data-ftab="' + t[0] + '" aria-selected="' + (t[0] === on) + '">' + t[1] + "</button>"; }).join("") + "</nav>";
+    if (mode !== "edit") h += '<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home"><div class="rg"><div class="row">' +
+      '<button class="big" data-fnew="form" title="New form"><i>📋</i>New form</button><button class="big" data-fnew="quiz" title="New quiz"><i>🧠</i>New quiz</button></div><div class="gl">New</div></div></div>';
+    else if (tab === "q") h += '<div class="ribbon" data-panel="q" role="tabpanel" aria-label="Questions"><div class="rg"><div class="row">' +
+      Object.keys(TYPES).map(function (t) { return '<button class="big" data-fadd="' + t + '" title="Add a ' + TYPES[t].toLowerCase() + ' question"><i>' + ICON[t] + "</i>" + esc(TYPES[t]) + "</button>"; }).join("") +
+      '</div><div class="gl">Add a question</div></div><div class="rg"><div class="row"><button class="big" data-ftab-go="p" title="See it as people will"><i>👁</i>Preview</button><button class="big" data-ftab-go="s" title="Share the link"><i>🔗</i>Share</button></div><div class="gl">Send</div></div></div>';
+    fb.innerHTML = h;
+    fb.querySelectorAll("[data-ftab]").forEach(function (b) { b.onclick = function () { if (mode === "edit") { tab = b.dataset.ftab; render(); } }; });
+    fb.querySelectorAll("[data-ftab-go]").forEach(function (b) { b.onclick = function () { tab = b.dataset.ftabGo; render(); }; });
+    fb.querySelectorAll("[data-fnew]").forEach(function (b) { b.onclick = function () { newForm(b.dataset.fnew === "quiz"); }; });
+    fb.querySelectorAll("[data-fadd]").forEach(function (b) { b.onclick = function () { var a = document.querySelector('#pane [data-add="' + b.dataset.fadd + '"]'); if (a) a.click(); }; });
+    $("fileTab").onclick = function () {
+      Office.backstage({
+        pages: {
+          home: { label: "Home", title: form ? form.title : "Forms", items: [
+            { a: "new-form", icon: "📋", title: "New form", sub: "A survey - see everyone's answers" },
+            { a: "new-quiz", icon: "🧠", title: "New quiz", sub: "Questions with right answers and a score" },
+            { a: "mine", icon: "📂", title: "Open", sub: "Your forms and quizzes" }] },
+          info: { label: "Info", html: function () { return form ? '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + esc(form.title) + "</dd><dt>Kind</dt><dd>" + (form.settings.quiz ? "Quiz" : "Form") + "</dd><dt>Questions</dt><dd>" + form.body.questions.length + "</dd><dt>Open</dt><dd>" + (form.open ? "Yes - taking answers" : "No") + "</dd></dl>" : "<h2>Info</h2><p>Open a form to see its details.</p>"; } }
+        },
+        onPick: function (a) { if (a === "new-form") newForm(false); else if (a === "new-quiz") newForm(true); else if (a === "mine") { history.pushState(null, "", location.pathname); myForms(); } }
+      });
+    };
+  }
   function myForms() {
     form = null; status(""); saver.opened();
+    drawBar("list");
     sb.from("forms").select("id,title,updated_at,open,settings,owner").order("updated_at", { ascending: false }).limit(200).then(function (r) {
       if (r.error) { serverMissing(); return; }
       var rows = r.data || [];
@@ -108,8 +140,8 @@
   function save() { saver.poke(); }
   function render() {
     var s = form.settings;
-    main.innerHTML = '<nav class="tabs2" role="tablist"><button type="button" data-tab="q" aria-selected="' + (tab === "q") + '">Questions</button><button type="button" data-tab="r" aria-selected="' + (tab === "r") + '">Answers</button><button type="button" data-tab="s" aria-selected="' + (tab === "s") + '">Share</button><button type="button" data-tab="p" aria-selected="' + (tab === "p") + '">Preview</button></nav><div id="pane"></div>';
-    main.querySelectorAll("[data-tab]").forEach(function (b) { b.onclick = function () { tab = b.dataset.tab; render(); }; });
+    drawBar("edit");
+    main.innerHTML = '<div id="pane"></div>';
     var pane = $("pane");
     if (tab === "q") questionsPane(pane);
     else if (tab === "r") answersPane(pane);

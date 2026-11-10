@@ -191,9 +191,10 @@
     if (editingId === id) return;                       // clicking inside the text being typed
     ev.preventDefault();
     var e = find(id);
-    if (selId === id && e.type === "text" && ev.pointerType !== "mouse") { startEdit(id); return; } // second tap types
+    if (selId === id && e.type === "text" && ev.pointerType !== "mouse") { startEdit(id, ev); return; } // second tap types
+    var again = selId === id && e.type === "text";   // like PowerPoint: clicking a picked text box (without dragging) puts the cursor in
     select(id);
-    mark(); drag = { mode: "move", start: pt(ev), o: Object.assign({}, e), moved: false };
+    mark(); drag = { mode: "move", start: pt(ev), o: Object.assign({}, e), moved: false, again: again ? id : null, cx: ev.clientX, cy: ev.clientY };
     stage.setPointerCapture(ev.pointerId);
   });
   stage.addEventListener("pointermove", function (ev) {
@@ -227,20 +228,34 @@
   });
   stage.addEventListener("pointerup", function () {
     clearGuides();
+    var d0 = drag;
     if (drag) { if (!drag.moved) undo.pop(); else changed(); }
     drag = null;
+    if (d0 && d0.again && !d0.moved && editingId !== d0.again) startEdit(d0.again, { clientX: d0.cx, clientY: d0.cy });
   });
   // pointer capture sends the double-click to the stage, so find the box under the pointer
   stage.addEventListener("dblclick", function (ev) {
     var hit = document.elementsFromPoint(ev.clientX, ev.clientY).filter(function (n) { return n.classList && n.classList.contains("el") && n.classList.contains("text"); })[0];
-    if (hit) startEdit(hit.dataset.id);
+    if (hit && editingId !== hit.dataset.id) startEdit(hit.dataset.id, ev);
+    else if (hit) caretAt(hit, ev, false);
   });
 
-  function startEdit(id) {
-    var e = find(id), d = domOf(id); if (!e || e.type !== "text") return;
-    finishEdit(); select(id); editingId = id; mark();
+  /* put the cursor where the pointer is (or, for a double-click, pick the word there) */
+  function caretAt(d, ev, word) {
+    var r = null;
+    if (ev && document.caretRangeFromPoint) r = document.caretRangeFromPoint(ev.clientX, ev.clientY);
+    else if (ev && document.caretPositionFromPoint) { var cp = document.caretPositionFromPoint(ev.clientX, ev.clientY); if (cp) { r = document.createRange(); r.setStart(cp.offsetNode, cp.offset); } }
+    if (!r || !d.contains(r.startContainer)) { r = document.createRange(); r.selectNodeContents(d); r.collapse(false); }
+    var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    if (word && s.modify && r.startContainer.nodeType === 3 && /\S/.test(r.startContainer.data.charAt(r.startOffset) || "")) { s.modify("move", "backward", "word"); s.modify("extend", "forward", "word"); }
+  }
+  function startEdit(id, ev) {
+    var e = find(id); if (!e || e.type !== "text") return;
+    if (editingId !== id) finishEdit();
+    var d = domOf(id); if (!d) return;
+    select(id); editingId = id; mark();
     d.contentEditable = "true"; d.focus();
-    var r = document.createRange(); r.selectNodeContents(d); r.collapse(false); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    caretAt(d, ev, false);
     if (!e.html && e.role === "body" && /^•/.test(e.ph || "")) { document.execCommand("insertUnorderedList"); }
     d.oninput = function () { e.html = Office.cleanHTML(d.innerHTML); changed(); };
     d.onpaste = function (ev) { ev.preventDefault(); document.execCommand("insertText", false, (ev.clipboardData || window.clipboardData).getData("text/plain")); };

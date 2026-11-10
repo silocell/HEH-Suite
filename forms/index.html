@@ -19,6 +19,8 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 body{overflow:auto;display:block}
 .top{position:sticky;top:0}
 main{max-width:780px;margin:0 auto;padding:20px 16px 90px}
+#fbar{position:sticky;top:0;z-index:5}
+#fbar .ribbon[data-panel]{min-height:0}
 .tabs2{display:flex;gap:6px;justify-content:center;margin:4px 0 18px}
 .tabs2 button{border:1px solid var(--rule);background:var(--card);border-radius:999px;padding:8px 18px;font-weight:700}
 .tabs2 button[aria-selected="true"]{background:var(--a1);border-color:var(--a1);color:#fff}
@@ -89,11 +91,12 @@ table.resp th,table.resp td{border-bottom:1px solid var(--rule);padding:6px 8px;
   <button class="tbtn" id="themeBtn" type="button"></button>
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
+<div id="fbar"></div>
 <main id="main"><p class="center" style="color:var(--soft);margin-top:60px">Loading…</p></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/office.js?b=20261110b"></script>
 <script src="/office/live.js?b=20261109c"></script>
-<script src="/forms/forms.js?b=20261109d"></script>
+<script src="/forms/forms.js?b=20261110c"></script>
 </body>
 </html>

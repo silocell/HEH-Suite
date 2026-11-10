@@ -55,49 +55,76 @@ label.tb{cursor:pointer}
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
 
-<div class="ribbon" role="toolbar" aria-label="PDF tools">
-  <div class="grp">
-    <label class="tb wide" title="Open a PDF">📂 Open<input type="file" id="openIn" accept="application/pdf,.pdf" hidden></label>
-    <label class="tb wide" title="Add another PDF's pages at the end">➕ Merge<input type="file" id="mergeIn" accept="application/pdf,.pdf" multiple hidden></label>
-    <label class="tb wide" title="Turn pictures into PDF pages">🖼 Pictures<input type="file" id="imgIn" accept="image/*" multiple hidden></label>
-  </div>
-  <div class="grp" id="tools">
-    <button class="tb" data-tool="select" aria-pressed="true" title="Scroll and pick">🖐</button>
-    <button class="tb" data-tool="pen" title="Pen">✏️</button>
-    <button class="tb" data-tool="hl" title="Highlighter">🖍</button>
-    <button class="tb" data-tool="text" title="Type text">🅣</button>
-    <button class="tb" data-tool="box" title="Box">▭</button>
-    <button class="tb" data-tool="white" title="White-out (cover something)">⬜</button>
-    <button class="tb" data-tool="sign" title="Signature">✍️</button>
-    <button class="tb" data-tool="erase" title="Rubber - tap a mark to remove it">🧽</button>
-    <label class="tb colorbtn" title="Colour">🎨<span class="bar" id="colBar" style="background:#1d4ed8"></span><input type="color" id="col" value="#1d4ed8" aria-label="Colour"></label>
-    <select id="size" aria-label="Size" title="Pen or text size"><option value="2">Thin</option><option value="3" selected>Medium</option><option value="6">Thick</option><option value="12">Text 12</option><option value="16">Text 16</option><option value="24">Text 24</option></select>
-    <button class="tb" id="undoBtn" title="Undo the last mark">↶</button>
-  </div>
-  <div class="grp">
-    <button class="tb" id="rotL" title="Rotate left">⟲</button>
-    <button class="tb" id="rotR" title="Rotate right">⟳</button>
-    <button class="tb" id="upBtn" title="Move page up">↑</button>
-    <button class="tb" id="downBtn" title="Move page down">↓</button>
-    <button class="tb" id="blankBtn" title="Add a blank page after this one">📄+</button>
-    <button class="tb" id="delBtn" title="Delete the ticked pages (or this page)">🗑</button>
-  </div>
-  <div class="grp">
-    <button class="tb wide" id="formBtn" title="Fill in the form" hidden>📝 Form</button>
-    <button class="tb wide" id="numBtn" aria-pressed="false" title="Add page numbers when saving">#️⃣ Numbers</button>
-    <button class="tb" id="zOut" title="Zoom out">➖</button>
-    <button class="tb" id="zIn" title="Zoom in">➕</button>
-    <div class="menuwrap">
-      <button class="tb wide" id="moreBtn" aria-haspopup="true">⬇ More ▾</button>
-      <div class="menu" id="moreMenu" hidden>
-        <button type="button" data-ex="pdf">📕<span>Save the whole PDF<small>With your marks, in this page order</small></span></button>
-        <button type="button" data-ex="ticked">✂️<span>Save ticked pages only<small>Split out the pages you ticked</small></span></button>
-        <button type="button" data-ex="png">🖼<span>This page as a picture<small>.png</small></span></button>
-        <button type="button" data-ex="text">📝<span>Copy out the words<small>.txt of all the text</small></span></button>
-        <button type="button" data-ex="write">✍️<span>Open the words in Write<small>Edit the text as a document</small></span></button>
+<nav class="tabsbar" role="tablist" aria-label="Ribbon">
+  <button type="button" class="file" id="fileTab">File</button>
+  <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button type="button" role="tab" data-tab="pages" aria-selected="false">Pages</button>
+  <button type="button" role="tab" data-tab="view" aria-selected="false">View</button>
+</nav>
+
+<!-- HOME -->
+<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home">
+  <div class="rg"><div class="row">
+      <label class="big" title="Open a PDF"><i>📂</i>Open<input type="file" id="openIn" accept="application/pdf,.pdf" hidden></label>
+      <label class="big" title="Add another PDF's pages at the end"><i>➕</i>Merge<input type="file" id="mergeIn" accept="application/pdf,.pdf" multiple hidden></label>
+      <label class="big" title="Turn pictures into PDF pages"><i>🖼</i>Pictures<br>to PDF<input type="file" id="imgIn" accept="image/*" multiple hidden></label>
+    </div><div class="gl">Files</div></div>
+  <div class="rg"><div class="row" id="tools">
+      <button class="big" data-tool="select" aria-pressed="true" title="Scroll and pick"><i>🖐</i>Select</button>
+      <button class="big" data-tool="pen" title="Pen"><i>✏️</i>Pen</button>
+      <button class="big" data-tool="hl" title="Highlighter"><i>🖍</i>Highlight</button>
+      <button class="big" data-tool="text" title="Type text"><i>🅣</i>Text</button>
+      <button class="big" data-tool="box" title="Box"><i>▭</i>Box</button>
+      <button class="big" data-tool="white" title="White-out (cover something)"><i>⬜</i>White-out</button>
+      <button class="big" data-tool="sign" title="Signature"><i>✍️</i>Sign</button>
+      <button class="big" data-tool="erase" title="Rubber - tap a mark to remove it"><i>🧽</i>Rubber</button>
+    </div><div class="gl">Mark up</div></div>
+  <div class="rg"><div class="row">
+      <label class="tb colorbtn" title="Colour">🎨<span class="bar" id="colBar" style="background:#1d4ed8"></span><input type="color" id="col" value="#1d4ed8" aria-label="Colour"></label>
+      <button class="tb" id="undoBtn" title="Undo the last mark" aria-label="Undo">↶</button>
+    </div><div class="row">
+      <select id="size" aria-label="Size" title="Pen or text size"><option value="2">Thin</option><option value="3" selected>Medium</option><option value="6">Thick</option><option value="12">Text 12</option><option value="16">Text 16</option><option value="24">Text 24</option></select>
+    </div><div class="gl">Colour &amp; size</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="formBtn" title="Fill in the form" hidden><i>📝</i>Fill in<br>form</button>
+    </div><div class="gl">Form</div></div>
+</div>
+
+<!-- PAGES -->
+<div class="ribbon" data-panel="pages" role="tabpanel" aria-label="Pages" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="rotL" title="Rotate left"><i>⟲</i>Rotate<br>left</button>
+      <button class="big" id="rotR" title="Rotate right"><i>⟳</i>Rotate<br>right</button>
+    </div><div class="gl">Rotate</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="upBtn" title="Move page up"><i>↑</i>Move up</button>
+      <button class="big" id="downBtn" title="Move page down"><i>↓</i>Move down</button>
+      <button class="big" id="blankBtn" title="Add a blank page after this one"><i>📄</i>Blank<br>page</button>
+      <button class="big" id="delBtn" title="Delete the ticked pages (or this page)"><i>🗑</i>Delete</button>
+    </div><div class="gl">Arrange</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="numBtn" aria-pressed="false" title="Add page numbers when saving"><i>#️⃣</i>Page<br>numbers</button>
+    </div><div class="gl">Numbers</div></div>
+</div>
+
+<!-- VIEW -->
+<div class="ribbon" data-panel="view" role="tabpanel" aria-label="View" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" id="zOut" title="Zoom out"><i>－</i>Zoom out</button>
+      <button class="big" id="zIn" title="Zoom in"><i>＋</i>Zoom in</button>
+    </div><div class="gl">Zoom</div></div>
+  <div class="rg"><div class="row">
+      <div class="menuwrap">
+        <button class="big" id="moreBtn" aria-haspopup="true" title="Save a copy"><i>⬇</i>Save a<br>copy ▾</button>
+        <div class="menu" id="moreMenu" hidden style="left:0;right:auto">
+          <button type="button" data-ex="pdf">📕<span>Save the whole PDF<small>With your marks, in this page order</small></span></button>
+          <button type="button" data-ex="ticked">✂️<span>Save ticked pages only<small>Split out the pages you ticked</small></span></button>
+          <button type="button" data-ex="png">🖼<span>This page as a picture<small>.png</small></span></button>
+          <button type="button" data-ex="text">📝<span>Copy out the words<small>.txt of all the text</small></span></button>
+          <button type="button" data-ex="write">✍️<span>Open the words in Write<small>Edit the text as a document</small></span></button>
+        </div>
       </div>
-    </div>
-  </div>
+    </div><div class="gl">Export</div></div>
 </div>
 
 <div class="work">
@@ -122,6 +149,6 @@ label.tb{cursor:pointer}
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/office.js?b=20261110b"></script>
 <script src="/pdf/lib/pdf-lib.min.js"></script>
-<script type="module" src="/pdf/pdf.js?b=20261103e"></script>
+<script type="module" src="/pdf/pdf.js?b=20261110c"></script>
 </body>
 </html>

@@ -20,6 +20,7 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 :root[data-theme="dark"]{ --desk:#0d1117 }
 .top .brand i{background:linear-gradient(135deg,#e11d48,#f97316)}
 .vz{flex:1;display:flex;min-height:0}
+@media (min-width:861px){ .vz .rail{display:none} }
 .rail{width:74px;flex:none;background:var(--tool);border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow:auto}
 .rail button{border:0;background:transparent;border-radius:12px;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.7rem;font-weight:600;color:var(--soft)}
 .rail button i{font-style:normal;font-size:1.35rem;line-height:1}
@@ -145,6 +146,60 @@ dialog.ofwide[open]{display:block;overflow:auto}
   <button class="tbtn" id="themeBtn" type="button"></button>
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
+<nav class="tabsbar" role="tablist" aria-label="Ribbon">
+  <button type="button" class="file" id="fileTab">File</button>
+  <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button type="button" role="tab" data-tab="insert" aria-selected="false">Insert</button>
+  <button type="button" role="tab" data-tab="audio" aria-selected="false">Audio</button>
+  <button type="button" role="tab" data-tab="view" aria-selected="false">View</button>
+</nav>
+<div id="vRib">
+<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home">
+  <div class="rg"><div class="row">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" data-vact="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="tb" data-vact="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+      </div>
+    </div><div class="gl">Undo</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-vsa="add" title="Add a new scene"><i>＋</i>New scene</button>
+      <button class="big" data-vsa="dup" title="Copy this scene"><i>⧉</i>Copy scene</button>
+      <button class="big" data-vsa="del" title="Delete this scene"><i>🗑</i>Delete<br>scene</button>
+      <button class="big" data-vpanel="scene" title="Background, length and how it comes in"><i>🎞</i>Scene<br>settings</button>
+    </div><div class="gl">Scenes</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-vact="play" title="Play from here (Space)"><i>▶</i>Play</button>
+      <button class="big" data-vact="make" title="Make the video file"><i>⬇</i>Make the<br>video</button>
+    </div><div class="gl">Video</div></div>
+</div>
+<div class="ribbon" data-panel="insert" role="tabpanel" aria-label="Insert" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-vtx="t" title="Add a title"><i>🅷</i>Title</button>
+      <button class="big" data-vtx="s" title="Add a subtitle"><i>🅢</i>Subtitle</button>
+      <button class="big" data-vtx="b" title="Add some words"><i>¶</i>Words</button>
+      <button class="big" data-vtx="l" title="A name label at the bottom"><i>🏷</i>Name<br>label</button>
+      <button class="big" data-vpanel="text" title="All the text styles"><i>🅣</i>More text</button>
+    </div><div class="gl">Text</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-vpanel="el" title="Shapes and stickers"><i>🔷</i>Elements</button>
+      <button class="big" data-vpanel="media" title="Pictures and video clips"><i>🖼</i>Media</button>
+    </div><div class="gl">Add</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-vsa="tpl" title="Add scenes from a template"><i>✨</i>Templates</button>
+    </div><div class="gl">Scenes</div></div>
+</div>
+<div class="ribbon" data-panel="audio" role="tabpanel" aria-label="Audio" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-vpanel="rec" title="Record your voice or camera"><i>🎙</i>Record</button>
+      <button class="big" data-vpanel="music" title="Background music"><i>🎵</i>Music</button>
+    </div><div class="gl">Sound</div></div>
+</div>
+<div class="ribbon" data-panel="view" role="tabpanel" aria-label="View" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-vact="panel" title="Show or hide the side panel"><i>◧</i>Side panel</button>
+    </div><div class="gl">Show</div></div>
+</div>
+</div>
 <div class="vz">
   <nav class="rail" aria-label="Add things">
     <button type="button" data-p="scene" aria-pressed="true"><i>🎞</i>Scene</button>
@@ -178,6 +233,6 @@ dialog.ofwide[open]{display:block;overflow:auto}
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/office.js?b=20261110b"></script>
 <script src="/office/scene.js?b=20261109a"></script>
-<script src="/vids/vids.js?b=20261109e"></script>
+<script src="/vids/vids.js?b=20261110c"></script>
 </body>
 </html>

@@ -20,6 +20,7 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 :root[data-theme="dark"]{ --desk:#0d1117 }
 .top .brand i{background:linear-gradient(135deg,#06b6d4,#7c3aed)}
 .dz{flex:1;display:flex;min-height:0}
+@media (min-width:861px){ .dz .rail{display:none} }
 /* the icons down the left, and the panel they open */
 .rail{width:74px;flex:none;background:var(--tool);border-right:1px solid var(--rule);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow:auto}
 .rail button{border:0;background:transparent;border-radius:12px;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.7rem;font-weight:600;color:var(--soft)}
@@ -136,6 +137,70 @@ dialog.ofwide[open]{display:block;overflow:auto}
   <button class="tbtn" id="themeBtn" type="button"></button>
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
+<nav class="tabsbar" role="tablist" aria-label="Ribbon">
+  <button type="button" class="file" id="fileTab">File</button>
+  <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button type="button" role="tab" data-tab="insert" aria-selected="false">Insert</button>
+  <button type="button" role="tab" data-tab="design" aria-selected="false">Design</button>
+  <button type="button" role="tab" data-tab="view" aria-selected="false">View</button>
+</nav>
+<div id="dRib">
+<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home">
+  <div class="rg"><div class="row">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" data-dact="undo" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="tb" data-dact="redo" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
+      </div>
+      <button class="big" data-dact="dup" title="Duplicate what's picked (Ctrl+D)"><i>⧉</i>Duplicate</button>
+      <button class="big" data-dact="del" title="Delete what's picked (Del)"><i>🗑</i>Delete</button>
+    </div><div class="gl">Clipboard</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-dact="text-h" title="Add a heading"><i>🅷</i>Heading</button>
+      <button class="big" data-dact="text-s" title="Add a subheading"><i>🅢</i>Subheading</button>
+      <button class="big" data-dact="text-b" title="Add body text"><i>¶</i>Body text</button>
+    </div><div class="gl">Text</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-dact="fwd" title="Bring forward"><i>⇡</i>Forward</button>
+      <button class="big" data-dact="back" title="Send backward"><i>⇣</i>Backward</button>
+      <button class="big" data-dact="lock" title="Lock it so it can't move"><i>🔒</i>Lock</button>
+    </div><div class="gl">Arrange</div></div>
+</div>
+<div class="ribbon" data-panel="insert" role="tabpanel" aria-label="Insert" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-dpanel="tpl" title="Templates"><i>✨</i>Templates</button>
+    </div><div class="gl">Start</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-dpanel="el" title="Shapes, stickers and lines"><i>🔷</i>Elements</button>
+      <button class="big" data-dpanel="text" title="Text styles"><i>🅣</i>Text</button>
+      <button class="big" data-dact="pic" title="A picture from this device"><i>🖼</i>Picture</button>
+      <button class="big" data-dpanel="up" title="Pictures you've added"><i>⬆️</i>Uploads</button>
+    </div><div class="gl">Add</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-dpage="add" title="Add a page"><i>＋</i>New page</button>
+      <button class="big" data-dpage="dup" title="Copy this page"><i>⧉</i>Copy page</button>
+      <button class="big" data-dpage="del" title="Delete this page"><i>🗑</i>Delete<br>page</button>
+    </div><div class="gl">Pages</div></div>
+</div>
+<div class="ribbon" data-panel="design" role="tabpanel" aria-label="Design" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-dpanel="bg" title="Background colour or picture"><i>🎨</i>Background</button>
+      <button class="big" data-dact="resize" title="Change the size"><i>📐</i>Resize</button>
+    </div><div class="gl">Page</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-dpanel="layers" title="Everything on the page, top to bottom"><i>🗂</i>Layers</button>
+    </div><div class="gl">Arrange</div></div>
+</div>
+<div class="ribbon" data-panel="view" role="tabpanel" aria-label="View" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-dpage="zout" title="Zoom out"><i>－</i>Zoom out</button>
+      <button class="big" data-dpage="fit" title="Fit to the screen"><i>⤢</i>Fit</button>
+      <button class="big" data-dpage="zin" title="Zoom in"><i>＋</i>Zoom in</button>
+    </div><div class="gl">Zoom</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-dact="panel" title="Show or hide the side panel"><i>◧</i>Side panel</button>
+    </div><div class="gl">Show</div></div>
+</div>
+</div>
 <div class="dz">
   <nav class="rail" aria-label="Add things">
     <button type="button" data-p="tpl" aria-pressed="true"><i>✨</i>Templates</button>
@@ -166,6 +231,6 @@ dialog.ofwide[open]{display:block;overflow:auto}
 <script src="/office/scene.js?b=20261109a"></script>
 <script src="/office/jszip.min.js"></script>
 <script src="/pdf/lib/pdf-lib.min.js"></script>
-<script src="/design/design.js?b=20261109a"></script>
+<script src="/design/design.js?b=20261110c"></script>
 </body>
 </html>

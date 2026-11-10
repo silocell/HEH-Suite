@@ -956,4 +956,44 @@
   $("title").addEventListener("input", saver.poke);
   window.addEventListener("beforeunload", function () { saver.now(); });
   showPanel();
+
+  /* the ribbon tabs and the File screen, as in Write */
+  Office.ribbon();
+  $("dRib").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button"); if (!b) return;
+    if (b.dataset.dpanel) { panel = b.dataset.dpanel; showPanel(); return; }
+    if (b.dataset.dpage) { var pb = document.querySelector('#pages [data-pa="' + b.dataset.dpage + '"]'); if (pb) pb.click(); return; }
+    var a = b.dataset.dact; if (!a) return;
+    if (a === "undo") { doUndo(); return; } if (a === "redo") { doRedo(); return; }
+    if (a.indexOf("text-") === 0) { addText(a.slice(5)); return; }
+    if (a === "pic") { $("imgIn").click(); return; }
+    if (a === "resize") { sizeDialog(true); return; }
+    if (a === "panel") { panel = panel ? null : "tpl"; showPanel(); return; }
+    var e = selEl(); if (!e) { Office.toast("Pick something on the page first."); return; }
+    if (a === "dup") dup(); else if (a === "del") del(); else if (a === "fwd") layer(e.id, 1); else if (a === "back") layer(e.id, -1);
+    else if (a === "lock") { setProp("lock", !e.lock); selBox(); ctxBar(); }
+  });
+  $("fileTab").onclick = function () {
+    saver.now();
+    var ex = function (k) { var b = document.querySelector('#exportMenu [data-ex="' + k + '"]'); if (b) b.click(); };
+    Office.backstage({
+      print: function () { ex("print"); },
+      pages: {
+        home: { label: "Home", title: $("title").value, items: [
+          { a: "new", icon: "🖌", title: "New design", sub: "Pick a size - post, poster, flyer, slide…" },
+          { a: "tpl", icon: "✨", title: "Templates", sub: "Start from a ready-made design" },
+          { a: "open", icon: "📂", title: "Open", sub: "Your designs" }] },
+        save: { label: "Download", title: "Download", items: [
+          { a: "ex-png", icon: "🖼", title: "PNG", sub: "Best for sharing online - this page" },
+          { a: "ex-jpg", icon: "📷", title: "JPG", sub: "Smaller file - this page" },
+          { a: "ex-pdf", icon: "📄", title: "PDF", sub: "Every page - best for printing" },
+          { a: "ex-zip", icon: "🗂", title: "All pages as pictures", sub: "A .zip of PNGs" }] },
+        info: { label: "Info", html: function () { return '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + esc($("title").value) + "</dd><dt>Size</dt><dd>" + doc.w + " × " + doc.h + " px</dd><dt>Pages</dt><dd>" + doc.pages.length + "</dd><dt>Saved</dt><dd>" + (Office.isCloud() ? "In your Launchpad account" : "In this browser") + "</dd></dl>"; } }
+      },
+      onPick: function (a) {
+        if (a === "new") sizeDialog(false); else if (a === "tpl") { panel = "tpl"; showPanel(); } else if (a === "open") $("filesBtn").click();
+        else if (a.indexOf("ex-") === 0) ex(a.slice(3));
+      }
+    });
+  };
 })();

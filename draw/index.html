@@ -30,7 +30,7 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 .zoombar{position:absolute;right:14px;bottom:14px;display:flex;gap:4px;background:var(--card);border:1px solid var(--rule);border-radius:999px;padding:4px}
 .zoombar button{border:0;background:transparent;border-radius:999px;min-width:32px;height:32px;font-weight:700}
 .zoombar button:hover{background:var(--hover)}
-@media print{ .top,.ribbon,.zoombar,.hint{display:none!important} body{display:block} #board{height:100vh} body::before{display:none!important} }
+@media print{ .top,.tabsbar,.ribbon,.zoombar,.hint{display:none!important} body{display:block} #board{height:100vh} body::before{display:none!important} }
 </style>
 <link rel="stylesheet" href="https://civilinitiatives.org/glass.css?b=20261102a">
 </head>
@@ -44,60 +44,94 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
   <button class="tbtn" id="themeBtn" type="button"></button>
   <a class="tbtn" href="https://civilinitiatives.org/">Launchpad</a>
 </header>
-<div class="ribbon" role="toolbar" aria-label="Drawing tools">
-  <div class="grp" id="tools">
-    <button class="tb" data-tool="select" aria-pressed="true" title="Pick and move (V)">↖</button>
-    <button class="tb" data-tool="hand" title="Move around the board (H, or hold Space)">✋</button>
-    <button class="tb" data-tool="pen" title="Pen (P)">✏️</button>
-    <button class="tb" data-tool="hl" title="Highlighter">🖍</button>
-    <button class="tb" data-tool="rect" title="Rectangle (R)">▭</button>
-    <button class="tb" data-tool="ellipse" title="Circle (O)">◯</button>
-    <button class="tb" data-tool="diamond" title="Diamond (for flowcharts)">◇</button>
-    <button class="tb" data-tool="arrow" title="Arrow (A)">➝</button>
-    <button class="tb" data-tool="line" title="Line (L)">╱</button>
-    <button class="tb" data-tool="text" title="Text (T)">🅣</button>
-    <button class="tb" data-tool="note" title="Sticky note (N)">🗒</button>
-    <button class="tb" data-tool="erase" title="Rubber (E)">🧽</button>
-    <label class="tb" title="Picture">🖼<input type="file" id="imgIn" accept="image/*" hidden></label>
-  </div>
-  <div class="grp" id="swatches">
-    <button class="sw" data-c="#111827" style="background:#111827" aria-label="Black" aria-pressed="true"></button>
-    <button class="sw" data-c="#2563eb" style="background:#2563eb" aria-label="Blue"></button>
-    <button class="sw" data-c="#dc2626" style="background:#dc2626" aria-label="Red"></button>
-    <button class="sw" data-c="#16a34a" style="background:#16a34a" aria-label="Green"></button>
-    <button class="sw" data-c="#ea580c" style="background:#ea580c" aria-label="Orange"></button>
-    <button class="sw" data-c="#7c3aed" style="background:#7c3aed" aria-label="Purple"></button>
-    <label class="tb colorbtn" title="Any colour">🎨<span class="bar" id="cBar" style="background:#111827"></span><input type="color" id="cIn" value="#111827" aria-label="Colour"></label>
-    <select id="sw" aria-label="Line width" title="Line width"><option value="2">Thin</option><option value="4" selected>Medium</option><option value="8">Thick</option></select>
-    <button class="tb" id="fillBtn" aria-pressed="false" title="Fill shapes with a light colour">◼ Fill</button>
-  </div>
-  <div class="grp">
-    <button class="tb" id="undoBtn" title="Undo (Ctrl+Z)">↶</button>
-    <button class="tb" id="redoBtn" title="Redo (Ctrl+Y)">↷</button>
-    <button class="tb" id="fwdBtn" title="Bring to front">⇡</button>
-    <button class="tb" id="dupBtn" title="Duplicate (Ctrl+D)">⧉</button>
-    <button class="tb" id="delBtn" title="Delete (Del)">🗑</button>
-  </div>
-  <div class="grp">
-    <select id="bg" aria-label="Background" title="Background"><option value="dots">Dots</option><option value="grid">Grid</option><option value="plain">Plain</option></select>
-    <div class="menuwrap">
-      <button class="tb wide" id="tplBtn" aria-haspopup="true">✨ Start ▾</button>
-      <div class="menu" id="tplMenu" hidden style="left:0;right:auto">
-        <button type="button" data-tpl="mind">🧠<span>Mind map<small>An idea in the middle with branches</small></span></button>
-        <button type="button" data-tpl="flow">🔀<span>Flowchart<small>Start, steps, a question, end</small></span></button>
-        <button type="button" data-tpl="kanban">🗂<span>To do / Doing / Done<small>Sticky notes in three columns</small></span></button>
-        <button type="button" data-tpl="venn">⭕<span>Venn diagram<small>Two circles that overlap</small></span></button>
+<nav class="tabsbar" role="tablist" aria-label="Ribbon">
+  <button type="button" class="file" id="fileTab">File</button>
+  <button type="button" role="tab" data-tab="home" aria-selected="true">Home</button>
+  <button type="button" role="tab" data-tab="insert" aria-selected="false">Insert</button>
+  <button type="button" role="tab" data-tab="view" aria-selected="false">View</button>
+</nav>
+
+<!-- HOME -->
+<div class="ribbon" data-panel="home" role="tabpanel" aria-label="Home">
+  <div class="rg"><div class="row">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="tb" id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
+        <button class="tb" id="redoBtn" title="Redo (Ctrl+Y)" aria-label="Redo">↷</button>
       </div>
-    </div>
-    <div class="menuwrap">
-      <button class="tb wide" id="exportBtn" aria-haspopup="true">⬇ Export ▾</button>
-      <div class="menu" id="exportMenu" hidden>
-        <button type="button" data-ex="png">🖼<span>Picture<small>.png of everything on the board</small></span></button>
-        <button type="button" data-ex="svg">📐<span>SVG<small>Sharp at any size - for websites and Word</small></span></button>
-        <button type="button" data-ex="pdf">📄<span>PDF or print</span></button>
+      <button class="big" id="dupBtn" title="Duplicate (Ctrl+D)"><i>⧉</i>Duplicate</button>
+      <button class="big" id="delBtn" title="Delete (Del)"><i>🗑</i>Delete</button>
+    </div><div class="gl">Clipboard</div></div>
+  <div class="rg"><div class="row" id="tools">
+      <button class="big" data-tool="select" aria-pressed="true" title="Select and move (V)"><i>↖</i>Select</button>
+      <button class="big" data-tool="hand" title="Move around the board (H, or hold Space)"><i>✋</i>Hand</button>
+      <button class="big" data-tool="pen" title="Pen (P)"><i>✏️</i>Pen</button>
+      <button class="big" data-tool="hl" title="Highlighter"><i>🖍</i>Highlighter</button>
+      <button class="big" data-tool="erase" title="Rubber (E)"><i>🧽</i>Rubber</button>
+    </div><div class="gl">Tools</div></div>
+  <div class="rg"><div class="row" id="swatches">
+      <button class="sw" data-c="#111827" style="background:#111827" aria-label="Black" title="Black" aria-pressed="true"></button>
+      <button class="sw" data-c="#2563eb" style="background:#2563eb" aria-label="Blue" title="Blue"></button>
+      <button class="sw" data-c="#dc2626" style="background:#dc2626" aria-label="Red" title="Red"></button>
+      <button class="sw" data-c="#16a34a" style="background:#16a34a" aria-label="Green" title="Green"></button>
+      <button class="sw" data-c="#ea580c" style="background:#ea580c" aria-label="Orange" title="Orange"></button>
+      <button class="sw" data-c="#7c3aed" style="background:#7c3aed" aria-label="Purple" title="Purple"></button>
+      <label class="tb colorbtn" title="Any colour">🎨<span class="bar" id="cBar" style="background:#111827"></span><input type="color" id="cIn" value="#111827" aria-label="Colour"></label>
+    </div><div class="row">
+      <select id="sw" aria-label="Line width" title="Line width"><option value="2">Thin</option><option value="4" selected>Medium</option><option value="8">Thick</option></select>
+      <button class="tb wide" id="fillBtn" aria-pressed="false" title="Fill shapes with a light colour">◼ Fill</button>
+    </div><div class="gl">Colour</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" id="fwdBtn" title="Bring to front"><i>⇡</i>Bring to<br>front</button>
+    </div><div class="gl">Arrange</div></div>
+</div>
+
+<!-- INSERT -->
+<div class="ribbon" data-panel="insert" role="tabpanel" aria-label="Insert" hidden>
+  <div class="rg"><div class="row">
+      <button class="big" data-tool="rect" title="Rectangle (R)"><i>▭</i>Rectangle</button>
+      <button class="big" data-tool="ellipse" title="Circle (O)"><i>◯</i>Circle</button>
+      <button class="big" data-tool="diamond" title="Diamond (for flowcharts)"><i>◇</i>Diamond</button>
+      <button class="big" data-tool="arrow" title="Arrow (A)"><i>➝</i>Arrow</button>
+      <button class="big" data-tool="line" title="Line (L)"><i>╱</i>Line</button>
+    </div><div class="gl">Shapes</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" data-tool="text" title="Text box (T)"><i>🅣</i>Text box</button>
+      <button class="big" data-tool="note" title="Sticky note (N)"><i>🗒</i>Sticky<br>note</button>
+      <label class="big" title="Picture"><i>🖼</i>Picture<input type="file" id="imgIn" accept="image/*" hidden></label>
+    </div><div class="gl">Text &amp; pictures</div></div>
+  <div class="rg"><div class="row">
+      <div class="menuwrap">
+        <button class="big" id="tplBtn" aria-haspopup="true" title="Start from a template"><i>✨</i>Templates ▾</button>
+        <div class="menu" id="tplMenu" hidden style="left:0;right:auto">
+          <button type="button" data-tpl="mind">🧠<span>Mind map<small>An idea in the middle with branches</small></span></button>
+          <button type="button" data-tpl="flow">🔀<span>Flowchart<small>Start, steps, a question, end</small></span></button>
+          <button type="button" data-tpl="kanban">🗂<span>To do / Doing / Done<small>Sticky notes in three columns</small></span></button>
+          <button type="button" data-tpl="venn">⭕<span>Venn diagram<small>Two circles that overlap</small></span></button>
+        </div>
       </div>
-    </div>
-  </div>
+    </div><div class="gl">Start</div></div>
+</div>
+
+<!-- VIEW -->
+<div class="ribbon" data-panel="view" role="tabpanel" aria-label="View" hidden>
+  <div class="rg"><div class="row">
+      <select id="bg" aria-label="Background" title="Background"><option value="dots">Dots</option><option value="grid">Grid</option><option value="plain">Plain</option></select>
+    </div><div class="gl">Background</div></div>
+  <div class="rg"><div class="row">
+      <button class="big" type="button" title="Zoom out" onclick="document.getElementById('zOut').click()"><i>－</i>Zoom out</button>
+      <button class="big" type="button" title="Zoom in" onclick="document.getElementById('zIn').click()"><i>＋</i>Zoom in</button>
+      <button class="big" type="button" title="Fit everything on screen" onclick="document.getElementById('zFit').click()"><i>⤢</i>Fit</button>
+    </div><div class="gl">Zoom</div></div>
+  <div class="rg"><div class="row">
+      <div class="menuwrap">
+        <button class="big" id="exportBtn" aria-haspopup="true" title="Save a copy"><i>⬇</i>Export ▾</button>
+        <div class="menu" id="exportMenu" hidden>
+          <button type="button" data-ex="png">🖼<span>Picture<small>.png of everything on the board</small></span></button>
+          <button type="button" data-ex="svg">📐<span>SVG<small>Sharp at any size - for websites and Word</small></span></button>
+          <button type="button" data-ex="pdf">📄<span>PDF or print</span></button>
+        </div>
+      </div>
+    </div><div class="gl">Export</div></div>
 </div>
 <main id="board" tabindex="0" aria-label="Drawing board">
   <svg id="svg" xmlns="http://www.w3.org/2000/svg">
@@ -116,6 +150,6 @@ try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = 
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/office.js?b=20261110b"></script>
 <script src="/office/live.js?b=20261109c"></script>
-<script src="/draw/draw.js?b=20261103e"></script>
+<script src="/draw/draw.js?b=20261110c"></script>
 </body>
 </html>

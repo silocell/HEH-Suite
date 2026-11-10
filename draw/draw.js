@@ -452,4 +452,33 @@
   $("title").addEventListener("input", saver.poke);
   window.addEventListener("resize", drawSel);
   window.addEventListener("beforeunload", function () { saver.now(); });
+
+  /* the ribbon tabs and the File screen, as in Write */
+  Office.ribbon();
+  $("fileTab").onclick = function () {
+    saver.now();
+    var ex = function (k) { var b = document.querySelector('#exportMenu [data-ex="' + k + '"]'); if (b) b.click(); };
+    var tp = function (k) { var b = document.querySelector('#tplMenu [data-tpl="' + k + '"]'); if (b) b.click(); };
+    Office.backstage({
+      print: function () { ex("pdf"); },
+      pages: {
+        home: { label: "Home", title: $("title").value, items: [
+          { a: "new", icon: "🎨", title: "Blank board", sub: "Start fresh" },
+          { a: "tpl-mind", icon: "🧠", title: "Mind map", sub: "An idea in the middle with branches" },
+          { a: "tpl-flow", icon: "🔀", title: "Flowchart", sub: "Start, steps, a question, end" },
+          { a: "tpl-kanban", icon: "🗂", title: "To do / Doing / Done", sub: "Sticky notes in three columns" },
+          { a: "tpl-venn", icon: "⭕", title: "Venn diagram", sub: "Two circles that overlap" },
+          { a: "open", icon: "📂", title: "Open", sub: "Your boards" }] },
+        save: { label: "Save a copy", title: "Save a copy", items: [
+          { a: "ex-png", icon: "🖼", title: "Picture", sub: ".png of everything on the board" },
+          { a: "ex-svg", icon: "📐", title: "SVG", sub: "Sharp at any size - for websites and Word" },
+          { a: "ex-pdf", icon: "📄", title: "PDF or print", sub: "Print, then “Save as PDF”" }] },
+        info: { label: "Info", html: function () { return '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + Office.esc($("title").value) + "</dd><dt>Saved</dt><dd>" + (Office.isCloud() ? "In your Launchpad account" : "In this browser") + "</dd></dl>"; } }
+      },
+      onPick: function (a) {
+        if (a === "new") fresh(); else if (a === "open") $("filesBtn").click();
+        else if (a.indexOf("ex-") === 0) ex(a.slice(3)); else if (a.indexOf("tpl-") === 0) tp(a.slice(4));
+      }
+    });
+  };
 })();

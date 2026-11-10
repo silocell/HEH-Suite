@@ -1050,4 +1050,32 @@
     if (!d) Office.toast("This browser won't let Vids keep your work - it will be lost when you close the tab. Make the video before you go.", true);
     if (q || last) return openProject(q || last); startDialog(false);
   }).catch(function () { startDialog(false); });
+
+  /* the ribbon tabs and the File screen, as in Write */
+  Office.ribbon();
+  function viaPanel(k, v) { var b = document.createElement("button"); b.type = "button"; b.dataset[k] = v; b.hidden = true; $("panel").appendChild(b); b.click(); b.remove(); }
+  $("vRib").addEventListener("click", function (ev) {
+    var b = ev.target.closest("button"); if (!b) return;
+    if (b.dataset.vpanel) { panel = b.dataset.vpanel; showPanel(); return; }
+    if (b.dataset.vsa) { viaPanel("sa", b.dataset.vsa); return; }
+    if (b.dataset.vtx) { viaPanel("tx", b.dataset.vtx); return; }
+    var a = b.dataset.vact;
+    if (a === "undo") doUndo(); else if (a === "redo") doRedo(); else if (a === "play") $("playBtn").click(); else if (a === "make") $("exportBtn").click();
+    else if (a === "panel") { panel = panel ? null : "scene"; showPanel(); }
+  });
+  $("fileTab").onclick = function () {
+    if (typeof saveNow === "function") saveNow();
+    Office.backstage({
+      pages: {
+        home: { label: "Home", title: $("title").value, items: [
+          { a: "new", icon: "🎬", title: "New video", sub: "Pick a shape and a starting point" },
+          { a: "tpl", icon: "✨", title: "Add scenes from a template", sub: "Into this video" },
+          { a: "open", icon: "📂", title: "Open", sub: "Your videos on this device" }] },
+        save: { label: "Make the video", title: "Make the video", items: [
+          { a: "make", icon: "⬇", title: "Make the video file", sub: "A video you can post or keep" }] },
+        info: { label: "Info", html: function () { return '<h2>Info</h2><dl class="info"><dt>Name</dt><dd>' + Office.esc($("title").value) + "</dd><dt>Scenes</dt><dd>" + proj.scenes.length + "</dd><dt>Saved</dt><dd>On this device</dd></dl>"; } }
+      },
+      onPick: function (a) { if (a === "new") startDialog(false); else if (a === "tpl") startDialog(true); else if (a === "open") $("projBtn").click(); else if (a === "make") $("exportBtn").click(); }
+    });
+  };
 })();
