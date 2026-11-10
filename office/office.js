@@ -355,7 +355,13 @@
       return upload(o.path, blob, prog).catch(function (e) { throw new Error(/bucket/i.test((e && e.message) || "") ? "This server can't keep videos yet." : "The upload didn't work: " + ((e && e.message) || e)); });
     }).then(function () {
       step("Nearly there…");
-      return sb.rpc("post_video", { p: o.path, t: title, a: about || "", secs: info.secs || 0, show: show !== false, w: info.w || null, h: info.h || null });
+      var args = { p: o.path, t: title, a: about || "", secs: info.secs || 0, show: show !== false, w: info.w || null, h: info.h || null };
+      if (o.short === true || o.short === false) args.as_short = o.short;
+      return sb.rpc("post_video", args).then(function (r) {
+        // a server without the Short choice yet: post it the old way (tall and short = a Short)
+        if (r.error && "as_short" in args && /function|schema cache|as_short/i.test(r.error.message)) { delete args.as_short; return sb.rpc("post_video", args); }
+        return r;
+      });
     }).then(function (r) {
       if (r.error) { sb.storage.from("videos").remove([o.path]); throw new Error(r.error.message); }
       return r.data;
