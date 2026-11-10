@@ -104,7 +104,7 @@ h2{font-size:1.15rem;margin:0 0 12px}
 <footer style="text-align:center;color:var(--soft);font-size:.86rem;padding:10px 16px 30px"><a href="https://files.civilinitiatives.org/">🗂 My Files</a> · <a href="https://hosting.civilinitiatives.org/">🎬 Launchpad Videos</a> · <a href="https://developer.civilinitiatives.org/">👨‍💻 Made by the developer</a></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
-<script src="/office/office.js?b=20261109e"></script>
+<script src="/office/office.js?b=20261110a"></script>
 <script>
 (function(){
   Office.themeToggle(document.getElementById("themeBtn"));
@@ -112,12 +112,11 @@ h2{font-size:1.15rem;margin:0 0 12px}
   if (Office.isApp()) ib.closest("section").hidden = true;
   ib.onclick = function () { Office.install(); };
   var APPS = [["doc","write","📘"],["sheet","grid","📗"],["deck","present","📙"],["note","notebook","📓"],["draw","draw","🎨"],["design","design","🖌"]], all = [], cloud = false, user = null;
-  APPS.reduce(function(p, a){
-    return p.then(function(){ return Office.init(a[0]); }).then(function(st){
-      cloud = st.cloud; user = st.user;
-      return Office.list().then(function(rows){ rows.forEach(function(r){ all.push({ r:r, a:a }); }); });
-    }).catch(function(){});
-  }, Promise.resolve()).then(function(){
+  var byKind = {}; APPS.forEach(function(a){ byKind[a[0]] = a; });
+  Office.init("doc").then(function(st){
+    cloud = st.cloud; user = st.user;
+    return Office.listAll(APPS.map(function(a){ return a[0]; }));
+  }).then(function(rows){ rows.forEach(function(r){ if(byKind[r.kind]) all.push({ r:r, a:byKind[r.kind] }); }); }, function(){}).then(function(){
     all.sort(function(x, y){ return (x.r.updated_at || "") < (y.r.updated_at || "") ? 1 : -1; });
     var ul = document.getElementById("recent");
     ul.innerHTML = all.slice(0, 12).map(function(o){

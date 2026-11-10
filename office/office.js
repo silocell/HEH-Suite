@@ -86,6 +86,30 @@
     }).sort(function (a, b) { return a.updated_at < b.updated_at ? 1 : -1; }));
   }
 
+  /* Every app's files at once, for the Suite home: one query instead of one
+     sign-in check and one list per app, one after another. */
+  function listAll(kinds) {
+    var was = kind;
+    if (cloud) {
+      var up = kinds.reduce(function (p, k) { return p.then(function () { kind = k; return moveLocalUp(); }); }, Promise.resolve());
+      return up.then(function () {
+        kind = was;
+        return sb.from("office_files").select("id,title,updated_at,user_id,kind").in("kind", kinds)
+          .order("updated_at", { ascending: false }).limit(300);
+      }).then(function (r) {
+        if (r.error) throw r.error;
+        return (r.data || []).map(function (x) { x.shared = !!(user && x.user_id && x.user_id !== user.id); return x; });
+      });
+    }
+    var out = [];
+    kinds.forEach(function (k) {
+      kind = k; var all = lall();
+      Object.keys(all).forEach(function (id) { out.push({ id: id, kind: k, title: all[id].title, updated_at: all[id].updated_at }); });
+    });
+    kind = was;
+    return Promise.resolve(out);
+  }
+
   function get(id) {
     if (cloud) {
       return sb.from("office_files").select("*").eq("id", id).maybeSingle()
@@ -626,7 +650,7 @@
     storage: storage, storageBar: storageBar, size: size,
     install: install, canInstall: canInstall, isApp: isApp, setImporter: setImporter, sb: function () { return sb; },
     cleanHTML: cleanHTML, shrinkImage: shrinkImage,
-    init: init, list: list, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
+    init: init, list: list, listAll: listAll, get: get, save: save, remove: remove, uuid: uuid, esc: esc,
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
     bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, postVideo: postVideo, videoInfo: videoInfo,
     autosaver: autosaver, themeToggle: themeToggle,
