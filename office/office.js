@@ -22,6 +22,31 @@
 
   var kind = "doc", cloud = false, user = null;
 
+  /* Demo mode (?demo=1, e.g. from try.chausima.com): no account, nothing sent
+     anywhere. Files live only in this tab and are gone when it closes, so a
+     banner offers the download and closing with work in it asks first. */
+  var DEMO = false, demoDirty = false;
+  try {
+    if (/[?&]demo=1(&|$)/.test(location.search)) sessionStorage.setItem("hl.demo", "1");
+    DEMO = sessionStorage.getItem("hl.demo") === "1";
+  } catch (e) {}
+  function box() { try { return DEMO ? sessionStorage : localStorage; } catch (e) { return null; } }
+  function demoBanner() {
+    if (!DEMO || document.getElementById("ofDemo")) return;
+    var b = document.createElement("div");
+    b.id = "ofDemo"; b.className = "of-demo"; b.setAttribute("role", "note");
+    b.innerHTML = '<span><b>Demo:</b> nothing is saved. Your work is deleted when you close this tab - download anything you want to keep.</span>' +
+      '<button type="button" class="of-btn" id="ofDemoDl">Download</button><a class="of-demo-x" href="https://hw.chausima.com">Get the full Suite</a>';
+    (document.querySelector(".tabsbar") || document.body.firstElementChild || document.body).insertAdjacentElement("afterend", b);
+    b.querySelector("#ofDemoDl").onclick = function () { var f = document.getElementById("fileTab"); if (f) f.click(); };
+    var st = document.createElement("style");
+    st.textContent = ".of-demo{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 16px;background:#fff7c2;color:#3b2f00;border-bottom:1px solid #e8d34a;font-size:.88rem}" +
+      ".of-demo span{flex:1;min-width:220px}.of-demo .of-btn{padding:5px 12px}.of-demo-x{color:#3b2f00;font-weight:700}" +
+      "@media (prefers-color-scheme:dark){.of-demo{background:#3a3410;color:#fff4b8;border-color:#6b5f1c}.of-demo-x{color:#fff4b8}}";
+    document.head.appendChild(st);
+    addEventListener("beforeunload", function (e) { if (demoDirty) { e.preventDefault(); e.returnValue = ""; } });
+  }
+
   function uuid() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -37,16 +62,17 @@
   /* ---- this browser ---- */
   function lkey() { return "hl.office." + kind; }
   function lall() {
-    try { return JSON.parse(localStorage.getItem(lkey())) || {}; } catch (e) { return {}; }
+    try { return JSON.parse(box().getItem(lkey())) || {}; } catch (e) { return {}; }
   }
   function lput(all) {
-    try { localStorage.setItem(lkey(), JSON.stringify(all)); return true; }
+    try { box().setItem(lkey(), JSON.stringify(all)); if (DEMO) demoDirty = true; return true; }
     catch (e) { return false; }
   }
 
   /* ---- start up: who is signed in, and is the table there? ---- */
   function init(k) {
     kind = k;
+    if (DEMO) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", demoBanner); else demoBanner(); return Promise.resolve({ user: null, cloud: false, demo: true }); }
     if (!sb) return Promise.resolve({ user: null, cloud: false });
     return sb.auth.getSession().then(function (r) {
       user = r && r.data && r.data.session ? r.data.session.user : null;
@@ -379,6 +405,7 @@
       '<div class="of-dhead"><h2>' + esc(opts.heading) + '</h2>' +
       '<button type="button" class="of-x" data-act="close" aria-label="Close">✕</button></div>' +
       '<p class="of-where">' + esc(cloud ? "Saved to your Launchpad account - they follow you to any device."
+        : DEMO ? "Demo: kept only until you close this tab. Download anything you want to keep."
         : (user ? "Saved in this browser for now." : "Saved in this browser. Sign in on the Launchpad to keep them in your account.")) + '</p>' +
       '<div class="of-new"><button type="button" class="of-btn" data-act="new">＋ New ' + esc(opts.noun) + '</button>' +
       '<label class="of-btn ghost">Open a file from your device<input type="file" hidden></label></div>' +
@@ -455,7 +482,7 @@
       if (o.skip && o.skip()) { if (o.done) o.done(); return; }   // view only: nothing to save
       busy = true; label("Saving…");
       (o.save || save)(getFile()).then(function () {
-        label(cloud ? "✓ Saved to your account" : "✓ Saved on this device");
+        label(cloud ? "✓ Saved to your account" : DEMO ? "✓ Kept until you close this tab" : "✓ Saved on this device");
       }).catch(function (e) {
         label("⚠ Not saved"); toast("Couldn't save: " + (e.message || e), true);
       }).then(function () { busy = false; if (again) { again = false; run(); } else if (o.done) o.done(); });
@@ -738,6 +765,6 @@
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
     bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, postVideo: postVideo, videoInfo: videoInfo,
     autosaver: autosaver, themeToggle: themeToggle, toolSearch: toolSearch,
-    isCloud: function () { return cloud; }, user: function () { return user; }
+    isCloud: function () { return cloud; }, user: function () { return user; }, isDemo: function () { return DEMO; }
   };
 })();

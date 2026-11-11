@@ -938,7 +938,7 @@
   Office.init("design").then(function (st) {
     var q = new URLSearchParams(location.search), id = q.get("id"), last = null;
     try { last = localStorage.getItem("hl.design.last"); } catch (e) {}
-    if (!st.user) Office.toast("Not signed in - your designs are saved in this browser.");
+    if (!st.user && !st.demo) Office.toast("Not signed in - your designs are saved in this browser.");
     if (q.get("new") != null) { doc = null; sizeDialog(false); return; }
     if (id || last) return openId(id || last);
     return Office.list().then(function (rows) { if (rows.length) return openId(rows[0].id); doc = null; sizeDialog(false); });
