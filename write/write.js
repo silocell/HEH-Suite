@@ -926,4 +926,28 @@
     Office.toast("Replaced " + n + (n === 1 ? " match" : " matches")); saver.poke(); count();
   };
   window.addEventListener("beforeunload", function () { clearMarks(); saver.now(); });
+
+  /* ---- Launchpad AI: reads the document (or what's selected) and puts answers in ---- */
+  function laiPut(html, replacing) {
+    if (!saved) { var r = document.createRange(); r.selectNodeContents(page); r.collapse(false); saved = r; }   // never clicked in: add it at the end
+    back();
+    var s = getSelection(); if (!replacing && s.rangeCount && !s.isCollapsed) s.collapseToEnd();
+    document.execCommand("insertHTML", false, Office.cleanHTML(html) || "");
+    keep(); saver.poke(); count(); navSoon();
+  }
+  if (Office.lai) Office.lai({
+    app: "Write", noun: "document",
+    doc: function () { return { title: titleIn.value.trim() || "Untitled document", text: page.innerText }; },
+    selection: function () { return saved && page.contains(saved.startContainer) ? saved.toString() : ""; },
+    insert: function (md, html) { laiPut(html, false); },
+    replace: function (md, html) { laiPut(html, true); },
+    actions: [
+      { label: "✏️ Improve my writing", ask: "Improve this writing: clearer, better words and sentences, same meaning and my own voice. Give back only the improved text." },
+      { label: "🔤 Fix spelling and grammar", ask: "Fix the spelling, grammar and punctuation (UK English). Give back only the corrected text, with nothing else changed." },
+      { label: "✂️ Make it shorter", ask: "Make this shorter while keeping the main points. Give back only the shorter text." },
+      { label: "➕ Carry on writing", ask: "Carry on writing from where my document ends, in the same style, for about a paragraph. Give back only the new text." },
+      { label: "💡 What could be better?", ask: "Give me 3 to 5 specific, kind suggestions to make this piece of work better (for a UK secondary school pupil). Don't rewrite it for me." },
+      { label: "📋 Summarise", ask: "Summarise this in a few bullet points." }
+    ]
+  });
 })();

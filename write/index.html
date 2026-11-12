@@ -16,7 +16,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261110b">
+<link rel="stylesheet" href="/office/office.css?b=20261112a">
 <style>
 :root{--a1:#2563eb;--pw:794px;--ph:1123px;--pm:96px;--ls:1.5;--paper:#ffffff}
 
@@ -366,10 +366,11 @@ body.focus .top,body.focus .tabsbar,body.focus .ribbon,body.focus .foot{display:
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/jszip.min.js"></script>
-<script src="/office/office.js?b=20261111e"></script>
+<script src="/office/office.js?b=20261112a"></script>
 <script src="/office/live.js?b=20261109c"></script>
 <script src="/office/odf.js?b=20261103g"></script>
 <script src="/write/docx.js?b=20261103g"></script>
-<script src="/write/write.js?b=20261111e"></script>
+<script src="/office/lai.js?b=20261112a"></script>
+<script src="/write/write.js?b=20261112a"></script>
 </body>
 </html>

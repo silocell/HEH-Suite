@@ -765,6 +765,7 @@
     download: download, safeName: safeName, toast: toast, filesDialog: filesDialog,
     bill: bill, billNow: billNow, billLabel: billLabel, unlock: unlock, postVideo: postVideo, videoInfo: videoInfo,
     autosaver: autosaver, themeToggle: themeToggle, toolSearch: toolSearch,
-    isCloud: function () { return cloud; }, user: function () { return user; }, isDemo: function () { return DEMO; }
+    isCloud: function () { return cloud; }, user: function () { return user; }, isDemo: function () { return DEMO; },
+    api: function () { return { url: URL_, key: KEY_ }; }   // the server and its public key (for Launchpad AI's streaming)
   };
 })();
