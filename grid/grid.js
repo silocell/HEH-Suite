@@ -527,6 +527,42 @@
     grow(sel.r + rows.length + 5, Math.min(MAXC, Math.max(sh.cols, sel.c + w)));
     apply(ch); sel.r2 = sel.r + rows.length - 1; sel.c2 = Math.min(MAXC - 1, sel.c + w - 1); place();
   });
+  /* ---- Launchpad AI: reads the sheet (or the selected cells) and puts tables or formulas in ---- */
+  function laiCells(r1, r2, c1, c2) {
+    var out = [];
+    for (var r = r1; r <= r2; r++) { var row = []; for (var c = c1; c <= c2; c++) { var cell = sh.cells[RN(r, c)]; row.push(cell && cell.v != null && cell.v !== "" ? (/^=/.test(String(cell.v)) ? show(value(RN(r, c)), cell.nf) + " [" + cell.v + "]" : show(value(RN(r, c)), cell.nf)) : ""); } out.push(row.join("\t")); }
+    return out.join("\n").replace(/\t+$/gm, "").trim();
+  }
+  function laiUsed() {
+    var mr = -1, mc = -1;
+    for (var r = 0; r < Math.min(sh.rows, 400); r++) for (var c = 0; c < Math.min(sh.cols, MAXC); c++) { var cell = sh.cells[RN(r, c)]; if (cell && cell.v != null && cell.v !== "") { if (r > mr) mr = r; if (c > mc) mc = c; } }
+    return mr < 0 ? "" : "Sheet \"" + sh.name + "\" (rows separated by new lines, columns by tabs; formulas in [brackets]):\n" + laiCells(0, mr, 0, mc);
+  }
+  if (Office.lai) Office.lai({
+    app: "Grid", noun: "spreadsheet", insertLabel: "Put in the sheet", insertDone: "Put into the sheet from the selected cell.",
+    doc: function () { return { title: titleIn.value.trim() || "Untitled spreadsheet", text: laiUsed() }; },
+    selection: function () { var n = norm(); return n.r1 === n.r2 && n.c1 === n.c2 && !sh.cells[RN(n.r1, n.c1)] ? "" : "Cells " + RN(n.r1, n.c1) + ":" + RN(n.r2, n.c2) + ":\n" + laiCells(n.r1, n.r2, n.c1, n.c2); },
+    insert: function (md) {
+      // a Markdown table goes into the cells; a line starting with = is a formula for the selected cell
+      var lines = md.split("\n").map(function (l) { return l.trim(); }), rows = [];
+      var tbl = lines.filter(function (l) { return /^\|.*\|$/.test(l) && !/^\|[\s:|-]+\|$/.test(l); });
+      if (tbl.length) rows = tbl.map(function (l) { return l.slice(1, -1).split("|").map(function (v) { return v.trim().replace(/\*\*/g, ""); }); });
+      else { var f = lines.filter(function (l) { return /^=/.test(l); })[0]; rows = f ? [[f.replace(/`/g, "")]] : lines.filter(Boolean).map(function (l) { return [l.replace(/^[-*•]\s+/, "")]; }); }
+      if (!rows.length) { Office.toast("There was nothing to put in the sheet.", true); return false; }
+      if (editing) stopEdit(true);
+      rows = rows.slice(0, MAXR - sel.r); var ch = {};
+      rows.forEach(function (row, i) { row.slice(0, MAXC - sel.c).forEach(function (v, j) { var k = RN(sel.r + i, sel.c + j), cell = clone(sh.cells[k]) || {}; if (v === "") delete cell.v; else cell.v = v; ch[k] = cell; }); });
+      var w = Math.max.apply(null, rows.map(function (r) { return r.length; }));
+      grow(sel.r + rows.length + 5, Math.min(MAXC, Math.max(sh.cols, sel.c + w)));
+      apply(ch); sel.r2 = sel.r + rows.length - 1; sel.c2 = Math.min(MAXC - 1, sel.c + w - 1); place();
+    },
+    actions: [
+      { label: "🧮 Make a formula", ask: "Write the formula I need for the selected cell, based on what's in the sheet. Give the formula on its own line starting with =, then one short line explaining it." },
+      { label: "📊 Explain my data", ask: "Explain what this data shows in 3 to 5 bullet points (patterns, highest, lowest, totals)." },
+      { label: "🗂️ Make a table for me", ask: "Make a useful table for what my spreadsheet is about, as a Markdown table with a header row. Give back only the table." },
+      { label: "🔎 Check for mistakes", ask: "Check this sheet for mistakes: wrong formulas, odd numbers or missing values. List what you find." }
+    ]
+  });
   function parseTable(text) { // tab- or comma-separated, with "quotes"
     text = text.replace(/\r\n?/g, "\n").replace(/\n$/, "");
     if (!text) return [];

@@ -28,8 +28,15 @@
       .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   }
   function md(t) {
-    var out = [], list = null, code = null;
+    var out = [], list = null, code = null, tbl = null;
+    var endTable = function () { if (!tbl) return; out.push("<table>" + tbl.map(function (r, i) { var c = i === 0 ? "th" : "td"; return "<tr>" + r.map(function (v) { return "<" + c + ">" + inline(v) + "</" + c + ">"; }).join("") + "</tr>"; }).join("") + "</table>"); tbl = null; };
     String(t || "").replace(/\r/g, "").split("\n").forEach(function (ln) {
+      if (code === null && /^\s*\|.*\|\s*$/.test(ln)) {   // a Markdown table row
+        if (list) { out.push("</" + list + ">"); list = null; }
+        if (/^\s*\|[\s:|-]+\|\s*$/.test(ln)) return;    // the |---|---| line
+        (tbl = tbl || []).push(ln.trim().slice(1, -1).split("|").map(function (v) { return v.trim(); })); return;
+      }
+      endTable();
       if (code !== null) { if (/^```/.test(ln)) { out.push("<pre><code>" + esc(code.join("\n")) + "</code></pre>"); code = null; } else code.push(ln); return; }
       if (/^```/.test(ln)) { if (list) { out.push("</" + list + ">"); list = null; } code = []; return; }
       var h = /^(#{1,4})\s+(.*)$/.exec(ln), ul = /^\s*[-*•]\s+(.*)$/.exec(ln), ol = /^\s*\d+[.)]\s+(.*)$/.exec(ln);
@@ -38,6 +45,7 @@
       if (h) { var n = Math.min(4, h[1].length + 1); out.push("<h" + n + ">" + inline(h[2]) + "</h" + n + ">"); return; }
       if (ln.trim()) out.push("<p>" + inline(ln) + "</p>");
     });
+    endTable();
     if (code !== null) out.push("<pre><code>" + esc(code.join("\n")) + "</code></pre>");
     if (list) out.push("</" + list + ">");
     return out.join("");
@@ -59,6 +67,7 @@
       ".lai .u{align-self:flex-end;background:var(--on);border-radius:14px;padding:7px 11px;max-width:88%;white-space:pre-wrap}",
       ".lai .a{max-width:100%}.lai .a .body p{margin:0 0 .5em}.lai .a .body :is(ul,ol){margin:0 0 .5em;padding-left:1.3em}.lai .a .body pre{background:var(--tool);padding:8px;border-radius:8px;overflow:auto;font-size:.82rem}",
       ".lai .a .body h2,.lai .a .body h3,.lai .a .body h4{font-size:1rem;margin:.4em 0}",
+      ".lai .a .body table{border-collapse:collapse;margin:0 0 .5em;font-size:.84rem}.lai .a .body :is(th,td){border:1px solid var(--rule);padding:3px 8px;text-align:left}.lai .a .body th{background:var(--tool)}",
       ".lai .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.lai .acts button{border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:4px 9px;font-size:.8rem;font-weight:600}.lai .acts button.go{background:#4f46e5;border-color:#4f46e5;color:#fff}",
       ".lai .by{font-size:.74rem;color:var(--soft);margin-top:4px}.lai .err{color:var(--bad)}.lai .note{font-size:.8rem;color:var(--soft);text-align:center}",
       ".lai .think{color:var(--soft);display:flex;gap:8px;align-items:center}.lai .think i{width:8px;height:8px;border-radius:50%;background:#7c3aed;animation:laip 1s ease-in-out infinite}@keyframes laip{50%{opacity:.25;transform:scale(.7)}}",
@@ -159,7 +168,7 @@
   function show(a, text, by, sources, hadSel, note) {
     a.innerHTML = '<div class="body">' + md(text) + "</div>" +
       (sources && sources.length ? '<div class="srcs">' + sources.map(function (s) { return /^https?:/.test(s.url) ? '<a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer nofollow">' + (+s.n) + " " + esc(s.site) + "</a>" : ""; }).join("") + "</div>" : "") +
-      '<div class="acts">' + (cfg.insert ? '<button type="button" class="go" data-act="insert">Insert</button>' : "") +
+      '<div class="acts">' + (cfg.insert ? '<button type="button" class="go" data-act="insert">' + esc(cfg.insertLabel || "Insert") + "</button>" : "") +
       (cfg.replace && hadSel ? '<button type="button" data-act="replace">Replace selection</button>' : "") +
       '<button type="button" data-act="copy">Copy</button>' + (thread ? '<a class="x" style="font-size:.78rem;text-decoration:none" href="https://ai.civilinitiatives.org/?c=' + encodeURIComponent(thread) + '" target="_blank" rel="noopener">Open in Launchpad AI ↗</a>' : "") + "</div>" +
       (by ? '<div class="by">' + esc(by) + "</div>" : "") + (note ? '<p class="note">' + esc(note) + "</p>" : "");
@@ -168,7 +177,7 @@
       var clean = text.replace(/\s*\[\d{1,2}\]/g, "");   // web search markers don't belong in the document
       var h = md(clean), one = /^<p>([\s\S]*)<\/p>$/.exec(h);
       if (one && one[1].indexOf("<p>") < 0) h = one[1];   // a single paragraph goes in as words, not a new paragraph
-      if (b.dataset.act === "insert") { cfg.insert(clean, h); Office.toast("Put into your " + (cfg.noun || "document") + "."); }
+      if (b.dataset.act === "insert") { if (cfg.insert(clean, h) !== false) Office.toast(cfg.insertDone || "Put into your " + (cfg.noun || "document") + "."); }
       else if (b.dataset.act === "replace") { cfg.replace(clean, h); Office.toast("Replaced the selected text."); }
       else if (navigator.clipboard) navigator.clipboard.writeText(clean).then(function () { Office.toast("Copied."); });
     };
