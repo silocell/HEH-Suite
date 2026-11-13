@@ -14,7 +14,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261113r">
+<link rel="stylesheet" href="/office/office.css?b=20261113s">
 <style>
 :root{--a1:#06b6d4;--a2:#7c3aed;--desk:#e9ecf2}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --desk:#0d1117 } }
@@ -227,7 +227,7 @@ dialog.ofwide[open]{display:block;overflow:auto}
 <input type="file" id="bgIn" accept="image/*" hidden>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
-<script src="/office/office.js?b=20261113r"></script>
+<script src="/office/office.js?b=20261113s"></script>
 <script src="/office/live.js?b=20261109c"></script>
 <script src="/office/scene.js?b=20261109a"></script>
 <script src="/office/jszip.min.js"></script>

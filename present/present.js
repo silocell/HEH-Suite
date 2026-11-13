@@ -584,6 +584,47 @@
   };
   Office.themeToggle($("themeBtn"));
   $("title").addEventListener("input", saver.poke);
+
+  /* ---- Launchpad AI: reads the slides and adds new ones from its answer ---- */
+  function laiPlain(h) { var d = document.createElement("div"); d.innerHTML = h || ""; return (d.innerText || d.textContent || "").replace(/\n{3,}/g, "\n\n").trim(); }
+  function laiLine(t) { return Office.cleanHTML(Office.laiMd(t)).replace(/^<p>|<\/p>$/g, ""); }
+  if (Office.lai) Office.lai({
+    app: "Present", noun: "slides", insertLabel: "Add as slides", insertDone: "Added the slides after this one.",
+    doc: function () {
+      return { title: $("title").value.trim() || "Untitled presentation", text: deck.slides.map(function (s, i) {
+        var t = s.els.filter(function (e) { return e.type === "text" && e.html; }).map(function (e) { return laiPlain(e.html); }).join("\n");
+        return "Slide " + (i + 1) + (i === cur ? " (the one I'm on)" : "") + ":\n" + (t || "(empty)") + (s.notes ? "\nSpeaker notes: " + s.notes : "");
+      }).join("\n\n") };
+    },
+    selection: function () { var s = deck.slides[cur]; return s ? "Slide " + (cur + 1) + ":\n" + s.els.filter(function (e) { return e.type === "text" && e.html; }).map(function (e) { return laiPlain(e.html); }).join("\n") : ""; },
+    insert: function (md) {
+      // "## Title" starts a slide; the lines under it become its bullet points
+      var parts = [], p = null;
+      md.split("\n").forEach(function (ln) {
+        var h = /^#{1,4}\s+(.*)$/.exec(ln);
+        if (h) { p = { title: h[1].replace(/\*\*/g, "").replace(/^slide\s*\d+\s*[:.-]\s*/i, "").trim(), lines: [] }; parts.push(p); return; }
+        if (!ln.trim()) return;
+        if (!p) { p = { title: "", lines: [] }; parts.push(p); }
+        p.lines.push(ln.replace(/^\s*[-*•]\s+|^\s*\d+[.)]\s+/, "").trim());
+      });
+      if (!parts.length) { Office.toast("There was nothing to make slides from.", true); return false; }
+      finishEdit(); mark(); var at = cur;
+      parts.slice(0, 30).forEach(function (q) {
+        var s = layout("content");
+        s.els[0].html = laiLine(q.title || "");
+        s.els[1].html = q.lines.length ? "<ul>" + q.lines.slice(0, 12).map(function (l) { return "<li>" + laiLine(l) + "</li>"; }).join("") + "</ul>" : "";
+        deck.slides.splice(++at, 0, s);
+      });
+      goSlide(cur + 1); changed();
+    },
+    actions: [
+      { label: "🪄 Make slides on my topic", ask: "Make 5 slides for a school presentation on the topic of my presentation's title (or its first slide). Give back only the slides." },
+      { label: "✏️ Improve this slide", ask: "Improve the slide I'm on: a clearer title and shorter, punchier bullet points. Give back only that one slide." },
+      { label: "🎤 Speaker notes", ask: "Write what I could say out loud for the slide I'm on, in 3 to 5 sentences." },
+      { label: "💡 How can I make it better?", ask: "Give me 3 to 5 specific suggestions to make this presentation better. Don't rewrite it." },
+      { label: "➕ What's missing?", ask: "Suggest 2 more slides that would fit well in this presentation. Give back only those slides." }
+    ]
+  });
   window.addEventListener("resize", fit);
   window.addEventListener("beforeunload", function () { finishEdit(); saver.now(); });
 })();

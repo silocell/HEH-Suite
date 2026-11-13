@@ -452,4 +452,29 @@
   Office.themeToggle($("themeBtn"));
   titleIn.addEventListener("input", saver.poke);
   window.addEventListener("beforeunload", function () { flush(); saver.now(); });
+
+  /* ---- Launchpad AI: reads this page (or what's selected) and puts answers in ---- */
+  var laiRange = null;
+  document.addEventListener("selectionchange", function () { var s = getSelection(); if (s.rangeCount && note.contains(s.anchorNode)) laiRange = s.getRangeAt(0).cloneRange(); });
+  function laiPut(html, replacing) {
+    note.focus(); var s = getSelection(); s.removeAllRanges();
+    var r = laiRange && note.contains(laiRange.startContainer) ? laiRange : (function () { var x = document.createRange(); x.selectNodeContents(note); x.collapse(false); return x; })();
+    s.addRange(r); if (!replacing && !s.isCollapsed) s.collapseToEnd();
+    document.execCommand("insertHTML", false, Office.cleanHTML(html) || ""); edited();
+  }
+  if (Office.lai) Office.lai({
+    app: "Notebook", noun: "notes",
+    doc: function () { return { title: (titleIn.value.trim() || "My Notebook") + " - " + (ptitle.value.trim() || "Untitled page"), text: note.innerText }; },
+    selection: function () { return laiRange && note.contains(laiRange.startContainer) ? laiRange.toString() : ""; },
+    insert: function (md, html) { laiPut(html, false); },
+    replace: function (md, html) { laiPut(html, true); },
+    actions: [
+      { label: "📋 Summarise my notes", ask: "Summarise these notes as short bullet points I can revise from." },
+      { label: "❓ Quiz me", ask: "Make 5 quick quiz questions from these notes, then the answers underneath." },
+      { label: "🃏 Make flashcards", ask: "Make 8 flashcards from these notes, one per line as: question - answer." },
+      { label: "🧒 Explain more simply", ask: "Explain this more simply, as if to a Year 7 pupil." },
+      { label: "✅ Make a to-do list", ask: "Turn this into a short to-do list of things I need to do. Give back only the list." },
+      { label: "🧹 Tidy up my notes", ask: "Tidy these notes into clear headings and bullet points, keeping everything I wrote. Give back only the tidied notes." }
+    ]
+  });
 })();
