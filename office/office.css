@@ -86,10 +86,6 @@ button{cursor:pointer}
 .foot{flex:none;display:flex;align-items:center;gap:16px;padding:5px 14px;font-size:.8rem;color:var(--soft);background:var(--tool);border-top:1px solid var(--rule)}
 .foot .sp{flex:1}
 .foot input[type=range]{width:110px;accent-color:var(--a1)}
-/* on a phone the status bar must never make the page wider than the screen (that zoomed every app out) */
-.foot{min-width:0;overflow:hidden}
-.foot>*{flex:none;white-space:nowrap}
-@media (max-width:560px){ .foot{gap:10px;padding:5px 10px} .foot label,.foot input[type=range]{display:none} }
 
 /* ===== Office-style tabs, ribbon and File screen (shared by the Suite apps) ===== */
 /* ---- tabs and ribbon, like Word ---- */
