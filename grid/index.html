@@ -16,7 +16,7 @@
 try{ var m = document.cookie.match(/(?:^|; )hl_theme=(dark|light|system)/), t = m ? m[1] : JSON.parse(localStorage.getItem("hl.theme"));
      if(t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t); }catch(e){}
 </script>
-<link rel="stylesheet" href="/office/office.css?b=20261113p">
+<link rel="stylesheet" href="/office/office.css?b=20261113r">
 <style>
 :root{--a1:#16a34a;--cell:#ffffff;--cellink:#1b1b1b;--grid:#e1e5eb;--head:#f3f5f8;--headon:#dcefe2;--sel:rgba(22,163,74,.12)}
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --cell:#151b23;--cellink:#e6ebf2;--grid:#2a333f;--head:#1c232d;--headon:#1f3b2a;--sel:rgba(74,222,128,.14) } }
@@ -248,7 +248,7 @@ table.sheet{border-collapse:separate;border-spacing:0;table-layout:fixed;font:13
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/jszip.min.js"></script>
-<script src="/office/office.js?b=20261111e"></script>
+<script src="/office/office.js?b=20261113r"></script>
 <script src="/office/live.js?b=20261109c"></script>
 <script src="/grid/formula.js?b=20261103a"></script>
 <script src="/grid/xlsx.js?b=20261103a"></script>

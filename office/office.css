@@ -102,6 +102,17 @@ button{cursor:pointer}
 .tabsbar button.ctx[aria-selected="true"]{color:#b45309;box-shadow:inset 0 -3px 0 #f59e0b}
 .ribbon[data-panel]{align-items:stretch;padding:6px 8px 4px;min-height:96px;background:var(--card)}
 .ribbon[hidden]{display:none!important}
+.ribtog{display:none}
+@media (max-width:700px){
+  .ribbon[data-panel]{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;min-height:0;padding:4px 6px 2px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+  .ribbon[data-panel]>*{flex:none}
+  .rg .row{flex-wrap:nowrap}
+  .ribtog{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;flex:none;min-width:40px;border:0;background:transparent;color:var(--soft);font-size:1.1rem;border-radius:10px 10px 0 0}
+  .ribtog span{transition:transform .15s}
+  body.rib-min .ribtog span{transform:rotate(180deg)}
+  body.rib-min .ribbon[data-panel]{display:none!important}
+  body.rib-min .tabsbar button[aria-selected="true"]{box-shadow:none;background:transparent}
+}
 .rg{display:flex;flex-direction:column;justify-content:space-between;padding:0 8px;border-right:1px solid var(--rule);gap:3px}
 .rg:last-child{border-right:0}
 .rg .row{display:flex;gap:2px;align-items:center;flex-wrap:wrap}

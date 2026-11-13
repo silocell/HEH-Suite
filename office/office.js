@@ -618,6 +618,55 @@
   });
   function setImporter(fn) { importer = fn; waiting.splice(0).forEach(fn); }
 
+  /* ---- phones: the ribbon is one row you scroll sideways, and it tucks itself away while you type
+     (so the keyboard doesn't hide the page). Tap a tab to bring it back, or the open tab (or the
+     arrow) to hide it. Works with any app's ribbon, so every Suite app gets it. ---- */
+  (function phoneRibbon() {
+    var phone = window.matchMedia ? window.matchMedia("(max-width:700px)") : { matches: false }, tog = null;
+    function tuck(on) {
+      document.body.classList.toggle("rib-min", !!on);
+      if (tog) tog.setAttribute("aria-expanded", String(!on));
+      if (on) document.querySelectorAll(".ribbon .dd").forEach(function (d) { d.hidden = true; });
+    }
+    function inRibbon(el) { return !!(el && el.closest && el.closest(".ribbon,.tabsbar,.dd,header.top,#backstage")); }
+    function editable(el) { return !!(el && (el.isContentEditable || el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && /^(text|search|number|)$/.test(el.type || "")))); }
+    function start() {
+      var bar = document.querySelector(".tabsbar"); if (!bar || !document.querySelector(".ribbon[data-panel]")) return;
+      tog = document.createElement("button"); tog.type = "button"; tog.className = "ribtog"; tog.setAttribute("aria-expanded", "true");
+      tog.setAttribute("aria-label", "Show or hide the ribbon"); tog.innerHTML = "<span aria-hidden=\"true\">⌃</span>";
+      tog.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      tog.onclick = function () { tuck(!document.body.classList.contains("rib-min")); };
+      bar.appendChild(tog);
+      bar.addEventListener("click", function (e) {
+        var b = e.target.closest("[data-tab]"); if (!b || !phone.matches) return;
+        if (b.getAttribute("aria-selected") === "true" && !document.body.classList.contains("rib-min")) { e.stopImmediatePropagation(); tuck(true); }
+        else tuck(false);
+      }, true);
+      document.addEventListener("focusin", function (e) {
+        if (phone.matches && editable(e.target) && !inRibbon(e.target) && !inRibbon(e.relatedTarget)) tuck(true);
+      });
+      // tapping into the page you're already typing in (no new focus) tucks it away too
+      document.addEventListener("click", function (e) {
+        if (!phone.matches || inRibbon(e.target)) return;
+        var ed = e.target.closest && e.target.closest("[contenteditable='true'],[contenteditable=''],textarea");
+        if (ed && ed.isContentEditable !== false) tuck(true);
+      });
+      // a drop-down in the sideways-scrolling ribbon would be cut off, so on a phone it floats over the page
+      document.addEventListener("click", function (e) {
+        var b = e.target.closest && e.target.closest(".ribbon button, .ribbon label"); if (!b) return;
+        setTimeout(function () {
+          document.querySelectorAll(".ribbon .dd").forEach(function (d) {
+            if (d.hidden || !phone.matches) { d.style.position = d.style.top = d.style.left = d.style.maxHeight = d.style.overflowY = ""; return; }
+            var r = b.getBoundingClientRect(); d.style.position = "fixed"; d.style.top = Math.round(r.bottom + 4) + "px";
+            d.style.left = Math.max(8, Math.min(Math.round(r.left), innerWidth - d.offsetWidth - 8)) + "px";
+            d.style.maxHeight = Math.max(160, innerHeight - r.bottom - 16) + "px"; d.style.overflowY = "auto";
+          });
+        }, 0);
+      });
+    }
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
+  })();
+
   /* ---- Office-style ribbon tabs and drop-downs ----
      <nav class="tabsbar"> buttons with data-tab, panels .ribbon[data-panel].
      A button with data-dd="someId" opens the .dd with that id. */
