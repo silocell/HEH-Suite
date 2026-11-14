@@ -124,7 +124,7 @@
     var a = document.createElement("div"); a.className = "a"; a.innerHTML = '<div class="think"><i></i><span>Launchpad AI is thinking…</span></div>'; log.appendChild(a); log.scrollTop = log.scrollHeight;
     setBusy(true); stopper = window.AbortController ? new AbortController() : null;
     var live = "", body = null;
-    var payload = { action: "send", stream: true, model: "inhouse", app: cfg.app, text: question, files: files, thread: thread };
+    var payload = { action: "send", stream: true, model: "auto", app: cfg.app, text: question, files: files, thread: thread };
     if (web) payload.search = true;
     sb.auth.getSession().then(function (s) {
       var tok = s.data && s.data.session && s.data.session.access_token;
