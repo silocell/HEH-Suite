@@ -60,7 +60,7 @@
       ".lai header b{font-size:1rem}.lai header .sp{flex:1}",
       ".lai .x{border:0;background:transparent;border-radius:8px;padding:5px 8px;color:var(--soft)}.lai .x:hover{background:var(--hover);color:var(--ink)}",
       ".lai .mk{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:.9rem}",
-      ".lai .chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid var(--rule)}",
+      ".lai .chips{flex:none;display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;border-bottom:1px solid var(--rule)}",
       ".lai .chips button{border:1px solid var(--rule);background:var(--tool);border-radius:999px;padding:5px 10px;font-size:.8rem}.lai .chips button:hover{border-color:#7c3aed}",
       ".lai .log{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:12px;display:flex;flex-direction:column;gap:12px}",
       ".lai .log>*{flex:none}",
@@ -71,10 +71,10 @@
       ".lai .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.lai .acts button{border:1px solid var(--rule);background:var(--card);border-radius:8px;padding:4px 9px;font-size:.8rem;font-weight:600}.lai .acts button.go{background:#4f46e5;border-color:#4f46e5;color:#fff}",
       ".lai .by{font-size:.74rem;color:var(--soft);margin-top:4px}.lai .err{color:var(--bad)}.lai .note{font-size:.8rem;color:var(--soft);text-align:center}",
       ".lai .think{color:var(--soft);display:flex;gap:8px;align-items:center}.lai .think i{width:8px;height:8px;border-radius:50%;background:#7c3aed;animation:laip 1s ease-in-out infinite}@keyframes laip{50%{opacity:.25;transform:scale(.7)}}",
-      ".lai form{border-top:1px solid var(--rule);padding:10px 12px;display:flex;flex-direction:column;gap:8px}",
+      ".lai form{flex:none;border-top:1px solid var(--rule);padding:10px 12px;display:flex;flex-direction:column;gap:8px}",
       ".lai textarea{width:100%;resize:none;min-height:42px;max-height:160px;border:1px solid var(--rule);border-radius:12px;padding:8px 10px;background:var(--tool)}.lai textarea:focus{outline:2px solid #7c3aed;outline-offset:-1px}",
       ".lai .row{display:flex;align-items:center;gap:8px}.lai .row .sp{flex:1}",
-      ".lai .sw{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--soft);cursor:pointer}.lai .sw input{accent-color:#7c3aed}",
+      ".lai .laisw{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--soft);cursor:pointer}.lai .laisw input{accent-color:#7c3aed}",
       ".lai .send{border:0;border-radius:10px;width:36px;height:34px;background:var(--ink);color:var(--card);font-size:1rem}.lai .send:disabled{opacity:.35}",
       ".lai .fine{font-size:.72rem;color:var(--soft);margin:0}",
       ".lai .srcs{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.lai .srcs a{font-size:.74rem;border:1px solid var(--rule);border-radius:999px;padding:2px 8px;color:inherit;text-decoration:none}",
@@ -89,7 +89,7 @@
       '<button type="button" class="x" id="laiNew" title="Start again">New</button><button type="button" class="x" id="laiClose" aria-label="Close Launchpad AI">✕</button></header>' +
       '<div class="chips" id="laiChips"></div><div class="log" id="laiLog" aria-live="polite"></div>' +
       '<form id="laiForm"><textarea id="laiText" rows="1" maxlength="4000" placeholder="Ask about your ' + esc((cfg.noun || "document")) + '…" aria-label="Ask Launchpad AI"></textarea>' +
-      '<div class="row"><label class="sw" title="HWLAI searches the web first and answers with sources (uses HWLAI\'s allowance)"><input type="checkbox" id="laiWeb"> 🔎 HWLAI web search</label><span class="sp"></span><button type="submit" class="send" id="laiSend" aria-label="Send">↑</button></div>' +
+      '<div class="row"><label class="laisw" title="HWLAI searches the web first and answers with sources (uses HWLAI\'s allowance)"><input type="checkbox" id="laiWeb"> 🔎 HWLAI web search</label><span class="sp"></span><button type="submit" class="send" id="laiSend" aria-label="Send">↑</button></div>' +
       '<p class="fine">It reads your ' + esc(cfg.noun || "document") + ' to answer. Don\'t share personal information. AI can make mistakes.</p></form>';
     document.body.appendChild(p);
     $("laiChips").innerHTML = (cfg.actions || []).map(function (a, i) { return '<button type="button" data-i="' + i + '">' + esc(a.label) + "</button>"; }).join("");

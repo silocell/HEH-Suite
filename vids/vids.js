@@ -1078,4 +1078,63 @@
       onPick: function (a) { if (a === "new") startDialog(false); else if (a === "tpl") startDialog(true); else if (a === "open") $("projBtn").click(); else if (a === "make") $("exportBtn").click(); }
     });
   };
+
+  /* ---- Launchpad AI: reads the scenes and turns its answer into new scenes ---- */
+  var LOOKS = [
+    { bg: { g: ["#1d4ed8", "#0f172a", 160] }, a: "#ffffff", b: "#bfdbfe", f: "Poppins", tr: "fade" },
+    { bg: { c: "#fef3c7" }, a: "#92400e", b: "#78350f", f: "Fredoka", tr: "slide" },
+    { bg: { g: ["#a855f7", "#ec4899", 135] }, a: "#ffffff", b: "#fdf4ff", f: "Poppins", tr: "zoom" },
+    { bg: { c: "#ecfeff" }, a: "#155e75", b: "#164e63", f: "Fredoka", tr: "slide" },
+    { bg: { g: ["#0f172a", "#334155", 170] }, a: "#fbbf24", b: "#e2e8f0", f: "Bebas Neue", tr: "circle" },
+    { bg: { g: ["#16a34a", "#065f46", 160] }, a: "#ffffff", b: "#dcfce7", f: "Poppins", tr: "fade" }
+  ];
+  var EMOJI = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
+  function sceneText(sc) {
+    return (sc.els || []).filter(function (e) { return e.t === "text" && e.text; }).map(function (e) { return e.text; }).join("\n") +
+      (sc.cap ? "\nCaption / what to say: " + sc.cap : "");
+  }
+  if (Office.lai) Office.lai({
+    app: "Vids", noun: "video", insertLabel: "Add as scenes", insertDone: "Added the scenes after this one.",
+    doc: function () {
+      return { title: $("title").value.trim() || "Untitled video", text: proj.scenes.map(function (sc, i) {
+        return "Scene " + (i + 1) + " (" + sc.dur + "s)" + (i === cur ? " (the one I'm on)" : "") + ":\n" + (sceneText(sc) || "(no words)");
+      }).join("\n\n") };
+    },
+    selection: function () { var sc = proj.scenes[cur]; return sc ? "Scene " + (cur + 1) + ":\n" + (sceneText(sc) || "(no words)") : ""; },
+    insert: function (md) {
+      // "## Title" starts a scene; short lines under it go on screen; a "Say:" line becomes the caption
+      var parts = [], p = null;
+      md.split("\n").forEach(function (ln) {
+        var h = /^#{1,4}\s+(.*)$/.exec(ln), clean = ln.replace(/\*\*/g, "").trim();
+        if (h) { p = { title: h[1].replace(/\*\*/g, "").replace(/^scene\s*\d+\s*[:.-]\s*/i, "").trim(), lines: [], say: "" }; parts.push(p); return; }
+        if (!clean) return;
+        if (!p) { p = { title: "", lines: [], say: "" }; parts.push(p); }
+        var say = /^(say|caption|voice ?over|narrator)\s*:\s*(.*)$/i.exec(clean.replace(/^\s*[-*•]\s+/, ""));
+        if (say) p.say = say[2].replace(/^["“]|["”]$/g, "");
+        else p.lines.push(clean.replace(/^\s*[-*•]\s+|^\s*\d+[.)]\s+/, ""));
+      });
+      parts = parts.filter(function (q) { return q.title || q.lines.length || q.say; });
+      if (!parts.length) { Office.toast("There was nothing to make scenes from.", true); return false; }
+      var tp = { sc: parts.slice(0, 20).map(function (q, k) {
+        var L = LOOKS[(cur + 1 + k) % LOOKS.length], em = EMOJI.exec(q.title), title = q.title.replace(EMOJI, ""), body = q.lines.slice(0, 3).join("\n");
+        var els = [];
+        if (em) els.push({ t: "emoji", ch: em[1], x: .44, y: .06, h: .2, anim: "pop" });
+        if (title) els.push({ t: "text", text: title, x: .08, y: em ? .3 : .22, w: .84, s: body ? .085 : .11, font: L.f, bold: 1, color: L.a, align: "center", anim: "rise", sh: L.bg.g ? 1 : 0 });
+        if (body) els.push({ t: "text", text: body, x: .1, y: em ? .55 : .5, w: .8, s: .05, font: "Inter", color: L.b, align: "center", anim: "fade", at: .6 });
+        var words = (title + " " + body + " " + q.say).split(/\s+/).length;
+        return { dur: Math.max(3, Math.min(10, Math.round(words / 2.6))), bg: L.bg, trans: L.tr, cap: q.say, els: els };
+      }) };
+      snap();
+      var made = fromTpl(tp);
+      proj.scenes.splice.apply(proj.scenes, [cur + 1, 0].concat(made));
+      cur++; t = startOf(cur); sel = null; draw(); timeline(); showPanel(); changed();
+    },
+    actions: [
+      { label: "🎬 Make a video on my topic", ask: "Plan a short school video (5 or 6 scenes) on the topic in my video's title or first scene. For each scene: a line '## ' with an emoji and a short title, up to 2 short lines to show on screen, then a line 'Say: ' with one or two sentences to say out loud. Give back only the scenes." },
+      { label: "✏️ Improve this scene", ask: "Improve the scene I'm on: punchier words on screen and a better line to say. Give it back as one scene: '## ' title, up to 2 short lines, then 'Say: '. Give back only that scene." },
+      { label: "🎤 Write the script", ask: "Write what I could say out loud over each scene of my video, scene by scene, in simple, lively sentences." },
+      { label: "➕ What's missing?", ask: "Suggest 1 or 2 more scenes that would make this video better, each as '## ' title, up to 2 short lines, then 'Say: '. Give back only those scenes." },
+      { label: "💡 How can I make it better?", ask: "Give me 3 to 5 specific, kind tips to make this video better (pacing, words on screen, what to say, music). Don't rewrite it." }
+    ]
+  });
 })();
