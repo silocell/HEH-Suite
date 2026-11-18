@@ -2,6 +2,16 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
+<script>
+/* The Suite has moved to Chausima Suite (suite.chausima.com). Each person picks on this device:
+   new = go straight to Chausima Suite, classic = stay on this Launchpad Suite. ?classic=1 / ?new=1 switch. */
+(function () {
+  var K = "hl.suite.choice", q = location.search, c = null;
+  try { if (/[?&]classic=1/.test(q)) localStorage.setItem(K, "classic"); if (/[?&]new=1/.test(q)) localStorage.setItem(K, "new"); c = localStorage.getItem(K); } catch (e) {}
+  if (c === "new") { location.replace("https://suite.chausima.com/"); return; }
+  window.__suiteChoice = c;
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://civilinitiatives.org/site.js?b=20261112d"></script>
 <meta name="robots" content="noindex, nofollow">
@@ -108,6 +118,33 @@ h2{font-size:1.15rem;margin:0 0 12px}
 </main>
 <footer style="text-align:center;color:var(--soft);font-size:.86rem;padding:10px 16px 30px"><a href="https://files.civilinitiatives.org/">🗂 My Files</a> · <a href="https://hosting.civilinitiatives.org/">🎬 Launchpad Videos</a> · <a href="https://developer.civilinitiatives.org/">🏢 HWL Systems</a><br>© 2026 HWL Systems · Developed by Shiv Kumar</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.0/dist/umd/supabase.js"></script>
+<div id="suiteMove" style="position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.72)">
+  <div role="dialog" aria-modal="true" aria-labelledby="smT" style="max-width:440px;background:var(--panel,#fff);color:var(--ink,#0f172a);border-radius:22px;padding:26px 22px;text-align:center;font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+    <img src="https://chausima.com/favicon.svg" alt="" width="56" height="56" style="display:block;margin:0 auto 12px">
+    <h2 id="smT" style="margin:0 0 8px;font-size:1.35rem">Meet Chausima Suite</h2>
+    <p style="margin:0 0 18px;opacity:.8">The Suite has a new version: documents, sheets, slides, forms and more, end-to-end encrypted. Your classic Suite files stay here.</p>
+    <button type="button" id="smNew" style="display:block;width:100%;border:0;border-radius:12px;padding:12px;background:#1f4fd8;color:#fff;font-weight:700;font-size:1rem;cursor:pointer">Open Chausima Suite</button>
+    <button type="button" id="smOld" style="display:block;width:100%;margin-top:10px;border:1px solid currentColor;border-radius:12px;padding:11px;background:transparent;color:inherit;font-size:1rem;cursor:pointer;opacity:.85">Keep the classic Suite</button>
+    <p style="margin:12px 0 0;font-size:.85rem;opacity:.65">You can switch any time from the bar at the bottom of this page.</p>
+  </div>
+</div>
+<div id="suiteBar" style="position:fixed;left:12px;right:12px;bottom:12px;z-index:2147482000;max-width:560px;margin:0 auto;display:none;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:#0f172a;color:#f1f5f9;font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3)">
+  <span style="flex:1;min-width:180px">You're on the classic Suite.</span>
+  <button type="button" id="sbNew" style="border:0;border-radius:10px;padding:7px 12px;background:#1f4fd8;color:#fff;font-weight:600;cursor:pointer">Switch to Chausima Suite</button>
+</div>
+<script>
+(function () {
+  var K = "hl.suite.choice";
+  function pick(v) { try { localStorage.setItem(K, v); } catch (e) {} }
+  function goNew() { pick("new"); location.href = "https://suite.chausima.com/"; }
+  function show(id, on) { document.getElementById(id).style.display = on ? "flex" : "none"; }
+  if (window.__suiteChoice === "classic") show("suiteBar", true);
+  else { show("suiteMove", true); document.getElementById("smNew").focus(); }
+  document.getElementById("smNew").onclick = goNew;
+  document.getElementById("sbNew").onclick = goNew;
+  document.getElementById("smOld").onclick = function () { pick("classic"); show("suiteMove", false); show("suiteBar", true); };
+})();
+</script>
 <script src="/auth-store.js?b=20261026a"></script>
 <script src="/office/office.js?b=20261113s"></script>
 <script>
